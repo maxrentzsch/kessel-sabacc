@@ -4,7 +4,8 @@ Things that could still be added. Effort is a rough guess: small / medium / larg
 
 ## Next
 
-- **Other Sabacc variants** such as Corellian Spike (large).
+- **Corellian Spike beyond free play** (medium): career tables, tour stops and daily hands of its own.
+- **More Sabacc variants** such as Coruscant Shift or classic Sabacc (large).
 
 ## Game modes
 

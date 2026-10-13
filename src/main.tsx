@@ -41,8 +41,8 @@ createRoot(document.getElementById('root')!).render(
 
 // Handy for poking at a running game from the browser console.
 if (import.meta.env.DEV) {
-  void Promise.all([import('./store/game'), import('./store/nav'), import('./ai/personalities'), import('./audio/sfx'), import('./store/career')]).then(
-    ([{ useGame }, { useNav }, { CHARACTERS }, audio, { useCareer }]) =>
-      Object.assign(window, { __game: useGame, __nav: useNav, __chars: CHARACTERS, __audio: audio, __career: useCareer, __missing: missing }),
+  void Promise.all([import('./store/game'), import('./store/nav'), import('./ai/personalities'), import('./audio/sfx'), import('./store/career'), import('./store/spike')]).then(
+    ([{ useGame }, { useNav }, { CHARACTERS }, audio, { useCareer }, { useSpike }]) =>
+      Object.assign(window, { __game: useGame, __nav: useNav, __chars: CHARACTERS, __audio: audio, __career: useCareer, __spike: useSpike, __missing: missing }),
   )
 }

@@ -902,6 +902,16 @@
   gap: 4px;
 }
 
+/* up to five cards of a Corellian Spike hand: narrower, in a row of fixed width */
+.rankCards[data-wide] {
+  width: 132px;
+  gap: 2px;
+}
+
+.rankCards[data-wide] svg {
+  width: 24px;
+}
+
 .rankCards svg {
   width: 34px;
   height: auto;

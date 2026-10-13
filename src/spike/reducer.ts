@@ -98,6 +98,9 @@ function nextTurn(ctx: Ctx): void {
 function endPhase(ctx: Ctx): void {
   const { s } = ctx
   if (s.phase === 'card') return startPhase(ctx, 'bet')
+  // The bets are in the pot now.
+  for (const p of s.players) p.bet = 0
+  s.toCall = 0
   s.phase = 'dice'
   s.current = s.dealer
   ctx.events.push({ type: 'phaseStart', phase: 'dice' })

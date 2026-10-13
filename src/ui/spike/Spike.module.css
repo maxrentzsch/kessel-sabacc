@@ -1,0 +1,273 @@
+/* What the Corellian Spike table adds to the table styles it shares with Kessel Sabacc. */
+
+/* up to five cards in hand: they overlap as far as they have to */
+.hand {
+  --n: 2;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: calc(var(--card-w) * 1.4);
+}
+
+.hand > * + * {
+  margin-left: min(8px, calc((min(100vw - 28px, 620px) - var(--n) * var(--card-w)) / (var(--n) - 1)));
+}
+
+.pick {
+  cursor: pointer;
+  filter: drop-shadow(0 0 2px var(--holo)) drop-shadow(0 0 9px rgb(118 236 228 / 0.75));
+}
+
+/* an opponent's cards lie in a short overlapping row */
+.minis {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: calc(var(--t) * 0.8);
+}
+
+.minis > * + * {
+  margin-left: calc(var(--mini-w) * -0.42);
+}
+
+.minis[data-count='2'] > * + * {
+  margin-left: calc(var(--t) * 0.6);
+}
+
+.open > * + * {
+  margin-left: calc(var(--mini-w) * -0.2);
+}
+
+.mini {
+  width: var(--mini-w);
+  perspective: calc(var(--mini-w) * 6.5);
+}
+
+.tag {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 3;
+  translate: -50% 45%;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: clamp(9px, calc(var(--t) * 2.2), 13px);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgb(9 14 16 / 0.92);
+  border: 1px solid var(--line-soft);
+}
+
+.tagWin {
+  color: #1a1005;
+  background: var(--sand);
+  border-color: var(--sand);
+}
+
+.tagOut {
+  color: var(--ink-dim);
+}
+
+.wager {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--good);
+}
+
+/* the two pots, either side of the deck and the discard pile */
+.row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: calc(var(--t) * 1.6);
+}
+
+.pot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--t) * 1.1);
+  width: calc(var(--t) * 11);
+}
+
+.potChips {
+  display: grid;
+  place-items: center;
+  width: calc(var(--t) * 9);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: clamp(14px, calc(var(--t) * 4.2), 26px);
+  font-weight: 900;
+  color: #1a1005;
+  background: radial-gradient(circle at 35% 30%, var(--chip-b), var(--chip-a) 62%, var(--chip-c));
+  box-shadow:
+    inset 0 0 0 calc(var(--t) * 0.5) rgb(0 0 0 / 0.22),
+    0 calc(var(--t) * 0.7) 0 var(--chip-c),
+    0 calc(var(--t) * 1.4) calc(var(--t) * 1.4) rgb(0 0 0 / 0.5);
+  transform: perspective(calc(var(--t) * 60)) rotateX(38deg);
+}
+
+.potSabacc .potChips {
+  background: radial-gradient(circle at 35% 30%, #d8fffb, var(--holo) 62%, #2f8f89);
+  box-shadow:
+    inset 0 0 0 calc(var(--t) * 0.5) rgb(0 0 0 / 0.22),
+    0 calc(var(--t) * 0.7) 0 #2f8f89,
+    0 0 calc(var(--t) * 2.4) rgb(118 236 228 / 0.5);
+}
+
+.potLabel {
+  font-family: var(--font-display);
+  font-size: clamp(9px, calc(var(--t) * 2.1), 13px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--cream);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.7);
+}
+
+.potSabacc .potLabel {
+  color: var(--holo);
+}
+
+.pileBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--t) * 1.1);
+}
+
+.pileBtn:disabled {
+  cursor: default;
+}
+
+.pileOn .slot::after {
+  content: '';
+  position: absolute;
+  inset: -6%;
+  border-radius: 18%;
+  box-shadow: 0 0 calc(var(--t) * 2.6) rgb(118 236 228 / 0.8);
+  animation: glow 1.6s ease-in-out infinite;
+}
+
+.slot {
+  position: relative;
+  display: block;
+  width: var(--pile-w);
+  aspect-ratio: 5 / 7;
+}
+
+.slot > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  perspective: calc(var(--pile-w) * 6.5);
+}
+
+@keyframes glow {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* the player's own line of chips and the buttons under the hand */
+.purse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.purse b {
+  margin-left: 5px;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 560px);
+}
+
+.bar > * {
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bar > .wide {
+  flex: 1.6;
+}
+
+/* the dice the dealer rolls after every round of betting */
+.shift {
+  color: var(--bad);
+}
+
+.diceNote {
+  min-height: 38px;
+  max-width: 250px;
+  margin: 0 auto;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-dim);
+}
+
+/* the cards of a hand, spelled out in the hand's result */
+.values {
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--cream);
+}
+
+.gain {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.gain span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+@media (min-width: 900px) and (min-height: 521px) {
+  .hand > * + * {
+    margin-left: 10px;
+  }
+
+  .purse {
+    grid-area: 2 / 1;
+    justify-self: start;
+    align-self: end;
+    padding: 10px 14px;
+    border-radius: var(--radius-l);
+    background: rgb(9 14 16 / 0.82);
+    border: 1px solid rgb(255 255 255 / 0.1);
+  }
+
+  .bar {
+    grid-area: 2 / 3;
+    justify-self: end;
+    align-self: end;
+    width: min(100%, 420px);
+  }
+
+  .handBox {
+    grid-area: 2 / 2;
+  }
+}

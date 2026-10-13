@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { TOKEN_IDS } from '../../engine'
 import type { Card, CardKind, Suit } from '../../engine'
@@ -8,6 +9,7 @@ import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
+import { SpikeRules } from '../spike/SpikeRules'
 import s from './Screens.module.css'
 import { tx } from '../../i18n'
 
@@ -28,7 +30,7 @@ function Pair({ sand, blood, label, note }: { sand: Card; blood: Card; label: st
   )
 }
 
-function Section({ no, title, children }: { no: number; title: string; children: ReactNode }) {
+export function Section({ no, title, children }: { no: number; title: string; children: ReactNode }) {
   return (
     <section className={s.rule}>
       <h2 className={s.ruleTitle}>
@@ -42,6 +44,7 @@ function Section({ no, title, children }: { no: number; title: string; children:
 
 export function RulesScreen() {
   const go = useNav((n) => n.go)
+  const [variant, setVariant] = useState<'kessel' | 'spike'>('kessel')
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
@@ -52,6 +55,24 @@ export function RulesScreen() {
       </header>
       <div className={common.screenBody}>
         <div className={cx(common.column, s.rules)}>
+          <div className={s.segments} role="radiogroup" aria-label={tx`Spielart`}>
+            <button role="radio" aria-checked={variant === 'kessel'} className={cx(s.segment, variant === 'kessel' && s.segmentOn)} onClick={() => setVariant('kessel')}>
+              Kessel Sabacc
+            </button>
+            <button role="radio" aria-checked={variant === 'spike'} className={cx(s.segment, variant === 'spike' && s.segmentOn)} onClick={() => setVariant('spike')}>
+              Corellian Spike
+            </button>
+          </div>
+          {variant === 'spike' ? <SpikeRules /> : <KesselRules />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function KesselRules() {
+  return (
+    <>
           <Section no={1} title={tx`Das Ziel`}>
             <p>
               {tx`Du hältst immer genau `}<b>{tx`zwei Karten`}</b>{tx`: eine aus dem Sand-Deck und eine aus dem Blut-Deck. Am Ende einer Hand gewinnt, wessen Karten am dichtesten beieinander liegen. Zwei gleiche Werte sind ein `}<b>{tx`Sabacc`}</b>{tx` – je niedriger, desto besser.`}
@@ -213,8 +234,6 @@ export function RulesScreen() {
               </li>
             </ul>
           </Section>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }

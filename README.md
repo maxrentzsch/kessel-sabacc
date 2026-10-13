@@ -1,8 +1,12 @@
 # Kessel Sabacc
 
-Kessel Sabacc as an installable web app (PWA) for desktop and phone, with the rules from
-*Star Wars Outlaws*: two cards, three rounds, all 16 shift tokens – against one to three AI
-opponents. In English and German.
+Sabacc as an installable web app (PWA) for desktop and phone, against one to three AI opponents,
+in English and German. Two games:
+
+- **Kessel Sabacc** with the rules from *Star Wars Outlaws*: two cards, three rounds, all 16 shift
+  tokens.
+- **Corellian Spike**, the game from *Solo*: make your cards add up to zero, with betting rounds,
+  two pots and the spike dice.
 
 **Play it: <https://maxrentzsch.github.io/kessel-sabacc/>**
 
@@ -11,7 +15,7 @@ opponents. In English and German.
 - **Career** across six venues on a sector map, with a story of its own, house rules, duels
   against rivals, three stakes and a legend mode afterwards.
 - **On Tour** (table after table for a growing pot), **Daily Hand** (one fixed table a day) and
-  **Free Play** with your own rules.
+  **Free Play** with your own rules – the place to play Corellian Spike.
 - **Long-term goals:** reputation and ranks, achievements, a collection of card backs, felt, chips
   and titles, and a ship of your own to upgrade.
 - **At the table:** peeking with suspicion, a dealer droid, swipe gestures, tips from the AI, a
@@ -35,13 +39,14 @@ npm run preview        # look at the build locally (including the service worker
 
 | Folder | Contents |
 |---|---|
-| `src/engine` | The rules as a pure reducer: `applyAction(state, action) → { state, events }`. No React, deterministic from a seed. |
-| `src/ai` | Hand evaluation (`evaluate.ts`), move and token strategy (`policy.ts`), opponents (`personalities.ts`). |
+| `src/engine` | The rules of Kessel Sabacc as a pure reducer: `applyAction(state, action) → { state, events }`. No React, deterministic from a seed. |
+| `src/ai` | Kessel Sabacc: hand evaluation (`evaluate.ts`), move and token strategy (`policy.ts`). The opponents (`personalities.ts`) play both games. |
+| `src/spike` | Corellian Spike, built the same way and kept apart: deck, hand ranking, reducer, AI. |
 | `src/career` | Everything about progress: tables, venues, story, reputation, achievements, collection, ship, tour and daily hand, save codes. |
 | `src/store` | Zustand stores: the running game, the career save, settings, navigation. |
 | `src/i18n` | The two languages, see below. |
 | `src/audio` | All sounds, generated at run time – there are no audio files. |
-| `src/ui` | Screens, the table, SVG artwork and design tokens. |
+| `src/ui` | Screens, the two tables (`table`, `spike`), SVG artwork and design tokens. |
 | `legacy/python` | The original Python prototype (different, simplified rules). |
 
 The save, the settings and an interrupted game live in the browser's `localStorage`.

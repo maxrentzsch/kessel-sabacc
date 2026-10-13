@@ -8,6 +8,7 @@ export type Screen =
   | 'free'
   | 'loadout'
   | 'table'
+  | 'spike'
   | 'result'
   | 'rules'
   | 'profile'
