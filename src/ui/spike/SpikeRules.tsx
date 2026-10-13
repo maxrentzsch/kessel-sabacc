@@ -3,8 +3,17 @@ import type { SpikeCard } from '../../spike'
 import { Section } from '../screens/Rules'
 import s from '../screens/Screens.module.css'
 import { SpikeFace } from './SpikeCardArt'
+import { signed } from './texts'
 
 const SUITS = ['circle', 'triangle', 'square'] as const
+
+/** One card of each stave, a green and a red one of the same value among them, and a sylop. */
+const EXAMPLES: SpikeCard[] = [
+  { id: 'rule-a', suit: 'circle', value: 4 },
+  { id: 'rule-b', suit: 'triangle', value: -4 },
+  { id: 'rule-c', suit: 'square', value: 9 },
+  { id: 'rule-d', suit: null, value: 0 },
+]
 
 /** Example cards from their values; the staves are only there to look at. */
 function cards(values: number[]): SpikeCard[] {
@@ -39,14 +48,18 @@ export function SpikeRules() {
       </Section>
 
       <Section no={2} title={tx`Die Karten`}>
-        <p>{tx`62 Karten: drei Farben (Kreis, Dreieck, Quadrat), jede mit 1 bis 10 in Grün (plus) und in Rot (minus), dazu zwei Sylops mit dem Wert 0. Den Wert zählst du an den Symbolen ab; die Punktreihe im Eckband zeigt ihn noch einmal.`}</p>
+        <p>
+          {tx`Die Kartenfarbe ist das Vorzeichen: `}<b>{tx`Grün zählt plus, Rot zählt minus.`}</b>{tx` Den Wert zählst du an den Symbolen ab; die Punktreihe im Eckband zeigt ihn noch einmal.`}
+        </p>
         <div className={s.cardRow}>
-          {cards([4, -7, 10, 0]).map((card) => (
+          {EXAMPLES.map((card) => (
             <figure key={card.id}>
               <SpikeFace card={card} />
+              <figcaption className="num">{signed(card.value)}</figcaption>
             </figure>
           ))}
         </div>
+        <p>{tx`62 Karten: Jeden Wert von 1 bis 10 gibt es in Grün und in Rot, und das je dreimal – mit Kreisen, mit Dreiecken und mit Quadraten. Dazu kommen zwei Sylops mit dem Wert 0. Die Form der Symbole ist nur Zierde: Für die Wertung zählen allein Farbe und Wert.`}</p>
       </Section>
 
       <Section no={3} title={tx`Eine Hand`}>
