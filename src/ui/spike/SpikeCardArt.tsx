@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import type { SpikeCard, SpikeSuit } from '../../spike'
+import { useSettings } from '../../store/settings'
 import { CARD_OUTLINE } from '../art/CardArt'
 
 const GREEN = '#2f9d6a'
@@ -28,43 +29,74 @@ function Pip({ suit, x, y, r }: { suit: SpikeSuit; x: number; y: number; r: numb
   return <path d={`M${x} ${y - r * 1.1}L${x + r * 1.1} ${y + r * 0.85}H${x - r * 1.1}Z`} />
 }
 
-const signed = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${-value}` : '0')
+/** The corner band runs along the upper left edge; ten places for the dots that count the value. */
+const BAND = 'M26 2H45.5L23.5 62H2Z'
+const DOTS: [number, number][] = Array.from({ length: 10 }, (_, i) => [35.4 - i * 2.13, 9.2 + i * 5.2])
 
+/**
+ * A card as in the decks made after the film: no numerals and no signs. Green
+ * is plus, red is minus; the value is counted, in the middle and as a row of
+ * dots in the corner band. The high cards are printed the other way round.
+ * A numeral can be switched on as a reading aid.
+ */
 export const SpikeFace = memo(function SpikeFace({ card }: { card: SpikeCard }) {
+  const numbers = useSettings((st) => st.cardNumbers)
   const sylop = card.suit === null
-  const ink = sylop ? '#76ece4' : card.value > 0 ? GREEN : RED
-  const id = `spike-face-${sylop ? 'sylop' : 'plain'}`
   const count = Math.abs(card.value)
+  const colour = sylop ? '#76ece4' : card.value > 0 ? GREEN : RED
+  const cream = '#f3ebd9'
+  const solid = !sylop && count >= 7
+  const plate = sylop ? '#23323a' : solid ? colour : cream
+  const ink = solid ? cream : colour
+  const id = `spike-face-${sylop ? 'sylop' : solid ? (card.value > 0 ? 'green' : 'red') : 'plain'}`
+  const corner = (
+    <g>
+      <path d={BAND} fill={ink} />
+      {DOTS.slice(0, count).map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="1.9" fill={plate} />
+      ))}
+      {numbers && (
+        <text x="61" y="21" fill={ink} fontFamily="var(--font-display)" fontWeight="800" fontSize="15" textAnchor="middle">
+          {count}
+        </text>
+      )}
+    </g>
+  )
   return (
     <svg viewBox="0 0 100 140" aria-hidden>
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0.6" y2="1">
-          <stop offset="0" stopColor={sylop ? '#23323a' : '#f3ebd9'} />
-          <stop offset="1" stopColor={sylop ? '#0e161a' : '#d9cdb1'} />
+          <stop offset="0" stopColor={plate} />
+          <stop offset="1" stopColor={sylop ? '#0e161a' : solid ? plate : '#d9cdb1'} stopOpacity={solid ? 0.82 : 1} />
         </linearGradient>
+        <clipPath id="spike-outline">
+          <path d={CARD_OUTLINE} />
+        </clipPath>
       </defs>
-      <path d={CARD_OUTLINE} fill={`url(#${id})`} stroke={sylop ? '#05090b' : '#b9ac8f'} strokeWidth="2" strokeLinejoin="round" />
-      <g fill={ink}>
-        <path d="M29.5 6H70.5L77.5 24.5H22.5Z" />
-        <path d="M70.5 134H29.5L22.500 115.500H77.500Z" />
-        {sylop ? (
-          <g fill="none" stroke={ink} strokeWidth="5">
-            <circle cx="50" cy="70" r="22" />
-            <circle cx="50" cy="70" r="7" fill={ink} stroke="none" />
-            <path d="M50 40V52M50 88V100M20 70H32M68 70H80" strokeLinecap="round" />
+      <path d={CARD_OUTLINE} fill={solid ? '#1a1310' : 'none'} />
+      <path d={CARD_OUTLINE} fill={`url(#${id})`} stroke={sylop ? '#05090b' : solid ? '#1a1310' : '#b9ac8f'} strokeWidth="2" strokeLinejoin="round" />
+      {sylop ? (
+        <g fill="none" stroke={colour} strokeWidth="5">
+          <circle cx="50" cy="70" r="22" />
+          <circle cx="50" cy="70" r="7" fill={colour} stroke="none" />
+          <path d="M50 40V52M50 88V100M20 70H32M68 70H80" strokeLinecap="round" />
+          {numbers && (
+            <text x="50" y="24" fill={colour} stroke="none" fontFamily="var(--font-display)" fontWeight="800" fontSize="15" textAnchor="middle">
+              0
+            </text>
+          )}
+        </g>
+      ) : (
+        <g clipPath="url(#spike-outline)">
+          {corner}
+          <g transform="rotate(180 50 70)">{corner}</g>
+          <g fill={ink}>
+            {PIPS[count].map(([x, y], i) => (
+              <Pip key={i} suit={card.suit!} x={x} y={y} r={count >= 9 ? 5 : count >= 7 ? 5.6 : 6.6} />
+            ))}
           </g>
-        ) : (
-          PIPS[count].map(([x, y], i) => <Pip key={i} suit={card.suit!} x={x} y={y} r={count >= 9 ? 5 : count >= 7 ? 5.6 : 6.6} />)
-        )}
-      </g>
-      <g fill={sylop ? '#0e161a' : '#f3ebd9'} fontFamily="var(--font-display)" fontWeight="800" fontSize="14.500" textAnchor="middle">
-        <text x="50" y="20.500">
-          {signed(card.value)}
-        </text>
-        <text x="50" y="20.500" transform="rotate(180 50 70)">
-          {signed(card.value)}
-        </text>
-      </g>
+        </g>
+      )}
     </svg>
   )
 })

@@ -135,6 +135,12 @@ export function ProfileScreen() {
             <Toggle label={tx`Vibration`} note={tx`Nur Android – iPhones erlauben das im Browser nicht`} value={settings.haptics} onChange={(haptics) => settings.set({ haptics })} />
             <Toggle label={tx`Tipps am Tisch`} note={tx`Erklärt, was gerade zu tun ist`} value={settings.hints} onChange={(hints) => settings.set({ hints })} />
             <Toggle label={tx`Schnelles Spiel`} note={tx`Kürzere Animationen und Denkpausen`} value={settings.fast} onChange={(fast) => settings.set({ fast })} />
+            <Toggle
+              label={tx`Ziffern auf Spike-Karten`}
+              note={tx`Corellian Spike: zeigt den Wert als Zahl. Die Originalkarten haben nur Symbole zum Abzählen`}
+              value={settings.cardNumbers}
+              onChange={(cardNumbers) => settings.set({ cardNumbers })}
+            />
           </div>
 
           <h2 className={s.fieldLabel}>{tx`Spielstand`}</h2>

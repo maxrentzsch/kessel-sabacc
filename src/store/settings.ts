@@ -11,6 +11,8 @@ interface SettingsState {
   /** show coaching hints at the table */
   hints: boolean
   fast: boolean
+  /** Corellian Spike: print the value on the cards as a numeral, beside the symbols to count */
+  cardNumbers: boolean
   set(patch: Partial<Omit<SettingsState, 'set'>>): void
 }
 
@@ -23,6 +25,7 @@ export const useSettings = create<SettingsState>()(
       haptics: true,
       hints: true,
       fast: false,
+      cardNumbers: true,
       set: (patch) => set(patch),
     }),
     { name: 'kessel-sabacc-settings', version: 1 },

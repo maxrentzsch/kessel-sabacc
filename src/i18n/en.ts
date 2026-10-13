@@ -818,6 +818,8 @@ export const EN: Record<string, string> = {
   "Karten auf den Tisch!": "Cards on the table!",
 
   // Corellian Spike
+  "Ziffern auf Spike-Karten": "Numerals on Spike cards",
+  "Corellian Spike: zeigt den Wert als Zahl. Die Originalkarten haben nur Symbole zum Abzählen": "Corellian Spike: shows the value as a number. The original cards only have symbols to count",
   "Spielt nach Gefühl und setzt planlos.": "Plays on a hunch and bets without a plan.",
   "Rechnet mit, verschätzt sich aber.": "Does the maths but misjudges things.",
   "Zählt Karten und setzt nach seinen Chancen.": "Counts cards and bets according to the odds.",
@@ -829,7 +831,7 @@ export const EN: Record<string, string> = {
   "null": "zero",
   "ergeben – das ist ein Sabacc. Wer das nicht schafft, will so nah an null wie möglich. Grüne Karten zählen plus, rote minus.": "– that is a Sabacc. If you cannot manage that, get as close to zero as you can. Green cards count plus, red ones minus.",
   "Gespielt wird um Chips. Wer als Letzter noch welche hat, gewinnt die Partie.": "The game is played for chips. The last player who still has some wins.",
-  "62 Karten: drei Farben (Kreis, Dreieck, Quadrat), jede mit +1 bis +10 und −1 bis −10, dazu zwei Sylops mit dem Wert 0.": "62 cards: three staves (circle, triangle, square), each with +1 to +10 and −1 to −10, plus two Sylops worth 0.",
+  "62 Karten: drei Farben (Kreis, Dreieck, Quadrat), jede mit 1 bis 10 in Grün (plus) und in Rot (minus), dazu zwei Sylops mit dem Wert 0. Den Wert zählst du an den Symbolen ab; die Punktreihe im Eckband zeigt ihn noch einmal.": "62 cards: three staves (circle, triangle, square), each with 1 to 10 in green (plus) and in red (minus), plus two Sylops worth 0. You count the value from the symbols; the row of dots in the corner band shows it once more.",
   "Jeder zahlt den Grundeinsatz in zwei Töpfe und bekommt zwei Karten. Dann folgen drei Runden mit je drei Schritten:": "Everybody pays the ante into two pots and is dealt two cards. Three rounds follow, each with three steps:",
   "Karten:": "Cards:",
   "Reihum darf jeder eine Karte vom Stapel nehmen (und vorher eine abwerfen), eine Handkarte gegen die offene Ablage tauschen, stehen oder aussteigen. Mehr als fünf Karten hält niemand.": "In turn, each player may take a card from the deck (discarding one first if they like), swap a card from their hand for the face-up discard, stand, or junk their hand. Nobody holds more than five cards.",

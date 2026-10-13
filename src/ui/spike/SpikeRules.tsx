@@ -39,7 +39,7 @@ export function SpikeRules() {
       </Section>
 
       <Section no={2} title={tx`Die Karten`}>
-        <p>{tx`62 Karten: drei Farben (Kreis, Dreieck, Quadrat), jede mit +1 bis +10 und −1 bis −10, dazu zwei Sylops mit dem Wert 0.`}</p>
+        <p>{tx`62 Karten: drei Farben (Kreis, Dreieck, Quadrat), jede mit 1 bis 10 in Grün (plus) und in Rot (minus), dazu zwei Sylops mit dem Wert 0. Den Wert zählst du an den Symbolen ab; die Punktreihe im Eckband zeigt ihn noch einmal.`}</p>
         <div className={s.cardRow}>
           {cards([4, -7, 10, 0]).map((card) => (
             <figure key={card.id}>
