@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#4a2c14"/>
+      <stop offset="1" stop-color="#100b08"/>
+    </radialGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#f3ebd9"/>
+      <stop offset="1" stop-color="#d9cdb1"/>
+    </linearGradient>
+    <linearGradient id="blood" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#a5302a"/>
+      <stop offset="1" stop-color="#711b18"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(96 126) rotate(-10 86 122) scale(1.72)">
+    <path d="M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.5L74.7 134.8Q73.4 138 70 138H30Q26.6 138 25.3 134.8L3 76.5Q1 70 3 63.5L25.3 5.2Q26.6 2 30 2Z" fill="#000" opacity="0.4" transform="translate(4 7)"/>
+    <path d="M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.5L74.7 134.8Q73.4 138 70 138H30Q26.6 138 25.3 134.8L3 76.5Q1 70 3 63.5L25.3 5.2Q26.6 2 30 2Z" fill="url(#sand)" stroke="#b9ac8f" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M29.5 6H70.5L77.5 24.5H22.5Z" fill="#de7f1c"/><path d="M70.500 134H29.500L22.500 115.500H77.500Z" fill="#de7f1c"/>
+    <path fill="#de7f1c" fill-rule="evenodd" d="M50 44.500L70 70L50 95.500L30 70ZM50 68L43.500 77L50 86L56.500 77Z"/>
+  </g>
+  <g transform="translate(244 126) rotate(10 86 122) scale(1.72)">
+    <path d="M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.5L74.7 134.8Q73.4 138 70 138H30Q26.6 138 25.3 134.8L3 76.5Q1 70 3 63.5L25.3 5.2Q26.6 2 30 2Z" fill="#000" opacity="0.4" transform="translate(4 7)"/>
+    <path d="M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.5L74.7 134.8Q73.4 138 70 138H30Q26.6 138 25.3 134.8L3 76.5Q1 70 3 63.5L25.3 5.2Q26.6 2 30 2Z" fill="url(#blood)" stroke="#4c110f" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M29.5 6H70.5L77.5 24.5H22.5Z" fill="#f1e6d0"/><path d="M70.500 134H29.500L22.500 115.500H77.500Z" fill="#f1e6d0"/>
+    <path fill="#f1e6d0" fill-rule="evenodd" d="M50 44.500L70 70L50 95.500L30 70ZM50 68L43.500 77L50 86L56.500 77Z"/>
+  </g>
+</svg>

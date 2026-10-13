@@ -1,0 +1,107 @@
+.portrait {
+  display: block;
+  overflow: visible;
+  transition: filter 0.6s;
+}
+
+.portrait g,
+.portrait path,
+.portrait ellipse,
+.portrait rect,
+.portrait circle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.out {
+  filter: grayscale(0.9) brightness(0.55);
+}
+
+.frameFill {
+  fill: rgb(9 14 16 / 0.9);
+}
+
+.frameLine {
+  fill: none;
+  stroke: var(--holo);
+  stroke-opacity: 0.7;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+/* Only portraits at the table breathe and blink. */
+.alive .body {
+  transform-origin: 50% 100%;
+  animation: breathe 4.2s ease-in-out infinite;
+  animation-delay: var(--offset, 0s);
+}
+
+.alive .blink {
+  animation: blink 5.3s infinite;
+  animation-delay: var(--offset, 0s);
+}
+
+.talk {
+  animation: talk 0.24s ease-in-out infinite;
+}
+
+.flicker {
+  animation: flicker 0.2s steps(2) infinite;
+}
+
+.breatheGlow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.grill rect {
+  animation: grill 0.3s ease-in-out infinite;
+}
+
+.grill rect:nth-child(2n) {
+  animation-delay: 0.1s;
+}
+
+.grill rect:nth-child(3n) {
+  animation-delay: 0.2s;
+}
+
+@keyframes breathe {
+  50% {
+    scale: 1.018 1.03;
+  }
+}
+
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    scale: 1 1;
+  }
+  95% {
+    scale: 1 0.08;
+  }
+}
+
+@keyframes talk {
+  50% {
+    scale: 0.85 2.4;
+  }
+}
+
+@keyframes flicker {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes glow {
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@keyframes grill {
+  50% {
+    scale: 1 0.3;
+  }
+}

@@ -1,0 +1,229 @@
+/*
+ * Lives inside the table scene so it can use the scene's units (--t, --rim),
+ * but reaches far beyond it to fill the screen in every layout.
+ */
+.backdrop {
+  --px: 0;
+  --py: 0;
+  /* where the back wall meets the floor: a little beyond the far rim of the table */
+  --horizon: calc(100vh + var(--rim) - var(--t) * 4);
+  position: absolute;
+  inset: -100vh -100vw;
+  z-index: 0;
+  background: var(--ceiling);
+  pointer-events: none;
+  transition: filter 0.9s;
+}
+
+/* Showdown: the room falls dark around the table. */
+.dim {
+  filter: brightness(0.42) saturate(0.8);
+}
+
+.room {
+  position: absolute;
+  inset: 0;
+  translate: calc(var(--px) * var(--t) * 2.2) calc(var(--py) * var(--t) * 1.1);
+  transform-origin: 50% var(--horizon);
+  transition: translate 0.5s var(--ease-out), scale 1.4s var(--ease-out);
+  animation: sway 19s ease-in-out infinite alternate;
+}
+
+.dim .room {
+  scale: 1.06;
+}
+
+@keyframes sway {
+  from {
+    transform: translateX(calc(var(--t) * -1.6));
+  }
+  to {
+    transform: translateX(calc(var(--t) * 1.6));
+  }
+}
+
+.wall,
+.life {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--horizon) - var(--t) * 66);
+  height: calc(var(--t) * 66);
+  translate: -50% 0;
+}
+
+/* everything behind the table is a little out of focus */
+.wall {
+  filter: blur(calc(var(--t) * 0.28));
+}
+
+.floor {
+  position: absolute;
+  left: 0;
+  top: var(--horizon);
+  width: 100%;
+  height: calc(var(--t) * 120);
+  background: linear-gradient(180deg, var(--floor-a), var(--floor-b) 70%);
+}
+
+/* The room is painted from the venue's palette (see career/venues). */
+.wallA {
+  stop-color: var(--wall-a);
+}
+
+.wallB {
+  stop-color: var(--wall-b);
+}
+
+.wallC {
+  stop-color: var(--wall-c);
+}
+
+.nicheA {
+  stop-color: var(--niche-a);
+}
+
+.nicheB {
+  stop-color: var(--niche-b);
+}
+
+.paneA {
+  stop-color: var(--pane-a);
+}
+
+.paneB {
+  stop-color: var(--pane-b);
+}
+
+.paneC {
+  stop-color: var(--pane-c);
+}
+
+.doorA {
+  stop-color: var(--door-a);
+}
+
+.doorB {
+  stop-color: var(--door-b);
+}
+
+.lamp {
+  stop-color: var(--lamp);
+}
+
+.bulb {
+  fill: var(--lamp);
+}
+
+.trim {
+  fill: var(--trim);
+}
+
+.trimLine {
+  stroke: var(--trim);
+}
+
+.ceiling {
+  fill: var(--ceiling);
+}
+
+/* the bars of a lattice screen, dark against the light behind them */
+.fret {
+  fill: none;
+  stroke: var(--trim);
+  stroke-width: 11;
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
+
+.crowd {
+  color: var(--trim);
+  fill: var(--trim);
+}
+
+.boards {
+  stroke: var(--floor-a);
+  filter: brightness(1.5);
+}
+
+.flicker {
+  animation: flicker 5.5s ease-in-out infinite;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  47% {
+    opacity: 0.86;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  53% {
+    opacity: 0.92;
+  }
+}
+
+.patron {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: shuffle 6s ease-in-out infinite alternate;
+}
+
+@keyframes shuffle {
+  from {
+    rotate: -1.6deg;
+  }
+  to {
+    rotate: 1.6deg;
+  }
+}
+
+/* Smoke hanging in the lamp light. */
+.haze {
+  position: absolute;
+  left: calc(50% - 80vw);
+  width: 160vw;
+  height: calc(var(--t) * 34);
+  border-radius: 50%;
+  filter: blur(26px);
+  opacity: 0.55;
+}
+
+.hazeA {
+  top: calc(var(--horizon) - var(--t) * 58);
+  background: radial-gradient(closest-side, rgb(var(--haze) / 0.3), transparent);
+  animation: drift 31s ease-in-out infinite alternate;
+}
+
+.hazeB {
+  top: calc(var(--horizon) - var(--t) * 34);
+  background: radial-gradient(closest-side, rgb(var(--haze) / 0.22), transparent);
+  animation: drift 43s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift {
+  from {
+    translate: -9% 0;
+  }
+  to {
+    translate: 9% 3%;
+  }
+}
+
+/* Darker towards the edges of the screen and in the foreground. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 95vw 75vh at 50% calc(var(--horizon) - var(--t) * 6), transparent 35%, rgb(8 5 3 / 0.8) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room,
+  .haze,
+  .patron,
+  .flicker {
+    animation: none;
+  }
+}

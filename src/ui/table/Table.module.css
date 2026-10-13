@@ -1,0 +1,2436 @@
+.table {
+  /* the player's own cards, held up in front of the table */
+  --card-w: clamp(56px, min(22vw, 13dvh), 132px);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* the home indicator needs less room than the system reserves for it */
+  padding: var(--safe-top) var(--safe-right) max(0px, calc(var(--safe-bottom) - 16px)) var(--safe-left);
+  overflow: hidden;
+  /* the room reaches far beyond the screen; nothing may ever scroll it into view */
+  overflow: clip;
+  isolation: isolate;
+  background: var(--ceiling);
+
+  /* Palette of the room; a venue overrides these (see career/venues). */
+  --wall-a: #1d120a;
+  --wall-b: #4a2b14;
+  --wall-c: #6b3d1a;
+  --niche-a: #3a2110;
+  --niche-b: #7a4a22;
+  --trim: #150d08;
+  --pane-a: #ffe2a8;
+  --pane-b: #f0a045;
+  --pane-c: #a85a1c;
+  --door-a: #f6c680;
+  --door-b: #c9762a;
+  --lamp: #ffd9a0;
+  --floor-a: #3a2412;
+  --floor-b: #0d0805;
+  --ceiling: #0f0906;
+  --haze: 255 180 100;
+  --felt-a: #88a27f;
+  --felt-b: #6f8868;
+  --felt-c: #566b50;
+  --rim-a: #e6dcc5;
+  --rim-b: #cfc4a9;
+  /* the copper the table is trimmed with */
+  --metal: #b9763f;
+}
+
+/*
+ * The scene: the room, the table and everybody sitting at it. Everything in
+ * here is measured in table units so the whole picture scales as one and
+ * always fits the space the screen leaves between the top bar and the
+ * player's hand.
+ *
+ *   --ground  how far down the table may reach (its near rim ends up there)
+ *   --t     1% of the table's diameter
+ *   --cy    where the middle of the table top appears
+ *   --rim   where its far rim appears (the table top is seen at an angle)
+ *   --side  how far left and right the outer opponents sit
+ */
+.scene {
+  --ground: 100cqh;
+  --t: min(1.18cqw, calc(var(--ground) * 0.014));
+  --cy: calc(var(--ground) - var(--t) * 25.8);
+  --rim: calc(var(--ground) - var(--t) * 45.6);
+  /* how far above the bottom of the scene the status line sits */
+  --console: calc(var(--t) * 0.8);
+  --side: min(calc(var(--t) * 34), calc(50cqw - var(--t) * 12.4));
+  --mini-w: calc(var(--t) * 8);
+  --pile-w: calc(var(--t) * 11.5);
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  container-type: size;
+}
+
+/* ── The table top: a round disc, really tilted away from the player ─────── */
+
+.tableTop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.disc,
+.discSide,
+.tableShadow {
+  position: absolute;
+  left: 50%;
+  top: var(--cy);
+  width: calc(var(--t) * 94);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  transform: perspective(calc(var(--t) * 220)) rotateX(60deg);
+}
+
+/* what the table throws onto the floor */
+.tableShadow {
+  top: calc(var(--cy) + var(--t) * 9);
+  scale: 1.12;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.85) 60%, transparent);
+}
+
+/* the edge of the table top, visible below its near rim */
+.discSide {
+  top: calc(var(--cy) + var(--t) * 2.6);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--metal) 50%, #000) 50%, color-mix(in srgb, var(--metal) 78%, #000) 80%, color-mix(in srgb, var(--metal) 32%, #000));
+}
+
+/* the table top itself is drawn in Surface.tsx */
+.disc {
+  overflow: hidden;
+  box-shadow: 0 0 0 calc(var(--t) * 0.3) color-mix(in srgb, var(--rim-b) 60%, #000);
+}
+
+.surface {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stopRimA {
+  stop-color: var(--rim-a);
+}
+
+.stopRimB {
+  stop-color: var(--rim-b);
+}
+
+.stopFeltA {
+  stop-color: var(--felt-a);
+}
+
+.stopFeltB {
+  stop-color: var(--felt-b);
+}
+
+.stopFeltC {
+  stop-color: var(--felt-c);
+}
+
+.stopLamp {
+  stop-color: var(--lamp);
+}
+
+.stopMetal {
+  stop-color: var(--metal);
+}
+
+.stopMetalDark {
+  stop-color: color-mix(in srgb, var(--metal) 42%, #120c08);
+}
+
+.metalLine {
+  fill: none;
+  stroke: var(--metal);
+}
+
+.metalDark {
+  fill: color-mix(in srgb, var(--metal) 45%, #120c08);
+}
+
+.shadeLine {
+  fill: none;
+  stroke: rgb(12 16 12 / 0.45);
+}
+
+.guideLine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--rim-a) 42%, transparent);
+  stroke-width: 3;
+}
+
+/* the mats: felt let into the rim, edged in metal */
+.mat {
+  fill: var(--felt-b);
+  stroke: var(--metal);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+
+.matLine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--rim-a) 38%, transparent);
+  stroke-width: 3;
+}
+
+.tray {
+  fill: none;
+  stroke: color-mix(in srgb, var(--metal) 42%, #1c1612);
+  stroke-width: 34;
+}
+
+.trayEdge {
+  fill: none;
+  stroke: var(--metal);
+  stroke-width: 5;
+}
+
+.hubLine {
+  fill: none;
+  stroke: #5d6663;
+  stroke-width: 4;
+}
+
+/* the console standing up from the middle of the table */
+.hub {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--cy) - var(--t) * 6.6);
+  z-index: 3;
+  width: calc(var(--t) * 13.5);
+  translate: -50% 0;
+  overflow: visible;
+  filter: drop-shadow(0 calc(var(--t) * 0.6) calc(var(--t) * 0.8) rgb(0 0 0 / 0.55));
+  pointer-events: none;
+  transition: filter 0.5s;
+}
+
+.hubTop {
+  fill: color-mix(in srgb, var(--metal) 80%, #fff);
+}
+
+.vents {
+  fill: none;
+  stroke: var(--lamp);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--lamp));
+  animation: vents 4s ease-in-out infinite;
+}
+
+.hubGlow {
+  fill: var(--lamp);
+  opacity: 0.5;
+  filter: blur(3px);
+}
+
+@keyframes vents {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+
+.top {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 12px 4px;
+}
+
+.topTitle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.topTitle b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--holo);
+  text-shadow: var(--glow);
+}
+
+.topTitle span {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+/* table-wide effects of shift tokens */
+.mods {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mod {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px 3px 8px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--holo);
+  border: 1.5px solid var(--holo-dim);
+  background: rgb(9 14 16 / 0.82);
+  text-shadow: var(--glow);
+}
+
+.rounds {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.roundLabel {
+  margin-right: 4px;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.roundPip {
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.roundDone {
+  background: var(--brass-dim);
+}
+
+.roundNow {
+  background: var(--sand);
+  box-shadow: 0 0 10px rgb(242 162 58 / 0.7);
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  flex: none;
+  width: var(--card-w);
+  aspect-ratio: 5 / 7;
+  perspective: 700px;
+  container-type: inline-size;
+  filter: drop-shadow(0 4px 5px rgb(0 0 0 / 0.5));
+}
+
+.cardButton {
+  cursor: pointer;
+}
+
+/* leans the card back onto the table */
+.cardLean {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.cardFlip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.cardSide {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.cardSide svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cardBack {
+  transform: rotateY(180deg);
+}
+
+/* resolved value of an Impostor or Sylop */
+.cardBadge {
+  position: absolute;
+  top: -7%;
+  right: -9%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 30%;
+  font-size: 27cqw;
+  font-weight: 800;
+  color: #17110c;
+  background: linear-gradient(145deg, #e6c98f, #b89352);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.6);
+  animation: pop 0.4s var(--ease-spring) both;
+}
+
+@keyframes pop {
+  from {
+    scale: 0;
+  }
+}
+
+/* a ring of light spreading over the table top when a token changes the rules */
+.ripple {
+  position: absolute;
+  left: 50%;
+  top: var(--cy);
+  width: calc(var(--t) * 80);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  transform: perspective(calc(var(--t) * 220)) rotateX(60deg);
+  border: calc(var(--t) * 1.2) solid var(--holo);
+  box-shadow: 0 0 calc(var(--t) * 4) var(--holo), inset 0 0 calc(var(--t) * 4) var(--holo);
+  animation: ripple 1.3s ease-out forwards;
+}
+
+@keyframes ripple {
+  from {
+    scale: 0.08;
+    opacity: 1;
+  }
+  to {
+    scale: 1.05;
+    opacity: 0;
+  }
+}
+
+/* ── Opponents: a bust behind the far rim, their place on the table ──────── */
+
+/* Both layers of a seat hang from the same point on the far rim. */
+.bust,
+.place {
+  position: absolute;
+  left: calc(50% + var(--side) * var(--sx));
+  translate: -50% 0;
+  transition: opacity 0.4s, filter 0.5s, scale 0.5s var(--ease-out);
+}
+
+/* behind the table top: head and shoulders, cut off by the far rim */
+.bust {
+  top: calc(var(--rim) + var(--t) * var(--drop) - var(--t) * 20);
+  z-index: 1;
+  width: calc(var(--t) * 22);
+  aspect-ratio: 120 / 130;
+  transform-origin: 50% calc(var(--t) * 20);
+}
+
+/* on the table top: name plate and cards */
+.place {
+  top: calc(var(--rim) + var(--t) * var(--drop) - var(--t) * 3.4);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  transform-origin: 50% calc(var(--t) * 3.4);
+}
+
+.seatOut {
+  opacity: 0.55;
+}
+
+/* Immunity: a shield of light in front of the player. */
+.immune::after {
+  content: '';
+  position: absolute;
+  inset: -4% -6% 14%;
+  border-radius: 50% 50% 46% 46%;
+  border: calc(var(--t) * 0.5) solid var(--holo);
+  background: radial-gradient(closest-side, transparent 60%, rgb(118 236 228 / 0.22));
+  box-shadow: 0 0 calc(var(--t) * 3) rgb(118 236 228 / 0.6);
+  animation: shield 2.4s ease-in-out infinite;
+}
+
+@keyframes shield {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Showdown: the hand being turned over steps forward, the rest of the room dims. */
+.seatFocus {
+  z-index: 6;
+  scale: 1.12;
+}
+
+.dimmed {
+  filter: brightness(0.38) saturate(0.7);
+}
+
+/* the six-sided readout an opponent sits in front of; the table hides its lower end */
+.frame {
+  position: absolute;
+  left: 8%;
+  top: -9%;
+  /* behind the portrait, which is not positioned */
+  z-index: -1;
+  width: 84%;
+  overflow: visible;
+  fill: rgb(9 14 16 / 0.42);
+  stroke: var(--holo);
+  stroke-opacity: 0.5;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: stroke-opacity 0.3s, stroke 0.3s, filter 0.3s;
+}
+
+.frameInner {
+  fill: none;
+  stroke-width: 0.7;
+}
+
+.seatActive .frame {
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 calc(var(--t) * 0.9) rgb(118 236 228 / 0.75));
+}
+
+.seatWinner .frame {
+  stroke: var(--sand);
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 calc(var(--t) * 0.9) rgb(242 162 58 / 0.8));
+}
+
+.halo {
+  position: absolute;
+  inset: 4% 12% 26%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(118 236 228 / 0.45), transparent);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.seatActive .halo {
+  opacity: 1;
+  animation: halo 1.8s ease-in-out infinite;
+}
+
+.seatWinner .halo {
+  opacity: 1;
+  background: radial-gradient(closest-side, rgb(242 162 58 / 0.8), transparent);
+}
+
+@keyframes halo {
+  50% {
+    scale: 1.12;
+    opacity: 0.65;
+  }
+}
+
+.plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  /* never wider than twice the distance to the edge of the scene */
+  max-width: min(calc(var(--t) * 30), calc((50cqw - var(--side) * max(var(--sx), -1 * var(--sx))) * 2 - 6px));
+  padding: calc(var(--t) * 0.5) calc(var(--t) * 1.6);
+  line-height: 1.2;
+  font-size: clamp(10px, calc(var(--t) * 2.6), 16px);
+  border-radius: 99px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(9 14 16 / 0.9);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.5);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.seatActive .plate {
+  border-color: var(--holo);
+  box-shadow: 0 0 16px rgb(118 236 228 / 0.45);
+}
+
+.seatWinner .plate {
+  border-color: var(--sand);
+  box-shadow: 0 0 18px rgb(242 162 58 / 0.55);
+}
+
+.seatName {
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seatChips {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  white-space: nowrap;
+}
+
+.chipDot {
+  width: 0.75em;
+  height: 0.75em;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--chip-b) 0 26%, var(--chip-a) 30% 60%, var(--chip-b) 64% 78%, var(--chip-c) 82%);
+}
+
+.seatInvested {
+  font-style: normal;
+  color: var(--holo);
+}
+
+.thinking {
+  position: absolute;
+  right: -8px;
+  top: -9px;
+  display: flex;
+  gap: 2px;
+  padding: 4px 5px;
+  border-radius: 99px;
+  background: rgb(9 14 16 / 0.95);
+  border: 1px solid var(--holo-dim);
+}
+
+.thinking i {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: var(--holo);
+  animation: blink 1s infinite;
+}
+
+.thinking i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinking i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+    translate: 0 -2px;
+  }
+}
+
+.seatCards {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--t) * 0.8);
+  min-height: calc(var(--mini-w) * 1.4);
+  margin-top: calc(var(--t) * 0.8);
+}
+
+.miniCard {
+  width: var(--mini-w);
+  perspective: calc(var(--mini-w) * 6.5);
+  filter: drop-shadow(0 calc(var(--t) * 0.6) calc(var(--t) * 0.5) rgb(0 0 0 / 0.5));
+}
+
+/* On a narrow table the outer hands move aside to leave the decks free. */
+.edgeLeft .seatCards {
+  translate: calc(var(--t) * -2.6) 0;
+}
+
+.edgeRight .seatCards {
+  translate: calc(var(--t) * 2.6) 0;
+}
+
+/* Their chips: the stock beside the hand, the bet a step closer to the middle. */
+.stacks {
+  position: absolute;
+  top: calc(var(--t) * 3.2);
+  left: calc(50% + var(--mini-w) + var(--t) * 2.2);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--t) * 3);
+  pointer-events: none;
+}
+
+.stacksLeft {
+  left: auto;
+  right: calc(50% + var(--mini-w) + var(--t) * 2.2);
+}
+
+.stack {
+  position: relative;
+  display: block;
+  width: calc(var(--t) * 3.3);
+  height: calc(var(--t) * 1.7);
+}
+
+.stackBet {
+  translate: calc(var(--t) * 1.6) 0;
+}
+
+.stacksLeft .stackBet {
+  translate: calc(var(--t) * -1.6) 0;
+}
+
+/* one chip, seen from the same angle as the table */
+.coin {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--t) * 0.52 * var(--n));
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 45%, var(--chip-b) 0 22%, var(--chip-a) 27% 56%, var(--chip-b) 61% 76%, var(--chip-a) 81%);
+  box-shadow: 0 calc(var(--t) * 0.5) 0 var(--chip-c);
+}
+
+.coin:first-child {
+  box-shadow: 0 calc(var(--t) * 0.5) 0 var(--chip-c), 0 calc(var(--t) * 0.9) calc(var(--t) * 0.6) rgb(0 0 0 / 0.5);
+}
+
+/* A card they just drew waits beside their hand until they decide. */
+.miniPending {
+  position: absolute;
+  right: calc(100% - var(--mini-w) * 0.3);
+  top: -12%;
+  z-index: 2;
+}
+
+.edgeRight .miniPending {
+  right: auto;
+  left: calc(100% - var(--mini-w) * 0.3);
+}
+
+.seatGone {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.7);
+}
+
+.seatStatus {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--t) * -0.6);
+  z-index: 3;
+  display: flex;
+  gap: 3px;
+  translate: -50% 0;
+  white-space: nowrap;
+}
+
+.seatTokens {
+  position: absolute;
+  left: 95%;
+  top: -2%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--t) * 0.35);
+}
+
+.edgeRight .seatTokens {
+  left: auto;
+  right: 95%;
+}
+
+.seatToken {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--t) * 3.7);
+  height: calc(var(--t) * 4.7);
+  color: var(--cream);
+  background: var(--plaque) center / 100% 100% no-repeat;
+}
+
+/* enlarge the touch target without growing the visual */
+.seatToken::after {
+  content: '';
+  position: absolute;
+  inset: -3px -9px;
+}
+
+.status {
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #26343a;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+}
+
+.statusImmune {
+  color: var(--holo);
+  box-shadow: inset 0 0 0 1px var(--holo-dim);
+}
+
+.statusBad {
+  color: var(--bad);
+  box-shadow: inset 0 0 0 1px rgb(239 106 94 / 0.4);
+}
+
+.scoreTag {
+  margin-top: calc(var(--t) * 0.4);
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: clamp(11px, calc(var(--t) * 2.7), 16px);
+  white-space: nowrap;
+  background: rgb(9 14 16 / 0.9);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.5);
+}
+
+.scoreTag b {
+  color: var(--bad);
+}
+
+.scoreSabacc {
+  color: var(--sand);
+  text-shadow: 0 0 14px rgb(242 162 58 / 0.55);
+}
+
+/* Status notes ("Steht") and spoken lines share the spot above the head. */
+.bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 92%;
+  z-index: 8;
+  translate: -50% 0;
+  width: max-content;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #17110c;
+  background: var(--ink);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+}
+
+.bubbleSpeech {
+  bottom: 90%;
+  max-width: min(48cqw, 240px);
+  padding: 6px 11px 7px;
+  border-radius: 12px;
+  font-size: clamp(12px, calc(var(--t) * 2.5), 15px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  background: var(--cream);
+}
+
+.bubbleSpeech::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  translate: -50% -1px;
+  border: 6px solid transparent;
+  border-top-color: var(--cream);
+  border-bottom: 0;
+}
+
+/* Keep the bubbles of the outer seats on screen. */
+.edgeLeft .bubbleSpeech {
+  left: 0;
+  translate: 0 0;
+}
+
+.edgeLeft .bubbleSpeech::after {
+  left: calc(var(--t) * 11);
+}
+
+.edgeRight .bubbleSpeech {
+  left: auto;
+  right: 0;
+  translate: 0 0;
+}
+
+.edgeRight .bubbleSpeech::after {
+  left: auto;
+  right: calc(var(--t) * 11);
+  translate: 50% -1px;
+}
+
+.floater {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 0;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.8);
+}
+
+.floaterGood {
+  color: var(--good);
+}
+
+.floaterBad {
+  color: var(--bad);
+}
+
+/* ── Middle of the table: the four piles on the dealer's console ─────────── */
+
+.center {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--cy) + var(--t) * 6.4);
+  z-index: 3;
+  translate: -50% -50%;
+  transition: filter 0.5s;
+}
+
+.piles {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: calc(var(--t) * 1);
+}
+
+.pile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--t) * 1.1);
+  transition: translate 0.2s var(--ease-out);
+}
+
+.pile:nth-child(2) {
+  margin-right: calc(var(--t) * 2);
+}
+
+.pileOpen {
+  cursor: pointer;
+}
+
+/* A deck the player may draw from glows in its recess. */
+.pileOpen .pileSlot::before {
+  animation: invite 1.6s ease-in-out infinite;
+}
+
+.pileOpen .pileLabel {
+  color: var(--holo);
+  text-shadow: var(--glow);
+}
+
+@keyframes invite {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px var(--holo)) drop-shadow(0 0 6px rgb(118 236 228 / 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px var(--holo)) drop-shadow(0 0 16px rgb(118 236 228 / 0.95));
+  }
+}
+
+@media (hover: hover) {
+  .pileOpen:hover {
+    translate: 0 calc(var(--t) * -0.8);
+  }
+}
+
+.pileSlot {
+  position: relative;
+  display: block;
+  width: var(--pile-w);
+  aspect-ratio: 5 / 7;
+}
+
+/* the recess a deck sits in, leaning back like the cards */
+.pileSlot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.500L74.7 134.800Q73.4 138 70 138H30Q26.6 138 25.3 134.800L3 76.500Q1 70 3 63.5L25.3 5.200Q26.6 2 30 2Z' fill='rgb(10 14 12 / 0.5)' stroke='%230c1210' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M30 2H70Q73.4 2 74.7 5.2L97 63.5Q99 70 97 76.500L74.7 134.800Q73.4 138 70 138H30Q26.6 138 25.3 134.800L3 76.500Q1 70 3 63.5L25.3 5.200Q26.6 2 30 2Z' fill='none' stroke='%23e9dfc9' stroke-opacity='0.55' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  transform: perspective(calc(var(--pile-w) * 6.5)) rotateX(42deg) scale(1.1);
+}
+
+.pileStack {
+  /* a little thickness under the top card */
+  filter: drop-shadow(0 calc(var(--t) * 0.45) 0 #2a1a10) drop-shadow(0 calc(var(--t) * 0.45) 0 #1f130b) drop-shadow(0 calc(var(--t) * 0.45) 0 #150c07);
+}
+
+.pileCard {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  perspective: calc(var(--pile-w) * 6.5);
+}
+
+.pileLabel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 0.4em;
+  font-family: var(--font-display);
+  font-size: clamp(9px, calc(var(--t) * 2.2), 13px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.7);
+}
+
+.pile[data-suit='sand'] .pileLabel {
+  color: #f6c27a;
+}
+
+.pile[data-suit='blood'] .pileLabel {
+  color: #f0a79f;
+}
+
+.pileLabel em {
+  font-style: normal;
+  color: rgb(233 223 201 / 0.6);
+}
+
+/* ── The dealer: a house droid hovering over the near left rim ────────────── */
+
+.dealer {
+  --eye: var(--holo);
+  position: absolute;
+  left: max(calc(var(--t) * 6.8), calc(50% - var(--t) * 37));
+  top: calc(var(--cy) + var(--t) * 14);
+  z-index: 3;
+  width: calc(var(--t) * 11.5);
+  translate: -50% -100%;
+  transition: filter 0.5s;
+}
+
+.dealerWary {
+  --eye: var(--sand);
+}
+
+.dealerAlarm {
+  --eye: var(--bad);
+}
+
+.dealerShow {
+  --eye: #ffe2a8;
+}
+
+.dealerBody {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.dealerBody svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.dealerFloat {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dealerHover 3.4s ease-in-out infinite;
+}
+
+.dealerShadow {
+  fill: rgb(0 0 0 / 0.45);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dealerShadow 3.4s ease-in-out infinite;
+}
+
+.dealerJet {
+  fill: var(--eye);
+  opacity: 0.55;
+  filter: blur(1.4px);
+  transition: fill 0.4s;
+}
+
+.dealerHull {
+  fill: #2b3437;
+  stroke: #12181a;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.dealerBand {
+  fill: var(--rim-b);
+}
+
+.dealerLamp,
+.dealerTip {
+  fill: var(--eye);
+  transition: fill 0.4s;
+}
+
+.dealerNeck {
+  fill: #171d1f;
+}
+
+.dealerHead {
+  fill: var(--rim-a);
+  stroke: #12181a;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.dealerVisor {
+  fill: #0d1214;
+}
+
+.dealerGaze {
+  transition: transform 0.45s var(--ease-out);
+}
+
+.dealerEye {
+  fill: var(--eye);
+  filter: drop-shadow(0 0 2.5px var(--eye));
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.4s;
+  animation: dealerBlink 5.2s infinite;
+}
+
+.dealerGlint {
+  fill: rgb(255 255 255 / 0.85);
+}
+
+.dealerAntenna,
+.dealerArm {
+  fill: none;
+  stroke: #12181a;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dealerAntenna {
+  stroke-width: 1.2;
+}
+
+.dealerHand {
+  transform-box: fill-box;
+  transform-origin: 0% 0%;
+}
+
+.dealerCard {
+  fill: var(--sand);
+  stroke: var(--sand-ink);
+  stroke-width: 0.8;
+  opacity: 0;
+}
+
+/* dealing: the right arm flicks a card towards the table, again and again */
+.dealerDealing .dealerHand {
+  animation: dealerFlick 0.44s ease-in-out infinite;
+}
+
+.dealerDealing .dealerCard {
+  animation: dealerCard 0.44s ease-in-out infinite;
+}
+
+.dealerShuffling .dealerFloat {
+  animation: dealerSpin 1.1s var(--ease-out);
+}
+
+.dealerShaking .dealerBody {
+  animation: dealerShake 0.5s linear 3;
+}
+
+/* what the dealer says: a readout above its head */
+.dealerLine {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--t) * 0.6);
+  width: max-content;
+  max-width: min(62cqw, 300px);
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--eye) 55%, transparent);
+  border-radius: 8px 8px 8px 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--eye);
+  background: rgb(9 14 16 / 0.88);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+}
+
+@keyframes dealerHover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.6px);
+  }
+}
+
+@keyframes dealerShadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.86);
+    opacity: 0.75;
+  }
+}
+
+@keyframes dealerBlink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  96.5% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes dealerFlick {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-38deg);
+  }
+}
+
+@keyframes dealerCard {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  40% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0;
+  }
+}
+
+/* turning on its own axis, seen from the side */
+@keyframes dealerSpin {
+  0%,
+  50%,
+  100% {
+    transform: scaleX(1);
+  }
+  25%,
+  75% {
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes dealerShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dealerFloat,
+  .dealerShadow,
+  .dealerEye {
+    animation: none;
+  }
+}
+
+/* What is going on, written across the near edge of the table. */
+.console {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--console);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+  text-align: center;
+  pointer-events: none;
+  transition: filter 0.5s;
+}
+
+.ticker {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgb(9 14 16 / 0.7);
+}
+
+.tickerMine {
+  padding: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--holo);
+  text-shadow: 0 0 12px rgb(118 236 228 / 0.7), 0 1px 3px rgb(0 0 0 / 0.9), 0 0 2px rgb(0 0 0 / 0.9);
+}
+
+/* ── The player ──────────────────────────────────────────────────────────── */
+
+.me {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 10px;
+  /* The near rim of the table disappears into the dark under the player's hand. */
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--floor-b) 85%, transparent) 34%);
+  transition: filter 0.5s;
+}
+
+/*
+ * Coaching floats over the back wall. In the flow above the hand it would
+ * push the whole table up and down every time it came and went.
+ */
+.hintTop {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hintTop > * {
+  pointer-events: auto;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.55);
+  animation: hintIn 0.25s var(--ease-out);
+}
+
+.hintDesk {
+  display: none;
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* first-hand coaching */
+.hint {
+  max-width: 460px;
+  padding: 6px 11px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--ink);
+  border-radius: var(--radius-m);
+  background: rgb(9 14 16 / 0.86);
+  border: 1px solid rgb(255 255 255 / 0.12);
+}
+
+/* the practice hand's coach */
+.coach {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  border-color: var(--holo-dim);
+  box-shadow: 0 0 18px rgb(118 236 228 / 0.25);
+  animation: coach 0.35s var(--ease-out);
+}
+
+.coach button {
+  min-height: 38px;
+  padding: 0 22px;
+  font-size: 13px;
+}
+
+@keyframes coach {
+  from {
+    scale: 0.94;
+    opacity: 0.4;
+  }
+}
+
+.myHand {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  min-height: calc(var(--card-w) * 1.4);
+}
+
+.myCard {
+  transition: filter 0.25s;
+}
+
+/* shown while the hand is pushed aside: letting go far enough means standing */
+.waveTag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  translate: -50% -50%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: rgb(9 14 16 / 0.88);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+}
+
+.waveTagOn {
+  color: #04302d;
+  background: var(--holo);
+}
+
+.meWinner .myCard {
+  filter: drop-shadow(0 0 2px var(--sand)) drop-shadow(0 0 12px rgb(242 162 58 / 0.75));
+}
+
+.myCardPick {
+  filter: drop-shadow(0 0 2px var(--holo)) drop-shadow(0 0 9px rgb(118 236 228 / 0.75));
+}
+
+.myCardDim {
+  filter: brightness(0.45) saturate(0.6);
+}
+
+.pickTag {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  z-index: 3;
+  translate: -50% 0;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #26343a;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
+}
+
+.pickTagNew {
+  color: #04302d;
+  background: var(--holo);
+}
+
+.myLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  margin-top: 6px;
+  padding: 2px 14px;
+  border-radius: 999px;
+  justify-content: center;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: rgb(9 14 16 / 0.7);
+}
+
+/* asking for advice: a small lamp at the end of the hand's label */
+.tipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: -2px -8px -2px 2px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--holo);
+  border: 1px solid var(--holo-dim);
+  background: rgb(118 236 228 / 0.1);
+  transition: opacity 0.2s;
+}
+
+.tipBtn:disabled {
+  opacity: 0.35;
+}
+
+/* the advice itself takes the place of the coaching line */
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  text-align: left;
+  color: var(--ink);
+  border-color: var(--holo-dim);
+}
+
+.tip svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--holo);
+}
+
+.myBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 460px);
+  margin-top: 4px;
+}
+
+.myTokens {
+  display: flex;
+  gap: 6px;
+}
+
+.tokenBtn {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 54px;
+  color: var(--cream);
+  background: var(--plaque) center / 100% 100% no-repeat;
+  transition: filter 0.25s, color 0.25s, scale 0.12s;
+}
+
+.tokenBtn:active {
+  scale: 0.93;
+}
+
+.tokenBtnReady {
+  color: var(--holo);
+  background-image: var(--plaque-on);
+  filter: drop-shadow(0 0 7px rgb(118 236 228 / 0.55));
+}
+
+.tokenBtnUsed {
+  background-image: var(--plaque-off);
+  opacity: 0.45;
+}
+
+.myChips {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-height: 30px;
+}
+
+.chipGroup {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.chipCaption {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.chipCaption b {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 100px;
+}
+
+.chip {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--chip-b) 0 26%, var(--chip-a) 30% 60%, var(--chip-b) 64% 78%, var(--chip-c) 82%);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.18), 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.chipInvested {
+  background: radial-gradient(circle, var(--chip-a) 0 26%, var(--chip-b) 30% 60%, var(--chip-a) 64% 78%, var(--chip-c) 82%);
+}
+
+.standBtn {
+  flex: 1;
+  min-width: 104px;
+  height: 50px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgb(9 14 16 / 0.85);
+  border: 1.5px solid rgb(255 255 255 / 0.25);
+  transition: opacity 0.2s, box-shadow 0.25s, border-color 0.25s, scale 0.12s;
+}
+
+.standBtn:disabled {
+  opacity: 0.35;
+}
+
+.standBtn:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.meActive .standBtn:not(:disabled) {
+  border-color: var(--holo);
+  color: var(--holo);
+  text-shadow: var(--glow);
+  box-shadow: 0 0 18px rgb(118 236 228 / 0.3);
+}
+
+/* ── Token sheet ─────────────────────────────────────────────────────────── */
+
+.tokenHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.tokenBig {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 70px;
+  color: var(--holo);
+  background: var(--plaque-on) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 10px rgb(118 236 228 / 0.45));
+}
+
+.tokenHead h2 {
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+
+.tokenKicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.tokenNote {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--ink-dim);
+  background: rgb(255 255 255 / 0.04);
+}
+
+.targetCaption {
+  margin-top: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--holo);
+}
+
+.targets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.targetBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: left;
+}
+
+.targetBtn span {
+  display: flex;
+  flex-direction: column;
+}
+
+.targetBtn em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+/* ── Token banner ────────────────────────────────────────────────────────── */
+
+.banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 36%;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 20px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(8 13 15 / 0.7), rgb(8 13 15 / 0.95) 18%, rgb(8 13 15 / 0.95) 82%, rgb(8 13 15 / 0.7));
+  border-block: 1px solid var(--holo-dim);
+  box-shadow: 0 0 60px rgb(0 0 0 / 0.7);
+}
+
+.bannerIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 78px;
+  color: var(--holo);
+  background: var(--plaque-on) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 14px rgb(118 236 228 / 0.55));
+}
+
+.bannerWho {
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.bannerName {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--holo);
+  text-shadow: var(--glow);
+}
+
+.bannerText {
+  font-size: 13px;
+}
+
+/* ── Dice ────────────────────────────────────────────────────────────────── */
+
+.diceLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  background: rgb(4 6 7 / 0.68);
+}
+
+.dicePanel {
+  min-width: 270px;
+  padding: 18px 26px 18px;
+  text-align: center;
+  border-radius: var(--radius-l);
+  background: rgb(9 14 16 / 0.93);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+}
+
+.diceTitle {
+  margin-top: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--holo-dim);
+  font-size: 20px;
+  color: var(--holo);
+  text-shadow: var(--glow);
+}
+
+.dice {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 18px 0 12px;
+}
+
+.die {
+  width: 78px;
+  height: 78px;
+  padding: 13px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #e6c98f, #b89352);
+  box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.15), 0 8px 18px rgb(0 0 0 / 0.5);
+  transition: scale 0.25s var(--ease-spring), opacity 0.25s, box-shadow 0.25s;
+}
+
+.dieFace {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+}
+
+.dieFace i {
+  border-radius: 50%;
+}
+
+.pipOn {
+  background: #1a1310;
+}
+
+.dieRolling {
+  animation: tumble 0.34s linear infinite;
+}
+
+.dieRolling:nth-child(2) {
+  animation-direction: reverse;
+  animation-duration: 0.4s;
+}
+
+@keyframes tumble {
+  25% {
+    rotate: 90deg;
+    translate: 0 -9px;
+  }
+  50% {
+    rotate: 180deg;
+    translate: 0 0;
+  }
+  75% {
+    rotate: 270deg;
+    translate: 0 -6px;
+  }
+  100% {
+    rotate: 360deg;
+  }
+}
+
+.diePick {
+  cursor: pointer;
+  box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.15), 0 0 0 3px var(--holo), 0 0 24px rgb(118 236 228 / 0.55);
+}
+
+.dieChosen {
+  scale: 1.1;
+  box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.15), 0 0 0 4px var(--sand), 0 0 32px rgb(242 162 58 / 0.65);
+}
+
+.dieDim {
+  scale: 0.88;
+  opacity: 0.35;
+}
+
+.diceHint {
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+/* ── Hand result ─────────────────────────────────────────────────────────── */
+
+.titleWin {
+  color: var(--sand);
+  text-shadow: 0 0 14px rgb(242 162 58 / 0.55);
+  border-bottom-color: rgb(242 162 58 / 0.45);
+}
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resultRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line-soft);
+  background: rgb(255 255 255 / 0.03);
+}
+
+.resultWin {
+  border-color: rgb(242 162 58 / 0.6);
+  background: rgb(242 162 58 / 0.09);
+}
+
+.resultWho {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.resultWho b {
+  font-size: 14px;
+}
+
+.resultWho span {
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.resultWin .resultWho span {
+  color: var(--sand);
+}
+
+.resultValues {
+  display: flex;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--sand);
+}
+
+.resultValues i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 32px;
+  border-radius: 5px;
+  font-style: normal;
+  color: #1a1005;
+}
+
+.resultValues i[data-suit='sand'] {
+  color: #c96f14;
+  background: var(--cream);
+}
+
+.resultValues i[data-suit='blood'] {
+  color: var(--cream);
+  background: #8c2620;
+}
+
+.resultChips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 58px;
+  line-height: 1.25;
+}
+
+.resultChips b {
+  font-size: 15px;
+}
+
+.resultChips span {
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+/* ── Showdown ────────────────────────────────────────────────────────────── */
+
+.revealing .center,
+.revealing .dealer,
+.revealing .hub,
+.revealing .console {
+  filter: brightness(0.42) saturate(0.7);
+}
+
+.meFocus .myCard {
+  filter: drop-shadow(0 0 2px var(--holo)) drop-shadow(0 0 12px rgb(118 236 228 / 0.7));
+}
+
+.callout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 41%;
+  z-index: 42;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.calloutKicker {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.9);
+}
+
+.calloutText {
+  font-size: clamp(32px, 10.5vw, 76px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--holo);
+  text-shadow: 0 0 30px rgb(118 236 228 / 0.8), 0 0 4px rgb(118 236 228 / 0.9), 0 4px 16px rgb(0 0 0 / 0.8);
+}
+
+.calloutSabacc {
+  color: var(--sand);
+  text-shadow: 0 0 34px rgb(242 162 58 / 0.9), 0 0 4px rgb(242 162 58 / 0.9), 0 4px 16px rgb(0 0 0 / 0.8);
+}
+
+/* ── Cheating ────────────────────────────────────────────────────────────── */
+
+/* a card of theirs the player has seen */
+.miniSeen {
+  filter: drop-shadow(0 0 2px var(--holo)) drop-shadow(0 0 7px rgb(118 236 228 / 0.7));
+}
+
+/* not a token: spying is a round button of its own */
+.peekBtn {
+  width: 44px;
+  height: 44px;
+  margin-left: 6px;
+  border: 1.5px dashed rgb(255 255 255 / 0.28);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #33444b, #10181b);
+}
+
+.peekBtnReady {
+  color: var(--holo);
+  border-color: var(--holo-dim);
+}
+
+.heat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-dim);
+}
+
+.heat i {
+  width: 44px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.heat b {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--holo);
+  transition: width 0.5s var(--ease-out), background 0.4s;
+}
+
+.heat em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.heatMid b {
+  background: var(--sand);
+}
+
+.heatHigh {
+  color: var(--bad);
+}
+
+.heatHigh b {
+  background: var(--bad);
+}
+
+.heatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-m);
+  font-weight: 700;
+  background: rgb(255 255 255 / 0.05);
+}
+
+.heatRow .heat i {
+  width: 120px;
+  height: 8px;
+}
+
+.noticeAlarm .noticeTitle {
+  color: var(--bad);
+  text-shadow: 0 0 14px rgb(255 123 110 / 0.7);
+}
+
+.noticeAlarm .noticeKicker {
+  color: var(--bad);
+  text-shadow: 0 0 10px rgb(255 123 110 / 0.7);
+}
+
+.noticeAlarm .noticeTitle::before,
+.noticeAlarm .noticeTitle::after {
+  border-color: var(--bad);
+  filter: drop-shadow(0 0 4px rgb(255 123 110 / 0.7));
+}
+
+/* ── Token effects ───────────────────────────────────────────────────────── */
+
+.beams {
+  position: absolute;
+  inset: 0;
+  z-index: 39;
+  pointer-events: none;
+}
+
+.beam {
+  stroke: var(--holo);
+  stroke-width: 4;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px var(--holo)) drop-shadow(0 0 14px rgb(118 236 228 / 0.8));
+}
+
+.impact {
+  fill: none;
+  stroke: var(--holo);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px var(--holo));
+}
+
+.beamBlocked {
+  stroke: var(--ink);
+  stroke-dasharray: 3 9;
+}
+
+/* ── The dealer's announcements ──────────────────────────────────────────── */
+
+.notice {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20%;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* the line above an announcement, in the glow of the table's readouts */
+.noticeKicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--holo);
+  text-shadow: var(--glow), 0 1px 4px rgb(0 0 0 / 0.9);
+}
+
+/* white capitals held between two brackets */
+.noticeTitle {
+  position: relative;
+  padding: 5px 30px;
+  font-size: clamp(19px, 5.6vw, 30px);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(90deg, transparent, rgb(9 14 16 / 0.8) 16%, rgb(9 14 16 / 0.8) 84%, transparent);
+  text-shadow: 0 2px 10px rgb(0 0 0 / 0.8);
+}
+
+.noticeTitle::before,
+.noticeTitle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 13px;
+  border: 1.5px solid var(--holo);
+  filter: drop-shadow(0 0 4px rgb(118 236 228 / 0.7));
+}
+
+.noticeTitle::before {
+  left: 0;
+  border-right: 0;
+  border-radius: 5px 0 0 5px;
+}
+
+.noticeTitle::after {
+  right: 0;
+  border-left: 0;
+  border-radius: 0 5px 5px 0;
+}
+
+.noticeSub {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.9);
+}
+
+/* sitting down: the name of the place, large across the room */
+.noticeGrand {
+  top: 26%;
+  gap: 6px;
+}
+
+.noticeGrand .noticeTitle {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: clamp(26px, 8.5vw, 60px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--ink);
+  text-shadow: 0 0 30px rgb(0 0 0 / 0.9), 0 3px 12px rgb(0 0 0 / 0.9);
+}
+
+.noticeGrand .noticeTitle::before,
+.noticeGrand .noticeTitle::after {
+  display: none;
+}
+
+.noticeGrand .noticeSub {
+  font-size: clamp(12px, 3.4vw, 16px);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--lamp);
+}
+
+/* ── Larger screens ──────────────────────────────────────────────────────── */
+
+/*
+ * With room to spare the table takes the whole screen: the player's cards are
+ * held over its near rim and the controls move out into the bottom corners.
+ */
+@media (min-width: 900px) and (min-height: 521px) {
+  .table {
+    --card-w: clamp(72px, 12.5dvh, 140px);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .scene {
+    grid-row: 2;
+    grid-column: 1;
+    /* the near rim disappears behind the upper part of the player's cards */
+    --ground: calc(100cqh - var(--card-w) * 0.95 - 80px);
+    --console: calc(var(--card-w) * 1.4 + 90px);
+  }
+
+  .top {
+    padding: 12px 20px 4px;
+  }
+
+  .ticker {
+    font-size: 15px;
+  }
+
+  .tickerMine {
+    font-size: 18px;
+  }
+
+  .me {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: end;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-items: end;
+    gap: 6px 24px;
+    padding: 0 24px 18px;
+    background: linear-gradient(180deg, transparent, rgb(10 6 4 / 0.7) 60%);
+    pointer-events: none;
+  }
+
+  .me > *,
+  .myBar > * {
+    pointer-events: auto;
+  }
+
+  .hintTop {
+    display: none;
+  }
+
+  .hintDesk {
+    display: block;
+    grid-area: 1 / 1;
+    justify-self: start;
+  }
+
+  .hint {
+    max-width: 340px;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .myHand {
+    grid-area: 2 / 2;
+  }
+
+  .myLabel {
+    grid-area: 3 / 2;
+    justify-self: center;
+    align-self: start;
+    margin-top: 0;
+  }
+
+  .myChips {
+    grid-area: 2 / 1;
+    justify-self: start;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: var(--radius-l);
+    background: rgb(9 14 16 / 0.82);
+    border: 1px solid rgb(255 255 255 / 0.1);
+  }
+
+  /* tokens and the stand button become items of the corner layout */
+  .myBar {
+    display: contents;
+  }
+
+  .myTokens {
+    grid-area: 3 / 1;
+    justify-self: start;
+    gap: 10px;
+  }
+
+  .standBtn {
+    grid-area: 2 / 3 / 4 / 3;
+    justify-self: end;
+    flex: none;
+    width: min(100%, 250px);
+    height: 58px;
+    font-size: 17px;
+  }
+
+  .tokenBtn {
+    width: 48px;
+    height: 62px;
+  }
+
+  .chip {
+    width: 17px;
+    height: 17px;
+  }
+
+  .chipRow {
+    max-width: 260px;
+  }
+}
+
+/* ── Phones held sideways: table on the left, the player's hand on the right ─ */
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .table {
+    --card-w: clamp(48px, 17dvh, 84px);
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 38%);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'top top'
+      'scene me';
+  }
+
+  .scene {
+    grid-area: scene;
+  }
+
+  .top {
+    grid-area: top;
+    padding: 4px 12px 0;
+  }
+
+  .ticker,
+  .tickerMine {
+    font-size: 13px;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .me {
+    grid-area: me;
+    justify-content: center;
+    padding-bottom: 8px;
+    background: linear-gradient(90deg, transparent, rgb(10 6 4 / 0.8) 30%);
+  }
+
+  .tokenBtn {
+    width: 38px;
+    height: 49px;
+  }
+
+  .chip {
+    width: 13px;
+    height: 13px;
+  }
+
+  .standBtn {
+    height: 46px;
+  }
+}
