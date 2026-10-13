@@ -4,7 +4,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
+import { LANG, missing } from './i18n'
 import './ui/theme/tokens.css'
+
+document.documentElement.lang = LANG
 
 // Offline support; new versions are picked up on the next launch.
 registerSW({ immediate: true })
@@ -40,6 +43,6 @@ createRoot(document.getElementById('root')!).render(
 if (import.meta.env.DEV) {
   void Promise.all([import('./store/game'), import('./store/nav'), import('./ai/personalities'), import('./audio/sfx'), import('./store/career')]).then(
     ([{ useGame }, { useNav }, { CHARACTERS }, audio, { useCareer }]) =>
-      Object.assign(window, { __game: useGame, __nav: useNav, __chars: CHARACTERS, __audio: audio, __career: useCareer }),
+      Object.assign(window, { __game: useGame, __nav: useNav, __chars: CHARACTERS, __audio: audio, __career: useCareer, __missing: missing }),
   )
 }

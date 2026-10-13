@@ -5,7 +5,7 @@ import { TUTORIAL_RESULT } from '../../career/tutorial'
 import { venueOf } from '../../career/venues'
 import { canPlayToken, tokenTargets, TOKENS } from '../../engine'
 import type { GameState, PendingDice, PlayerResult, TokenId } from '../../engine'
-import { chipsText, scoreLabel, SUIT_NAME, TOKEN_TEXT } from '../../i18n/de'
+import { chipsText, scoreLabel, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { HUMAN, revealOrder, useGame } from '../../store/game'
 import { tempo } from '../../store/settings'
 import { Icon } from '../art/Icons'
@@ -17,18 +17,19 @@ import { cx } from '../cx'
 import { useFeed } from './feed'
 import { useInspect } from './inspect'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 // ── Shift token sheet ────────────────────────────────────────────────────────
 
 function whyNot(game: GameState, token: TokenId, canAct: boolean): string {
   const me = game.players[HUMAN]
-  if (!canAct || game.phase !== 'turn') return 'Tokens spielst du in deinem Zug, bevor du ziehst oder stehst.'
-  if (game.tokenPlayedThisTurn) return 'Du hast in diesem Zug schon ein Token gespielt.'
-  if (token === 'freeDraw' && me.embargoed) return 'Embargo: Du darfst in diesem Zug nicht ziehen.'
-  if ((token === 'refund' || token === 'extraRefund') && me.invested === 0) return 'Du hast noch nichts im Einsatz.'
-  if (TOKENS[token].target === 'standingOpponent') return 'Gerade steht kein Gegner, den du prüfen könntest.'
-  if (TOKENS[token].target === 'opponent') return 'Alle Gegner sind immun.'
-  return 'Dieses Token kannst du gerade nicht spielen.'
+  if (!canAct || game.phase !== 'turn') return tx`Tokens spielst du in deinem Zug, bevor du ziehst oder stehst.`
+  if (game.tokenPlayedThisTurn) return tx`Du hast in diesem Zug schon ein Token gespielt.`
+  if (token === 'freeDraw' && me.embargoed) return tx`Embargo: Du darfst in diesem Zug nicht ziehen.`
+  if ((token === 'refund' || token === 'extraRefund') && me.invested === 0) return tx`Du hast noch nichts im Einsatz.`
+  if (TOKENS[token].target === 'standingOpponent') return tx`Gerade steht kein Gegner, den du prüfen könntest.`
+  if (TOKENS[token].target === 'opponent') return tx`Alle Gegner sind immun.`
+  return tx`Dieses Token kannst du gerade nicht spielen.`
 }
 
 
@@ -68,7 +69,7 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
           <TokenIcon token={t} size={34} />
         </span>
         <div>
-          <p className={s.tokenKicker}>{mine ? 'Shift-Token' : 'Token eines Gegners'}</p>
+          <p className={s.tokenKicker}>{mine ? tx`Shift-Token` : tx`Token eines Gegners`}</p>
           <h2 className={common.sheetTitle}>{text.name}</h2>
         </div>
       </div>
@@ -76,7 +77,7 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
 
       {playable && targets.length > 0 && (
         <>
-          <p className={s.targetCaption}>Ziel wählen</p>
+          <p className={s.targetCaption}>{tx`Ziel wählen`}</p>
           <div className={s.targets}>
             {targets.map((id) => (
               <button key={id} className={s.targetBtn} onClick={() => play(id)}>
@@ -84,7 +85,7 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
                 <span>
                   <b>{game.players[id].name}</b>
                   <em className="num">
-                    {chipsText(game.players[id].chips)} · Einsatz {game.players[id].invested}
+                    {chipsText(game.players[id].chips)}{tx` · Einsatz `}{game.players[id].invested}
                   </em>
                 </span>
               </button>
@@ -97,11 +98,11 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
 
       <div className={common.sheetActions}>
         <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
-          {playable ? 'Abbrechen' : 'Schließen'}
+          {playable ? tx`Abbrechen` : tx`Schließen`}
         </button>
         {playable && targets.length === 0 && (
           <button className={cx(common.btn, common.btnPrimary)} onClick={() => play()}>
-            Spielen
+            {tx`Spielen`}
           </button>
         )}
       </div>
@@ -123,12 +124,12 @@ export function TokenBanner() {
   useFeed((event, id) => {
     if (event.type !== 'tokenPlayed') return
     const players = useGame.getState().game!.players
-    const name = (p: number) => (p === HUMAN ? 'Du' : players[p].name)
+    const name = (p: number) => (p === HUMAN ? tx`Du` : players[p].name)
     setBanner({
       id,
       token: event.token,
-      who: event.playerId === HUMAN ? 'Du spielst' : `${players[event.playerId].name} spielt`,
-      target: event.target !== undefined ? (event.target === HUMAN ? 'gegen dich' : `gegen ${name(event.target)}`) : null,
+      who: event.playerId === HUMAN ? tx`Du spielst` : tx`${players[event.playerId].name} spielt`,
+      target: event.target !== undefined ? (event.target === HUMAN ? tx`gegen dich` : tx`gegen ${name(event.target)}`) : null,
     })
     setTimeout(() => setBanner((b) => (b?.id === id ? null : b)), 1900 * tempo())
   })
@@ -237,9 +238,9 @@ export function DiceOverlay({ canAct }: { canAct: boolean }) {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
           >
-            <p className={s.tokenKicker}>{mine ? 'Du würfelst' : `${players[roll.playerId].name} würfelt`}</p>
+            <p className={s.tokenKicker}>{mine ? tx`Du würfelst` : tx`${players[roll.playerId].name} würfelt`}</p>
             <h2 className={cx(s.diceTitle, 'display')}>
-              {roll.purpose === 'prime' ? 'Prime Sabacc' : `Impostor · ${SUIT_NAME[roll.suit!]}`}
+              {roll.purpose === 'prime' ? tx`Prime Sabacc` : tx`Impostor · ${SUIT_NAME[roll.suit!]}`}
             </h2>
             <div className={s.dice}>
               {roll.dice.map((value, i) => (
@@ -249,7 +250,7 @@ export function DiceOverlay({ canAct }: { canAct: boolean }) {
                   disabled={!pickable}
                   onClick={() => choose(value)}
                   whileTap={pickable ? { scale: 0.92 } : undefined}
-                  aria-label={roll.rolling ? 'Würfel rollt' : `Wert ${value} wählen`}
+                  aria-label={roll.rolling ? tx`Würfel rollt` : tx`Wert ${value} wählen`}
                 >
                   <DieFace value={roll.rolling ? shuffle[i] : value} />
                 </motion.button>
@@ -259,12 +260,12 @@ export function DiceOverlay({ canAct }: { canAct: boolean }) {
               {roll.rolling
                 ? '…'
                 : roll.chosen !== null
-                  ? `Gewählt: ${roll.chosen}`
+                  ? tx`Gewählt: ${roll.chosen}`
                   : mine
                     ? roll.purpose === 'prime'
-                      ? 'Welcher Sabacc soll der beste sein?'
-                      : 'Welchen Wert bekommt dein Impostor?'
-                    : 'wählt einen Würfel …'}
+                      ? tx`Welcher Sabacc soll der beste sein?`
+                      : tx`Welchen Wert bekommt dein Impostor?`
+                    : tx`wählt einen Würfel …`}
             </p>
           </motion.div>
         </motion.div>
@@ -275,7 +276,7 @@ export function DiceOverlay({ canAct }: { canAct: boolean }) {
 
 // ── Showdown ─────────────────────────────────────────────────────────────────
 
-const SABACC_CALL = { pure: 'Pure Sabacc!', prime: 'Prime Sabacc!', sabacc: 'Sabacc!' } as const
+const SABACC_CALL = { pure: tx`Pure Sabacc!`, prime: tx`Prime Sabacc!`, sabacc: tx`Sabacc!` } as const
 
 /** The big words over the table while the hands are turned over one by one. */
 export function RevealCallout() {
@@ -285,9 +286,9 @@ export function RevealCallout() {
   let call: { key: string; kicker?: string; text: string; sabacc?: boolean } | null = null
   if (game.phase === 'showdown' && step !== null && game.result) {
     const order = revealOrder(game)
-    const name = (id: number) => (id === HUMAN ? 'Du' : game.players[id].name)
+    const name = (id: number) => (id === HUMAN ? tx`Du` : game.players[id].name)
     if (step < 0) {
-      call = { key: 'intro', text: 'Karten auf den Tisch' }
+      call = { key: 'intro', text: tx`Karten auf den Tisch` }
     } else if (step < order.length) {
       const r = game.result.ranking.find((x) => x.playerId === order[step])!
       if (r.score.category !== 'none') call = { key: `hand-${step}`, kicker: name(order[step]), text: SABACC_CALL[r.score.category], sabacc: true }
@@ -296,8 +297,8 @@ export function RevealCallout() {
       const mine = winners.includes(HUMAN)
       call = {
         key: 'winner',
-        kicker: winners.length > 1 ? 'Unentschieden' : 'Die Hand geht an',
-        text: winners.length > 1 ? winners.map(name).join(' & ') : mine ? 'Dich' : name(winners[0]),
+        kicker: winners.length > 1 ? tx`Unentschieden` : tx`Die Hand geht an`,
+        text: winners.length > 1 ? winners.map(name).join(' & ') : mine ? tx`Dich` : name(winners[0]),
         sabacc: mine,
       }
     }
@@ -330,7 +331,7 @@ export function Suspicion({ compact }: { compact?: boolean }) {
   if (compact && suspicion < 1) return null
   const level = suspicion >= 70 ? s.heatHigh : suspicion >= 40 ? s.heatMid : undefined
   return (
-    <span className={cx(s.heat, level)} title="Verdacht">
+    <span className={cx(s.heat, level)} title={tx`Verdacht`}>
       <Icon name="eye" size={14} />
       <i>
         <b style={{ width: `${Math.min(100, suspicion)}%` }} />
@@ -352,13 +353,12 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
 
   return (
     <Sheet open={open} onClose={onClose}>
-      <h2 className={common.sheetTitle}>Spähen</h2>
+      <h2 className={common.sheetTitle}>{tx`Spähen`}</h2>
       <p className={common.sheetText}>
-        Wirf einen Blick auf eine Karte eines Gegners – einmal pro Hand, in deinem Zug. Jeder Blick macht den Tisch misstrauischer. Bei vollem Verdacht wirst du erwischt, siehst nichts
-        und zahlst 2 Chips Strafe.
+        {tx`Wirf einen Blick auf eine Karte eines Gegners – einmal pro Hand, in deinem Zug. Jeder Blick macht den Tisch misstrauischer. Bei vollem Verdacht wirst du erwischt, siehst nichts und zahlst 2 Chips Strafe.`}
       </p>
       <div className={s.heatRow}>
-        <span>Verdacht</span>
+        <span>{tx`Verdacht`}</span>
         <Suspicion />
       </div>
       {ready ? (
@@ -375,17 +375,17 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
               <Portrait character={session.seats[p.id]} size={44} frame />
               <span>
                 <b>{p.name}</b>
-                <em>eine Karte ansehen</em>
+                <em>{tx`eine Karte ansehen`}</em>
               </span>
             </button>
           ))}
         </div>
       ) : (
-        <p className={s.tokenNote}>{used ? 'In dieser Hand hast du schon gespäht.' : 'Spähen kannst du nur in deinem Zug, bevor du ziehst oder stehst.'}</p>
+        <p className={s.tokenNote}>{used ? tx`In dieser Hand hast du schon gespäht.` : tx`Spähen kannst du nur in deinem Zug, bevor du ziehst oder stehst.`}</p>
       )}
       <div className={common.sheetActions}>
         <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
-          Schließen
+          {tx`Schließen`}
         </button>
       </div>
     </Sheet>
@@ -426,14 +426,14 @@ export function Announcer() {
   useEffect(() => {
     if (caught === seenCaught.current) return
     seenCaught.current = caught
-    show({ id: -caught, title: 'Erwischt!', sub: 'Strafe: 2 Chips', alarm: true }, 2200)
+    show({ id: -caught, title: tx`Erwischt!`, sub: tx`Strafe: 2 Chips`, alarm: true }, 2200)
   })
 
   useFeed((event, id) => {
-    if (event.type === 'handStart' && event.hand > 1) show({ id, title: `Hand ${event.hand}`, sub: 'Neue Karten' }, 1700)
+    if (event.type === 'handStart' && event.hand > 1) show({ id, title: tx`Hand ${event.hand}`, sub: tx`Neue Karten` }, 1700)
     if (event.type === 'roundStart' && event.round > 1) {
       sfx.round()
-      show({ id, title: event.round === useGame.getState().game?.rules.rounds ? 'Letzte Runde' : `Runde ${event.round}` }, 1500)
+      show({ id, title: event.round === useGame.getState().game?.rules.rounds ? tx`Letzte Runde` : tx`Runde ${event.round}` }, 1500)
     }
   })
 
@@ -448,7 +448,7 @@ export function Announcer() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          {!notice.grand && <span className={s.noticeKicker}>{notice.alarm ? 'Aufsicht' : 'Kessel Sabacc'}</span>}
+          {!notice.grand && <span className={s.noticeKicker}>{notice.alarm ? tx`Aufsicht` : tx`Kessel Sabacc`}</span>}
           <span className={cx(s.noticeTitle, 'display')}>{notice.title}</span>
           {notice.sub && <span className={s.noticeSub}>{notice.sub}</span>}
         </motion.div>
@@ -473,7 +473,7 @@ function ResultRow({ r, index }: { r: PlayerResult; index: number }) {
     >
       <Portrait character={session.seats[r.playerId]} size={40} frame />
       <div className={s.resultWho}>
-        <b>{player.isHuman ? 'Du' : player.name}</b>
+        <b>{player.isHuman ? tx`Du` : player.name}</b>
         <span className="num">{scoreLabel(r.score)}</span>
       </div>
       <span className={cx(s.resultValues, 'num')}>
@@ -488,7 +488,7 @@ function ResultRow({ r, index }: { r: PlayerResult; index: number }) {
       </span>
       <div className={cx(s.resultChips, 'num')}>
         <b className={r.winner ? s.floaterGood : s.floaterBad}>{r.winner ? (r.investedBefore > 0 ? `+${r.investedBefore}` : '±0') : `−${lost}`}</b>
-        <span>{r.eliminated ? 'pleite' : chipsText(r.chipsAfter)}</span>
+        <span>{r.eliminated ? tx`pleite` : chipsText(r.chipsAfter)}</span>
       </div>
     </motion.li>
   )
@@ -508,14 +508,14 @@ export function ResultSheet({ onLeave }: { onLeave(): void }) {
   const iWon = winners.some((r) => r.playerId === HUMAN)
   const tutorial = session.tutorial
   const title = tutorial
-    ? 'Übung geschafft'
+    ? tx`Übung geschafft`
     : outcome === 'won'
-    ? 'Der Tisch gehört dir!'
+    ? tx`Der Tisch gehört dir!`
     : outcome === 'lost'
-      ? 'Du bist pleite'
+      ? tx`Du bist pleite`
       : winners.length > 1
-        ? iWon ? 'Geteilter Sieg' : 'Unentschieden am Tisch'
-        : iWon ? 'Hand gewonnen' : `${game.players[winners[0].playerId].name} gewinnt die Hand`
+        ? iWon ? tx`Geteilter Sieg` : tx`Unentschieden am Tisch`
+        : iWon ? tx`Hand gewonnen` : tx`${game.players[winners[0].playerId].name} gewinnt die Hand`
 
   return (
     <Sheet open={open} bare>
@@ -529,11 +529,11 @@ export function ResultSheet({ onLeave }: { onLeave(): void }) {
       <div className={common.sheetActions}>
         {outcome || tutorial ? (
           <button className={cx(common.btn, common.btnPrimary)} onClick={onLeave}>
-            {tutorial ? 'Übung beenden' : 'Weiter'}
+            {tutorial ? tx`Übung beenden` : tx`Weiter`}
           </button>
         ) : (
           <button className={cx(common.btn, common.btnPrimary)} onClick={() => act({ type: 'nextHand' })}>
-            Nächste Hand
+            {tx`Nächste Hand`}
           </button>
         )}
       </div>

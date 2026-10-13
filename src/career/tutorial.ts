@@ -1,6 +1,7 @@
 import { CHARACTERS } from '../ai/personalities'
 import { createGame, SUITS } from '../engine'
 import type { Action, Card, GameState, Suit, TokenId } from '../engine'
+import { tx } from '../i18n'
 
 /**
  * The practice hand: one fixed deal against Pim, played along a script. Every
@@ -20,41 +21,41 @@ export const TUTORIAL_OPPONENT = CHARACTERS.pim
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     when: 'start',
-    text: 'Willkommen am Übungstisch. Du hältst immer zwei Karten: eine Sand-Karte und eine Blut-Karte. Deine zeigen 5 und 2 – Differenz 3. Das Ziel ist Differenz 0: ein Sabacc.',
+    text: tx`Willkommen am Übungstisch. Du hältst immer zwei Karten: eine Sand-Karte und eine Blut-Karte. Deine zeigen 5 und 2 – Differenz 3. Das Ziel ist Differenz 0: ein Sabacc.`,
   },
   {
     when: 'turn',
-    text: 'Zieh eine neue Sand-Karte: Tippe den gelben Sand-Stapel, den zweiten von links. Das kostet 1 Chip, der in deinen Einsatz wandert.',
+    text: tx`Zieh eine neue Sand-Karte: Tippe den gelben Sand-Stapel, den zweiten von links. Das kostet 1 Chip, der in deinen Einsatz wandert.`,
     expect: (a) => a.type === 'draw' && a.source === 'sandDeck',
   },
   {
     when: 'discard',
-    text: 'Eine 2! Mit deiner Blut-2 ist das ein Sabacc. Tippe die neue Karte, um sie zu behalten – die alte 5 wandert offen auf die Ablage.',
+    text: tx`Eine 2! Mit deiner Blut-2 ist das ein Sabacc. Tippe die neue Karte, um sie zu behalten – die alte 5 wandert offen auf die Ablage.`,
     expect: (a) => a.type === 'discard' && a.keep === 'new',
   },
   {
     when: 'turn',
-    text: 'Sabacc 2. Pim ist stehen geblieben – das kostet nichts. Eine Hand hat drei Runden, danach decken alle auf.',
+    text: tx`Sabacc 2. Pim ist stehen geblieben – das kostet nichts. Eine Hand hat drei Runden, danach decken alle auf.`,
   },
   {
     when: 'turn',
-    text: 'Shift-Tokens ändern die Regeln. Tippe unten dein Token mit den drei Pfeilen – „Allgemeiner Zoll“ – und spiele es: Pim muss einen Chip in seinen Einsatz legen.',
+    text: tx`Shift-Tokens ändern die Regeln. Tippe unten dein Token mit den drei Pfeilen – „Allgemeiner Zoll“ – und spiele es: Pim muss einen Chip in seinen Einsatz legen.`,
     expect: (a) => a.type === 'playToken' && a.token === 'generalTariff',
   },
   {
     when: 'turn',
-    text: 'Deine Hand ist stark. Bleib stehen.',
+    text: tx`Deine Hand ist stark. Bleib stehen.`,
     expect: (a) => a.type === 'stand',
   },
   {
     when: 'turn',
-    text: 'Letzte Runde. Pim hat gezogen und damit noch einen Chip riskiert. Bleib wieder stehen – gleich wird aufgedeckt.',
+    text: tx`Letzte Runde. Pim hat gezogen und damit noch einen Chip riskiert. Bleib wieder stehen – gleich wird aufgedeckt.`,
     expect: (a) => a.type === 'stand',
   },
 ]
 
 export const TUTORIAL_RESULT =
-  'Dein Sabacc gewinnt: Du bekommst deinen Einsatz zurück. Pim verliert seinen Einsatz und zahlt dazu die Differenz seiner Karten als Strafe. Wer keine Chips mehr hat, scheidet aus – wer zuletzt übrig bleibt, gewinnt die Partie.'
+  tx`Dein Sabacc gewinnt: Du bekommst deinen Einsatz zurück. Pim verliert seinen Einsatz und zahlt dazu die Differenz seiner Karten als Strafe. Wer keine Chips mehr hat, scheidet aus – wer zuletzt übrig bleibt, gewinnt die Partie.`
 
 /** What Pim does on each of his turns. */
 export function tutorialScript(): Action[] {
@@ -67,7 +68,7 @@ export function tutorialGame(): GameState {
     seed: 1,
     startingChips: 5,
     players: [
-      { name: 'Du', isHuman: true, tokens: TUTORIAL_TOKENS },
+      { name: tx`Du`, isHuman: true, tokens: TUTORIAL_TOKENS },
       { name: TUTORIAL_OPPONENT.name, isHuman: false, tokens: [] },
     ],
   })

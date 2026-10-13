@@ -1,3 +1,4 @@
+import { tx } from '../i18n'
 /**
  * The collection: things that change how the game looks and what the player
  * is called. Some are bought with credits, some have to be earned.
@@ -54,33 +55,33 @@ export const CHIPS: Record<string, [string, string, string]> = {
 }
 
 export const COSMETICS: Cosmetic[] = [
-  { id: 'back-standard', kind: 'back', name: 'Hausdeck' },
-  { id: 'back-desert', kind: 'back', name: 'Wüstenwind', price: 400 },
-  { id: 'back-obsidian', kind: 'back', name: 'Obsidian', price: 900 },
-  { id: 'back-holo', kind: 'back', name: 'Holo', price: 1500 },
-  { id: 'back-syndicate', kind: 'back', name: 'Syndikat', earn: { duel: 'salon' }, hint: 'Besiege K-7 im Duell' },
-  { id: 'back-crown', kind: 'back', name: 'Kessel-Krone', earn: { achievement: 'crown' }, hint: 'Gewinne die Kessel-Krone' },
+  { id: 'back-standard', kind: 'back', name: tx`Hausdeck` },
+  { id: 'back-desert', kind: 'back', name: tx`Wüstenwind`, price: 400 },
+  { id: 'back-obsidian', kind: 'back', name: tx`Obsidian`, price: 900 },
+  { id: 'back-holo', kind: 'back', name: tx`Holo`, price: 1500 },
+  { id: 'back-syndicate', kind: 'back', name: tx`Syndikat`, earn: { duel: 'salon' }, hint: tx`Besiege K-7 im Duell` },
+  { id: 'back-crown', kind: 'back', name: tx`Kessel-Krone`, earn: { achievement: 'crown' }, hint: tx`Gewinne die Kessel-Krone` },
 
-  { id: 'felt-house', kind: 'felt', name: 'Hausfilz' },
-  { id: 'felt-sage', kind: 'felt', name: 'Salbei', price: 250 },
-  { id: 'felt-midnight', kind: 'felt', name: 'Mitternacht', price: 500 },
-  { id: 'felt-purple', kind: 'felt', name: 'Purpur', price: 500 },
-  { id: 'felt-emerald', kind: 'felt', name: 'Smaragd', price: 1000 },
-  { id: 'felt-black', kind: 'felt', name: 'Schwarzmarkt', earn: { achievement: 'flawless' }, hint: 'Gewinne eine Partie ohne verlorene Hand' },
+  { id: 'felt-house', kind: 'felt', name: tx`Hausfilz` },
+  { id: 'felt-sage', kind: 'felt', name: tx`Salbei`, price: 250 },
+  { id: 'felt-midnight', kind: 'felt', name: tx`Mitternacht`, price: 500 },
+  { id: 'felt-purple', kind: 'felt', name: tx`Purpur`, price: 500 },
+  { id: 'felt-emerald', kind: 'felt', name: tx`Smaragd`, price: 1000 },
+  { id: 'felt-black', kind: 'felt', name: tx`Schwarzmarkt`, earn: { achievement: 'flawless' }, hint: tx`Gewinne eine Partie ohne verlorene Hand` },
 
-  { id: 'chip-standard', kind: 'chip', name: 'Hauschips' },
-  { id: 'chip-jade', kind: 'chip', name: 'Jade', price: 300 },
-  { id: 'chip-cobalt', kind: 'chip', name: 'Kobalt', price: 300 },
-  { id: 'chip-gold', kind: 'chip', name: 'Reingold', price: 2000 },
-  { id: 'chip-obsidian', kind: 'chip', name: 'Obsidian', earn: { rank: 6 }, hint: 'Erreiche Rang 6' },
-  { id: 'chip-crown', kind: 'chip', name: 'Blutgold', earn: { achievement: 'legend' }, hint: 'Gewinne die Kessel-Krone als Legende' },
+  { id: 'chip-standard', kind: 'chip', name: tx`Hauschips` },
+  { id: 'chip-jade', kind: 'chip', name: tx`Jade`, price: 300 },
+  { id: 'chip-cobalt', kind: 'chip', name: tx`Kobalt`, price: 300 },
+  { id: 'chip-gold', kind: 'chip', name: tx`Reingold`, price: 2000 },
+  { id: 'chip-obsidian', kind: 'chip', name: tx`Obsidian`, earn: { rank: 6 }, hint: tx`Erreiche Rang 6` },
+  { id: 'chip-crown', kind: 'chip', name: tx`Blutgold`, earn: { achievement: 'legend' }, hint: tx`Gewinne die Kessel-Krone als Legende` },
 
-  { id: 'title-rank', kind: 'title', name: 'Dein Rang' },
-  { id: 'title-rivals', kind: 'title', name: 'Rivalenschreck', earn: { achievement: 'duelAll' }, hint: 'Gewinne alle sechs Duelle' },
-  { id: 'title-champion', kind: 'title', name: 'Champion der Kessel-Krone', earn: { achievement: 'crown' }, hint: 'Gewinne die Kessel-Krone' },
-  { id: 'title-ghost', kind: 'title', name: 'Das Phantom', earn: { achievement: 'cleanPeek' }, hint: 'Gewinne mit drei unbemerkten Blicken' },
-  { id: 'title-tour', kind: 'title', name: 'Der Unaufhaltsame', earn: { achievement: 'tour5' }, hint: 'Schaffe fünf Tische am Stück auf Tour' },
-  { id: 'title-legend', kind: 'title', name: 'Legende', earn: { achievement: 'legend' }, hint: 'Gewinne die Kessel-Krone als Legende' },
+  { id: 'title-rank', kind: 'title', name: tx`Dein Rang` },
+  { id: 'title-rivals', kind: 'title', name: tx`Rivalenschreck`, earn: { achievement: 'duelAll' }, hint: tx`Gewinne alle sechs Duelle` },
+  { id: 'title-champion', kind: 'title', name: tx`Champion der Kessel-Krone`, earn: { achievement: 'crown' }, hint: tx`Gewinne die Kessel-Krone` },
+  { id: 'title-ghost', kind: 'title', name: tx`Das Phantom`, earn: { achievement: 'cleanPeek' }, hint: tx`Gewinne mit drei unbemerkten Blicken` },
+  { id: 'title-tour', kind: 'title', name: tx`Der Unaufhaltsame`, earn: { achievement: 'tour5' }, hint: tx`Schaffe fünf Tische am Stück auf Tour` },
+  { id: 'title-legend', kind: 'title', name: tx`Legende`, earn: { achievement: 'legend' }, hint: tx`Gewinne die Kessel-Krone als Legende` },
 ]
 
 export const DEFAULT_LOOK: Record<CosmeticKind, string> = {
@@ -90,7 +91,7 @@ export const DEFAULT_LOOK: Record<CosmeticKind, string> = {
   title: 'title-rank',
 }
 
-export const KIND_NAME: Record<CosmeticKind, string> = { back: 'Karten', felt: 'Filz', chip: 'Chips', title: 'Titel' }
+export const KIND_NAME: Record<CosmeticKind, string> = { back: tx`Karten`, felt: tx`Filz`, chip: tx`Chips`, title: tx`Titel` }
 
 export function cosmetic(id: string): Cosmetic | undefined {
   return COSMETICS.find((c) => c.id === id)

@@ -6,6 +6,7 @@ import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 export function AchievementsScreen() {
   const go = useNav((n) => n.go)
@@ -19,10 +20,10 @@ export function AchievementsScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={() => go('ship')} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={() => go('ship')} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Erfolge</h1>
+        <h1 className={common.screenTitle}>{tx`Erfolge`}</h1>
         <span className={cx(common.credits, s.plainCount)}>
           {done.length}/{ACHIEVEMENTS.length}
         </span>
@@ -45,11 +46,11 @@ export function AchievementsScreen() {
               </div>
               <div className={cx(s.featReward, 'num')}>
                 {a.credits > 0 && <b>{a.credits}</b>}
-                <span>+{a.rep} Ruf</span>
+                <span>+{a.rep}{tx` Ruf`}</span>
               </div>
             </motion.div>
           ))}
-          {done.length > 0 && <h2 className={s.fieldLabel}>Erreicht</h2>}
+          {done.length > 0 && <h2 className={s.fieldLabel}>{tx`Erreicht`}</h2>}
           {done.map((a) => (
             <div key={a.id} className={cx(s.feat, s.featDone)}>
               <span className={s.featIcon}>

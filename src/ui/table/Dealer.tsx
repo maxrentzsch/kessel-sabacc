@@ -9,14 +9,15 @@ import { cx } from '../cx'
 import { useFeed } from './feed'
 import { REVEAL_PHASES, SLOTS } from './Seat'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 /** What is different about this table, in the dealer's clipped way of speaking. */
 function houseRules(rules: Rules): string | null {
   const parts: string[] = []
-  if (rules.rounds !== STANDARD_RULES.rounds) parts.push(`${rules.rounds} Runden pro Hand`)
-  if (rules.sylops !== STANDARD_RULES.sylops) parts.push(`${rules.sylops} Sylops pro Deck`)
-  if (rules.impostors !== STANDARD_RULES.impostors) parts.push(rules.impostors === 0 ? 'keine Impostoren' : `${rules.impostors} Impostoren pro Deck`)
-  if (rules.penaltyBonus > 0) parts.push(`${rules.penaltyBonus} Chip Steuer pro verlorener Hand`)
+  if (rules.rounds !== STANDARD_RULES.rounds) parts.push(tx`${rules.rounds} Runden pro Hand`)
+  if (rules.sylops !== STANDARD_RULES.sylops) parts.push(tx`${rules.sylops} Sylops pro Deck`)
+  if (rules.impostors !== STANDARD_RULES.impostors) parts.push(rules.impostors === 0 ? tx`keine Impostoren` : tx`${rules.impostors} Impostoren pro Deck`)
+  if (rules.penaltyBonus > 0) parts.push(tx`${rules.penaltyBonus} Chip Steuer pro verlorener Hand`)
   return parts.length ? parts.join(', ') : null
 }
 
@@ -61,7 +62,7 @@ export function Dealer() {
     if (game.handNumber !== 1 || game.round !== 1) return
     move('deal', dealTime())
     const rules = houseRules(game.rules)
-    say(rules ? `Hausregel: ${rules}.` : 'Einsätze bitte.', 2800)
+    say(rules ? tx`Hausregel: ${rules}.` : tx`Einsätze bitte.`, 2800)
     // only when the droid takes its place
   }, [])
 
@@ -70,14 +71,14 @@ export function Dealer() {
     if (caught === seenCaught.current) return
     seenCaught.current = caught
     move('alarm', 2400)
-    say('Betrugsversuch registriert. Zwei Chips.')
+    say(tx`Betrugsversuch registriert. Zwei Chips.`)
   })
 
   // Crossing the line from curious to suspicious is worth a warning – once.
   const wary = suspicion >= 70
   const wasWary = useRef(wary)
   useEffect(() => {
-    if (wary && !wasWary.current && caught === seenCaught.current) say('Ich beobachte dich.', 500)
+    if (wary && !wasWary.current && caught === seenCaught.current) say(tx`Ich beobachte dich.`, 500)
     wasWary.current = wary
   })
 
@@ -88,20 +89,20 @@ export function Dealer() {
       case 'handStart':
         if (event.hand === 1) break
         move('deal', dealTime())
-        say('Neue Hand.', 300)
+        say(tx`Neue Hand.`, 300)
         break
       case 'roundStart':
-        if (event.round > 1 && event.round === current.rules.rounds) say('Letzte Runde.', 200)
+        if (event.round > 1 && event.round === current.rules.rounds) say(tx`Letzte Runde.`, 200)
         break
       case 'reshuffled':
         move('shuffle', 1100)
-        say('Stapel leer. Ich mische neu.')
+        say(tx`Stapel leer. Ich mische neu.`)
         break
       case 'showdown':
-        say('Karten auf den Tisch.')
+        say(tx`Karten auf den Tisch.`)
         break
       case 'eliminated':
-        say(event.playerId === HUMAN ? 'Du bist raus.' : `${current.players[event.playerId].name} ist raus.`, 900)
+        say(event.playerId === HUMAN ? tx`Du bist raus.` : tx`${current.players[event.playerId].name} ist raus.`, 900)
         break
     }
   })
@@ -115,7 +116,7 @@ export function Dealer() {
 
   const explain = () => {
     const rules = houseRules(game.rules)
-    say(`Runde ${Math.min(game.round, game.rules.rounds)} von ${game.rules.rounds}. ${rules ? `Hausregel: ${rules}.` : 'Standardregeln.'}`)
+    say(tx`Runde ${Math.min(game.round, game.rules.rounds)} von ${game.rules.rounds}. ${rules ? tx`Hausregel: ${rules}.` : tx`Standardregeln.`}`)
   }
 
   return (
@@ -134,7 +135,7 @@ export function Dealer() {
           </motion.p>
         )}
       </AnimatePresence>
-      <button className={s.dealerBody} onClick={explain} aria-label="Geber-Droide: Regeln dieses Tischs">
+      <button className={s.dealerBody} onClick={explain} aria-label={tx`Geber-Droide: Regeln dieses Tischs`}>
         <svg viewBox="0 0 60 78" aria-hidden>
           <ellipse className={s.dealerShadow} cx="30" cy="73" rx="15" ry="3.6" />
           <g className={s.dealerFloat}>

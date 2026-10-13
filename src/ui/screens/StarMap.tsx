@@ -4,6 +4,7 @@ import type { TableDef } from '../../career/tables'
 import { venueOf } from '../../career/venues'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 export type Standing = 'locked' | 'open' | 'won'
 
@@ -37,7 +38,7 @@ function Site({ table, standing, selected, onSelect }: { table: TableDef; standi
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
-      aria-label={`${table.name}, ${table.place}${standing === 'locked' ? ', gesperrt' : standing === 'won' ? ', gewonnen' : ''}`}
+      aria-label={`${table.name}, ${table.place}${standing === 'locked' ? tx`, gesperrt` : standing === 'won' ? tx`, gewonnen` : ''}`}
     >
       <defs>
         <radialGradient id={id} cx="0.35" cy="0.3" r="0.8">
@@ -108,7 +109,7 @@ export function StarMap({ tables, standing, selected, onSelect, ship }: Props) {
   const frontier = tables.reduce((far, table, i) => (standing(table) !== 'locked' ? i : far), 0)
 
   return (
-    <svg viewBox="0 0 360 290" className={s.starMap} role="group" aria-label="Sektorkarte">
+    <svg viewBox="0 0 360 290" className={s.starMap} role="group" aria-label={tx`Sektorkarte`}>
       <defs>
         <radialGradient id="map-nebula-a">
           <stop offset="0" stopColor="#76ece4" stopOpacity="0.16" />

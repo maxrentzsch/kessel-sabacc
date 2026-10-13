@@ -13,6 +13,7 @@ import { randomSeed } from '../engine'
 import type { TokenId } from '../engine'
 import type { Session } from './game'
 import { useToasts } from './toasts'
+import { tx } from '../i18n'
 
 /** Counters behind the profile page and the achievements. */
 export type Stats = Record<string, number>
@@ -151,7 +152,7 @@ export const useCareer = create<CareerState>()(
         })
         if (earned.length) {
           set({ owned: [...s.owned, ...earned.map((c) => c.id)] })
-          for (const c of earned) toast({ kind: 'item', title: c.name, text: 'Neu in deiner Sammlung' })
+          for (const c of earned) toast({ kind: 'item', title: c.name, text: tx`Neu in deiner Sammlung` })
         }
       }
 
@@ -277,7 +278,7 @@ export const useCareer = create<CareerState>()(
           set({ rep: s.rep + earned, gameRep: s.gameRep + earned })
           settle()
           const after = rankOf(get().rep)
-          if (after.level > before.level) useToasts.getState().push({ kind: 'rank', title: `Rang ${after.level}: ${after.title}`, text: 'Dein Ruf eilt dir voraus' })
+          if (after.level > before.level) useToasts.getState().push({ kind: 'rank', title: tx`Rang ${after.level}: ${after.title}`, text: tx`Dein Ruf eilt dir voraus` })
         },
 
         markStory(id) {

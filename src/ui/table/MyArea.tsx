@@ -7,7 +7,7 @@ import { DEFAULT_PROFILES } from '../../ai/personalities'
 import { chooseAction } from '../../ai/policy'
 import { canPlayToken, Rng, SUITS } from '../../engine'
 import type { Card, GameState, Player } from '../../engine'
-import { scoreLabel, SOURCE_NAME, SUIT_NAME, TOKEN_TEXT } from '../../i18n/de'
+import { scoreLabel, SOURCE_NAME, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { HUMAN, useGame } from '../../store/game'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
@@ -17,12 +17,13 @@ import { useReveal } from './feed'
 import { useInspect } from './inspect'
 import { ChipFloaters, resolvedValue, REVEAL_PHASES } from './Seat'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 function handLabel(game: GameState, me: Player): { text: string; sabacc: boolean } {
   const result = game.result?.ranking.find((r) => r.playerId === me.id)
   if (result) return { text: scoreLabel(result.score), sabacc: result.score.category !== 'none' }
   const possible = outcomes(me.hand!, game.modifiers, me.impostor)
-  if (possible.length > 1) return { text: 'Impostor · Würfel entscheiden', sabacc: false }
+  if (possible.length > 1) return { text: tx`Impostor · Würfel entscheiden`, sabacc: false }
   return { text: scoreLabel(possible[0].score), sabacc: possible[0].score.category !== 'none' }
 }
 
@@ -37,20 +38,20 @@ function advise(game: GameState): string {
   const name = (id: number) => game.players[id].name
   const move =
     action.type === 'draw'
-      ? `Zieh vom ${SOURCE_NAME[action.source]}.`
+      ? tx`Zieh vom ${SOURCE_NAME[action.source]}.`
       : action.type === 'stand'
-        ? 'Bleib stehen.'
+        ? tx`Bleib stehen.`
         : action.type === 'playToken'
-          ? `Spiel ${TOKEN_TEXT[action.token].name}${action.target !== undefined ? ` gegen ${name(action.target)}` : ''}.`
+          ? tx`Spiel ${TOKEN_TEXT[action.token].name}${action.target !== undefined ? tx` gegen ${name(action.target)}` : ''}.`
           : action.type === 'discard'
-            ? `Behalte die ${action.keep === 'new' ? 'neue' : 'alte'} Karte.`
+            ? tx`Behalte die ${action.keep === 'new' ? tx`neue` : tx`alte`} Karte.`
             : action.type === 'chooseImpostor' || action.type === 'choosePrime'
-              ? `Nimm die ${action.value}.`
+              ? tx`Nimm die ${action.value}.`
               : ''
   if (game.phase !== 'turn' || !me.hand) return move
   const rivals = game.players.filter((p) => !p.isHuman && !p.eliminated).length
   const chance = Math.round(winChance(me.hand, game.modifiers, rivals, me.impostor) * 100)
-  return `${move} Mit diesem Blatt gewinnst du etwa ${chance} von 100 Händen.`
+  return tx`${move} Mit diesem Blatt gewinnst du etwa ${chance} von 100 Händen.`
 }
 
 function ChipPile({ from, count, invested }: { from: number; count: number; invested?: boolean }) {
@@ -146,7 +147,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
           if (Math.abs(info.offset.x) > WAVE) act({ type: 'stand' })
         }}
       >
-        {wave && <span className={cx(s.waveTag, wave === 'far' && s.waveTagOn)}>{wave === 'far' ? 'Loslassen: Stehen' : 'Weiter wischen = Stehen'}</span>}
+        {wave && <span className={cx(s.waveTag, wave === 'far' && s.waveTagOn)}>{wave === 'far' ? tx`Loslassen: Stehen` : tx`Weiter wischen = Stehen`}</span>}
         {cards.map(({ card, isNew }, i) => {
           const pick = choosing && card.suit === pending.card.suit
           const value = reveal.shown ? resolvedValue(game, me, card.suit, reveal.result) : null
@@ -162,23 +163,23 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
               className={cx(s.myCard, pick && s.myCardPick, choosing && !pick && s.myCardDim)}
               onClick={pick ? () => act({ type: 'discard', keep: isNew ? 'new' : 'old' }) : undefined}
               onFling={pick ? () => act({ type: 'discard', keep: isNew ? 'old' : 'new' }) : undefined}
-              label={pick ? `${isNew ? 'Neue' : 'Alte'} ${SUIT_NAME[card.suit]}-Karte behalten` : undefined}
+              label={pick ? tx`${isNew ? tx`Neue` : tx`Alte`} ${SUIT_NAME[card.suit]}-Karte behalten` : undefined}
             >
-              {pick && <span className={cx(s.pickTag, isNew && s.pickTagNew)}>{isNew ? 'Neu' : 'Alt'}</span>}
+              {pick && <span className={cx(s.pickTag, isNew && s.pickTagNew)}>{isNew ? tx`Neu` : tx`Alt`}</span>}
               {value !== null && <span className={cx(s.cardBadge, 'num')}>{value}</span>}
             </PlayingCard>
           )
         })}
-        {!me.hand && <p className={s.seatGone}>Du bist ausgeschieden</p>}
+        {!me.hand && <p className={s.seatGone}>{tx`Du bist ausgeschieden`}</p>}
       </motion.div>
 
       {label && (
         <motion.p key={label.text} className={cx(s.myLabel, label.sabacc && s.scoreSabacc, 'num')} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
           {label.text}
-          {me.immune && <span className={cx(s.status, s.statusImmune)}>Immun</span>}
-          {me.embargoed && <span className={cx(s.status, s.statusBad)}>Embargo</span>}
+          {me.immune && <span className={cx(s.status, s.statusImmune)}>{tx`Immun`}</span>}
+          {me.embargoed && <span className={cx(s.status, s.statusBad)}>{tx`Embargo`}</span>}
           {!session.tutorial && (
-            <button className={s.tipBtn} disabled={!canAct || tipsLeft <= 0 || advice !== null} onClick={askTip} aria-label={`Tipp – noch ${Number.isFinite(tipsLeft) ? tipsLeft : 'beliebig viele'}`}>
+            <button className={s.tipBtn} disabled={!canAct || tipsLeft <= 0 || advice !== null} onClick={askTip} aria-label={tx`Tipp – noch ${Number.isFinite(tipsLeft) ? tipsLeft : tx`beliebig viele`}`}>
               <Icon name="bulb" size={15} />
               {Number.isFinite(tipsLeft) && <b className="num">{tipsLeft}</b>}
             </button>
@@ -189,13 +190,13 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
       <div className={s.myChips}>
         <div className={s.chipGroup}>
           <span className={s.chipCaption}>
-            Vorrat <b className="num">{me.chips}</b>
+            {tx`Vorrat `}<b className="num">{me.chips}</b>
           </span>
           <ChipPile from={0} count={me.chips} />
         </div>
         <div className={s.chipGroup}>
           <span className={s.chipCaption}>
-            Einsatz <b className="num">{me.invested}</b>
+            {tx`Einsatz `}<b className="num">{me.invested}</b>
           </span>
           <ChipPile from={me.chips} count={me.invested} invested />
         </div>
@@ -211,7 +212,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
                 key={`${token}-${i}`}
                 className={cx(s.tokenBtn, playable && s.tokenBtnReady)}
                 onClick={() => useInspect.getState().showToken(token, true)}
-                aria-label={`Token ${TOKEN_TEXT[token].name}`}
+                aria-label={tx`Token ${TOKEN_TEXT[token].name}`}
               >
                 <TokenIcon token={token} size="52%" />
               </button>
@@ -221,7 +222,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
             <span key={i} className={cx(s.tokenBtn, s.tokenBtnUsed)} aria-hidden />
           ))}
           {canPeek && (
-            <button className={cx(s.tokenBtn, s.peekBtn, canAct && game.phase === 'turn' && !peekUsed && s.peekBtnReady)} onClick={useInspect.getState().showPeek} aria-label="Spähen">
+            <button className={cx(s.tokenBtn, s.peekBtn, canAct && game.phase === 'turn' && !peekUsed && s.peekBtnReady)} onClick={useInspect.getState().showPeek} aria-label={tx`Spähen`}>
               <Icon name="eye" size={22} />
             </button>
           )}
@@ -233,7 +234,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
           onClick={() => act({ type: 'stand' })}
           aria-keyshortcuts="S"
         >
-          Stehen
+          {tx`Stehen`}
         </button>
       </div>
     </section>

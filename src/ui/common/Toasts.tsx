@@ -4,8 +4,9 @@ import { useToasts } from '../../store/toasts'
 import { Icon } from '../art/Icons'
 import { cx } from '../cx'
 import s from './common.module.css'
+import { tx } from '../../i18n'
 
-const KICKER = { achievement: 'Erfolg', rank: 'Neuer Rang', item: 'Sammlung' } as const
+const KICKER = { achievement: tx`Erfolg`, rank: tx`Neuer Rang`, item: tx`Sammlung` } as const
 
 /** Shows queued notices one after the other at the top of the screen. */
 export function Toasts() {

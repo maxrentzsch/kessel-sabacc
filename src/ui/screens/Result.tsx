@@ -4,7 +4,7 @@ import { CHARACTERS } from '../../ai/personalities'
 import { achievement } from '../../career/achievements'
 import { TABLES } from '../../career/tables'
 import { tourPot } from '../../career/tour'
-import { TOKEN_TEXT } from '../../i18n/de'
+import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
 import { useNav } from '../../store/nav'
@@ -15,6 +15,7 @@ import common from '../common/common.module.css'
 import { RankBar } from '../common/Rank'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 function CountUp({ to }: { to: number }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -75,7 +76,7 @@ export function ResultScreen() {
     <div className={cx(common.screen, s.result, won ? s.resultWon : s.resultLost)}>
       <div className={s.resultBody}>
         <motion.p className={s.resultKicker} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-          {session.title} · {game?.handNumber ?? 0} Hände
+          {session.title} · {game?.handNumber ?? 0}{tx` Hände`}
         </motion.p>
         <motion.h1
           className={cx(s.resultTitle, 'display')}
@@ -83,44 +84,44 @@ export function ResultScreen() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.15 }}
         >
-          {champion ? 'Kessel-Krone!' : won ? (duel ? 'Duell gewonnen' : tour ? 'Weiter geht’s' : 'Sieg') : tour ? 'Tour vorbei' : summary.refund > 0 ? 'Zweiter Platz' : 'Pleite'}
+          {champion ? tx`Kessel-Krone!` : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
         </motion.h1>
         <motion.p className={s.resultText} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           {champion
-            ? 'Madame Oshi legt wortlos ihre Karten ab. Die „Sandläufer“ gehört wieder dir – und die ganze Galaxis weiß es.'
+            ? tx`Madame Oshi legt wortlos ihre Karten ab. Die „Sandläufer“ gehört wieder dir – und die ganze Galaxis weiß es.`
             : tour
               ? won
-                ? `Halt ${tourState?.wins ?? 0} geschafft. Im Topf liegen jetzt ${tourPot(tourState?.wins ?? 0)} Credits – aussteigen oder weiterziehen?`
-                : 'Der Topf ist weg. Die nächste Tour beginnt wieder bei null.'
+                ? tx`Halt ${tourState?.wins ?? 0} geschafft. Im Topf liegen jetzt ${tourPot(tourState?.wins ?? 0)} Credits – aussteigen oder weiterziehen?`
+                : tx`Der Topf ist weg. Die nächste Tour beginnt wieder bei null.`
               : daily
                 ? won
-                  ? `Tageshand gewonnen – am ${streak}. Tag in Folge dabei. Morgen wartet die nächste.`
-                  : 'Die Tageshand ging verloren. Deine Serie läuft weiter, wenn du morgen wieder am Tisch sitzt.'
+                  ? tx`Tageshand gewonnen – am ${streak}. Tag in Folge dabei. Morgen wartet die nächste.`
+                  : tx`Die Tageshand ging verloren. Deine Serie läuft weiter, wenn du morgen wieder am Tisch sitzt.`
                 : won
-              ? 'Du bist als Letzter mit Chips übrig. Die anderen starren in leere Hände.'
+              ? tx`Du bist als Letzter mit Chips übrig. Die anderen starren in leere Hände.`
               : summary.refund > 0
-                ? 'Nur einer hat länger durchgehalten als du. Dafür gibt das Haus dein Buy-in zurück.'
+                ? tx`Nur einer hat länger durchgehalten als du. Dafür gibt das Haus dein Buy-in zurück.`
               : career
-                ? 'Deine Chips sind weg, dein Buy-in auch. Der Tisch wartet auf deine Revanche.'
-                : 'Deine Chips sind weg. Neue Runde, neues Glück.'}
+                ? tx`Deine Chips sind weg, dein Buy-in auch. Der Tisch wartet auf deine Revanche.`
+                : tx`Deine Chips sind weg. Neue Runde, neues Glück.`}
         </motion.p>
 
         {won && summary.payout > 0 && (
           <motion.div className={s.payout} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
             <CountUp to={summary.payout} />
-            <small>Credits</small>
+            <small>{tx`Credits`}</small>
           </motion.div>
         )}
         {summary.refund > 0 && (
           <motion.div className={s.payout} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
             <CountUp to={summary.refund} />
-            <small>Credits zurück</small>
+            <small>{tx`Credits zurück`}</small>
           </motion.div>
         )}
 
         <motion.div className={s.earned} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
           <p className={s.earnedRep}>
-            <b className="num">+{gameRep}</b> Ruf
+            <b className="num">+{gameRep}</b>{tx` Ruf`}
           </p>
           <RankBar />
           {recent.map((id) => (
@@ -136,7 +137,7 @@ export function ResultScreen() {
 
         {summary.newTokens.length > 0 && (
           <div className={s.unlocks}>
-            <p className={s.unlocksTitle}>Neue Shift-Tokens</p>
+            <p className={s.unlocksTitle}>{tx`Neue Shift-Tokens`}</p>
             {summary.newTokens.map((token, i) => (
               <motion.div
                 key={token}
@@ -162,14 +163,14 @@ export function ResultScreen() {
             <Portrait character={rival} size={60} mood={summary.firstDuelWin ? 'angry' : 'worried'} alive frame />
             <p>
               <b>{rival.name}</b>
-              {summary.firstDuelWin ? '„Das war das letzte Mal. Wirklich.“' : `„${table.outro}“`}
+              {summary.firstDuelWin ? tx`„Das war das letzte Mal. Wirklich.“` : tx`„${table.outro}“`}
             </p>
           </motion.div>
         )}
 
         {won && summary.firstWin && nextTable && (
           <motion.p className={s.resultNext} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
-            Neuer Tisch freigeschaltet: <b>{nextTable.name}</b>
+            {tx`Neuer Tisch freigeschaltet: `}<b>{nextTable.name}</b>
           </motion.p>
         )}
       </div>
@@ -178,15 +179,15 @@ export function ResultScreen() {
         {/* After a loss the rematch is the obvious next step. */}
         {tour || daily ? (
           <button className={cx(common.btn, common.btnPrimary, common.btnBlock)} onClick={() => leave(tour ? 'tour' : 'daily')}>
-            {tour ? 'Zur Tour' : 'Weiter'}
+            {tour ? tx`Zur Tour` : tx`Weiter`}
           </button>
         ) : (
           <>
             <button className={cx(common.btn, !won && canRetry && common.btnPrimary, common.btnBlock)} disabled={!canRetry} onClick={() => leave('loadout')} style={{ order: won ? 1 : 0 }}>
-              {won ? 'Nochmal spielen' : 'Revanche'}
+              {won ? tx`Nochmal spielen` : tx`Revanche`}
             </button>
             <button className={cx(common.btn, (won || !canRetry) && common.btnPrimary, common.btnBlock)} onClick={() => leave(career ? 'career' : 'home')}>
-              {career ? 'Zur Karriere' : 'Hauptmenü'}
+              {career ? tx`Zur Karriere` : tx`Hauptmenü`}
             </button>
           </>
         )}

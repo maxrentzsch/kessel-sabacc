@@ -6,7 +6,7 @@ import { TUTORIAL_STEPS } from '../../career/tutorial'
 import { venueOf } from '../../career/venues'
 import { canDraw, canDrawFrom, drawCost } from '../../engine'
 import type { DrawSource, GameState, TokenId } from '../../engine'
-import { TOKEN_TEXT } from '../../i18n/de'
+import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
 import { HUMAN, useGame } from '../../store/game'
 import { useNav } from '../../store/nav'
@@ -28,6 +28,7 @@ import { pruneCardMemory } from './PlayingCard'
 import { Seat } from './Seat'
 import { Hub, Surface } from './Surface'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 const HUMAN_PHASES: GameState['phase'][] = ['turn', 'discard', 'primeChoice', 'impostor']
 const SHORTCUTS: Record<string, DrawSource> = { '1': 'sandDiscard', '2': 'sandDeck', '3': 'bloodDeck', '4': 'bloodDiscard' }
@@ -35,10 +36,10 @@ const SHORTCUTS: Record<string, DrawSource> = { '1': 'sandDiscard', '2': 'sandDe
 function Modifiers({ game }: { game: GameState }) {
   const m = game.modifiers
   const items: { token: TokenId; text: string }[] = []
-  if (m.primeValue !== null) items.push({ token: 'primeSabacc', text: `Prime Sabacc: ${m.primeValue}` })
-  if (m.cookTheBooks) items.push({ token: 'cookTheBooks', text: 'Rang umgekehrt' })
-  if (m.sylopZero) items.push({ token: 'markdown', text: 'Sylop = 0' })
-  if (m.impostorSix) items.push({ token: 'majorFraud', text: 'Impostor = 6' })
+  if (m.primeValue !== null) items.push({ token: 'primeSabacc', text: tx`Prime Sabacc: ${m.primeValue}` })
+  if (m.cookTheBooks) items.push({ token: 'cookTheBooks', text: tx`Rang umgekehrt` })
+  if (m.sylopZero) items.push({ token: 'markdown', text: tx`Sylop = 0` })
+  if (m.impostorSix) items.push({ token: 'majorFraud', text: tx`Impostor = 6` })
   if (items.length === 0) return null
   return (
     <div className={s.mods}>
@@ -62,24 +63,24 @@ function prompt(game: GameState): { line: string; hint: string | null } {
       const hint = !first
         ? null
         : game.round === 1
-          ? 'Ziel: zwei gleiche Werte – ein Sabacc, je niedriger desto besser. Wer verliert, zahlt seinen Einsatz plus die Differenz seiner Karten.'
+          ? tx`Ziel: zwei gleiche Werte – ein Sabacc, je niedriger desto besser. Wer verliert, zahlt seinen Einsatz plus die Differenz seiner Karten.`
           : game.round === 2 && me.tokens.length > 0 && !game.tokenPlayedThisTurn
-            ? 'Unten links liegen deine Shift-Tokens. Antippen zeigt, was sie tun – eins pro Zug, jedes nur einmal pro Partie.'
+            ? tx`Unten links liegen deine Shift-Tokens. Antippen zeigt, was sie tun – eins pro Zug, jedes nur einmal pro Partie.`
             : null
-      if (me.embargoed) return { line: 'Embargo: du musst stehen', hint: 'Ein Token darfst du vorher trotzdem spielen.' }
-      if (!canDraw(game, me)) return { line: 'Kein Chip: du musst stehen', hint: 'Mit Gratiszug oder Rückerstattung könntest du trotzdem ziehen.' }
-      const cost = drawCost(me) === 0 ? 'gratis' : '1 Chip'
-      return { line: `Karte ziehen (${cost}) oder stehen`, hint }
+      if (me.embargoed) return { line: tx`Embargo: du musst stehen`, hint: tx`Ein Token darfst du vorher trotzdem spielen.` }
+      if (!canDraw(game, me)) return { line: tx`Kein Chip: du musst stehen`, hint: tx`Mit Gratiszug oder Rückerstattung könntest du trotzdem ziehen.` }
+      const cost = drawCost(me) === 0 ? tx`gratis` : tx`1 Chip`
+      return { line: tx`Karte ziehen (${cost}) oder stehen`, hint }
     }
     case 'discard':
       return {
-        line: 'Welche Karte behältst du?',
-        hint: game.handNumber === 1 ? 'Du hältst immer genau eine Sand- und eine Blut-Karte. Die andere landet offen auf der Ablage.' : null,
+        line: tx`Welche Karte behältst du?`,
+        hint: game.handNumber === 1 ? tx`Du hältst immer genau eine Sand- und eine Blut-Karte. Die andere landet offen auf der Ablage.` : null,
       }
     case 'impostor':
-      return { line: 'Wähle einen Würfel', hint: null }
+      return { line: tx`Wähle einen Würfel`, hint: null }
     case 'primeChoice':
-      return { line: 'Wähle den Prime-Wert', hint: null }
+      return { line: tx`Wähle den Prime-Wert`, hint: null }
     default:
       return { line: '', hint: null }
   }
@@ -146,7 +147,7 @@ export function TableScreen() {
   const showdown = game.phase === 'showdown'
   // In the practice hand the coach does the talking.
   const mine = canAct && !session.tutorial ? prompt(game) : null
-  const waiting = thinking !== null ? `${game.players[thinking].name} überlegt …` : line
+  const waiting = thinking !== null ? tx`${game.players[thinking].name} überlegt …` : line
 
   const leave = () => {
     if (outcome) go('result')
@@ -165,7 +166,7 @@ export function TableScreen() {
       <p>{step.text}</p>
       {!step.expect && (
         <button className={cx(common.btn, common.btnPrimary)} onClick={tutorialNext}>
-          Weiter
+          {tx`Weiter`}
         </button>
       )}
     </div>
@@ -176,16 +177,16 @@ export function TableScreen() {
     <LayoutGroup>
       <div className={cx(s.table, showdown && s.revealing)} style={colors}>
         <header className={s.top}>
-          <button className={common.iconBtn} onClick={leave} aria-label="Tisch verlassen">
+          <button className={common.iconBtn} onClick={leave} aria-label={tx`Tisch verlassen`}>
             <Icon name="close" />
           </button>
           <div className={s.topTitle}>
             <b>{session.title}</b>
-            <span>Hand {game.handNumber}</span>
+            <span>{tx`Hand `}{game.handNumber}</span>
           </div>
-          <div className={s.rounds} aria-label={`Runde ${game.round} von ${game.rules.rounds}`}>
+          <div className={s.rounds} aria-label={tx`Runde ${game.round} von ${game.rules.rounds}`}>
             <Suspicion compact />
-            <span className={s.roundLabel}>Runde</span>
+            <span className={s.roundLabel}>{tx`Runde`}</span>
             {Array.from({ length: game.rules.rounds }, (_, i) => i + 1).map((r) => (
               <i key={r} className={cx(s.roundPip, r < game.round && s.roundDone, r === game.round && s.roundNow)} />
             ))}
@@ -239,21 +240,21 @@ export function TableScreen() {
         <PeekSheet canAct={canAct} />
 
         <Sheet open={quitting} onClose={() => setQuitting(false)} dialog>
-          <h2 className={common.sheetTitle}>Tisch verlassen?</h2>
+          <h2 className={common.sheetTitle}>{tx`Tisch verlassen?`}</h2>
           <p className={common.sheetText}>
             {session.tutorial
-              ? 'Die Übungshand wird abgebrochen. Du kannst sie jederzeit neu starten.'
+              ? tx`Die Übungshand wird abgebrochen. Du kannst sie jederzeit neu starten.`
               : session.kind === 'tour'
-                ? 'Die Partie zählt als verloren – damit ist die Tour vorbei und der Topf weg.'
+                ? tx`Die Partie zählt als verloren – damit ist die Tour vorbei und der Topf weg.`
                 : session.kind === 'daily'
-                  ? 'Die Tageshand zählt dann als verloren. Einen zweiten Versuch gibt es heute nicht.'
+                  ? tx`Die Tageshand zählt dann als verloren. Einen zweiten Versuch gibt es heute nicht.`
                   : session.mode === 'career'
-                    ? 'Die Partie zählt als verloren und dein Buy-in bleibt am Tisch.'
-                : 'Die laufende Partie wird abgebrochen.'}
+                    ? tx`Die Partie zählt als verloren und dein Buy-in bleibt am Tisch.`
+                : tx`Die laufende Partie wird abgebrochen.`}
           </p>
           <div className={common.sheetActions}>
             <button className={cx(common.btn, common.btnGhost)} onClick={() => setQuitting(false)}>
-              Bleiben
+              {tx`Bleiben`}
             </button>
             <button
               className={cx(common.btn, common.btnDanger)}
@@ -263,7 +264,7 @@ export function TableScreen() {
                 go(session.kind === 'tour' ? 'tour' : session.kind === 'daily' ? 'daily' : session.mode === 'career' ? 'career' : 'home')
               }}
             >
-              Verlassen
+              {tx`Verlassen`}
             </button>
           </div>
         </Sheet>

@@ -9,11 +9,12 @@ import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 const DIFFICULTIES: { id: Difficulty; name: string; text: string }[] = [
-  { id: 'easy', name: 'Leicht', text: 'Zieht nach Gefühl und verschenkt Tokens.' },
-  { id: 'medium', name: 'Mittel', text: 'Rechnet mit, macht aber Fehler.' },
-  { id: 'hard', name: 'Schwer', text: 'Zählt Karten und setzt Tokens gezielt.' },
+  { id: 'easy', name: tx`Leicht`, text: tx`Zieht nach Gefühl und verschenkt Tokens.` },
+  { id: 'medium', name: tx`Mittel`, text: tx`Rechnet mit, macht aber Fehler.` },
+  { id: 'hard', name: tx`Schwer`, text: tx`Zählt Karten und setzt Tokens gezielt.` },
 ]
 
 /** Random opponents of the wanted strength, topped up with the next tier if needed. */
@@ -49,7 +50,7 @@ export function FreePlayScreen() {
       session: {
         mode: 'free',
         table: null,
-        title: 'Freies Spiel',
+        title: tx`Freies Spiel`,
         venue: randomVenueId(),
         seats: [null, ...pickOpponents(count, difficulty)],
         startingChips: chips,
@@ -59,29 +60,29 @@ export function FreePlayScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={() => go('home')} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={() => go('home')} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Freies Spiel</h1>
+        <h1 className={common.screenTitle}>{tx`Freies Spiel`}</h1>
       </header>
       <div className={common.screenBody}>
         <div className={cx(common.column, s.form)}>
           <section className={s.field}>
-            <h2 className={s.fieldLabel}>Gegner</h2>
+            <h2 className={s.fieldLabel}>{tx`Gegner`}</h2>
             <Segments<number> value={count} onChange={setCount} options={[1, 2, 3].map((n) => ({ id: n, name: String(n) }))} />
           </section>
           <section className={s.field}>
-            <h2 className={s.fieldLabel}>Schwierigkeit</h2>
+            <h2 className={s.fieldLabel}>{tx`Schwierigkeit`}</h2>
             <Segments<Difficulty> value={difficulty} onChange={setDifficulty} options={DIFFICULTIES} />
             <p className={s.fieldNote}>{DIFFICULTIES.find((d) => d.id === difficulty)!.text}</p>
           </section>
           <section className={s.field}>
-            <h2 className={s.fieldLabel}>Chips pro Spieler</h2>
+            <h2 className={s.fieldLabel}>{tx`Chips pro Spieler`}</h2>
             <Segments<number> value={chips} onChange={setChips} options={[4, 5, 6, 7, 8].map((n) => ({ id: n, name: String(n) }))} />
-            <p className={s.fieldNote}>Weniger Chips, kürzere Partie. Alle 16 Shift-Tokens stehen zur Wahl.</p>
+            <p className={s.fieldNote}>{tx`Weniger Chips, kürzere Partie. Alle 16 Shift-Tokens stehen zur Wahl.`}</p>
           </section>
           <button className={cx(common.btn, common.btnPrimary, common.btnBlock)} onClick={start}>
-            Tokens wählen
+            {tx`Tokens wählen`}
           </button>
         </div>
       </div>

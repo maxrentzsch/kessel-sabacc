@@ -12,6 +12,7 @@ import type { Action, GameEvent, GameState, Rules, TokenId } from '../engine'
 import { useCareer } from './career'
 import type { GameSummary, GameTally } from './career'
 import { tempo } from './settings'
+import { tx } from '../i18n'
 
 export const HUMAN = 0
 
@@ -440,7 +441,7 @@ export const useGame = create<GameStore>((set, get) => {
         players: session.seats.map((c) =>
           c
             ? { name: c.name, isHuman: false, tokens: c.tokens }
-            : { name: 'Du', isHuman: true, tokens: humanTokens, chips: session.playerChips },
+            : { name: tx`Du`, isHuman: true, tokens: humanTokens, chips: session.playerChips },
         ),
       })
       set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(session) })
@@ -451,7 +452,7 @@ export const useGame = create<GameStore>((set, get) => {
     startTutorial() {
       const gen = ++generation
       script = tutorialScript()
-      const session: Session = { mode: 'free', table: null, title: 'Übungstisch', venue: 'anchor', tutorial: true, seats: [null, TUTORIAL_OPPONENT], startingChips: 5 }
+      const session: Session = { mode: 'free', table: null, title: tx`Übungstisch`, venue: 'anchor', tutorial: true, seats: [null, TUTORIAL_OPPONENT], startingChips: 5 }
       const events: GameEvent[] = [
         { type: 'handStart', hand: 1, dealer: HUMAN },
         { type: 'roundStart', round: 1 },

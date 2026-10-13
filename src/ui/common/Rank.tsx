@@ -2,6 +2,7 @@ import { cosmetic } from '../../career/cosmetics'
 import { rankProgress } from '../../career/reputation'
 import { useCareer } from '../../store/career'
 import s from './common.module.css'
+import { tx } from '../../i18n'
 
 /** What the player is called: their rank, unless they wear a title from the collection. */
 export function usePlayerTitle(): string {
@@ -23,7 +24,7 @@ export function RankBar() {
         <i>
           <span style={{ width: `${Math.round(share * 100)}%` }} />
         </i>
-        <em className="num">{next ? `${rep} / ${next.at} Ruf` : `${rep} Ruf · höchster Rang`}</em>
+        <em className="num">{next ? tx`${rep} / ${next.at} Ruf` : tx`${rep} Ruf · höchster Rang`}</em>
       </div>
     </div>
   )

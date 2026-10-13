@@ -4,6 +4,7 @@ import type { Difficulty } from '../ai/policy'
 import { Rng, TOKEN_IDS } from '../engine'
 import type { Rules, TokenId } from '../engine'
 import { VENUES } from './venues'
+import { tx } from '../i18n'
 
 /** A table that is made up on the spot: for the tour and for the daily hand. */
 export interface Stop {
@@ -17,12 +18,12 @@ export interface Stop {
 }
 
 const MUTATORS: { rules: Partial<Rules>; text: string }[] = [
-  { rules: { rounds: 2 }, text: 'Kurze Hände: nur zwei Runden.' },
-  { rules: { rounds: 4 }, text: 'Lange Hände: vier Runden.' },
-  { rules: { sylops: 3 }, text: 'Drei Sylops pro Deck.' },
-  { rules: { impostors: 6 }, text: 'Sechs Impostoren pro Deck.' },
-  { rules: { penaltyBonus: 1 }, text: 'Steuer: jede verlorene Hand kostet 1 Chip extra.' },
-  { rules: { impostors: 0 }, text: 'Keine Impostoren.' },
+  { rules: { rounds: 2 }, text: tx`Kurze Hände: nur zwei Runden.` },
+  { rules: { rounds: 4 }, text: tx`Lange Hände: vier Runden.` },
+  { rules: { sylops: 3 }, text: tx`Drei Sylops pro Deck.` },
+  { rules: { impostors: 6 }, text: tx`Sechs Impostoren pro Deck.` },
+  { rules: { penaltyBonus: 1 }, text: tx`Steuer: jede verlorene Hand kostet 1 Chip extra.` },
+  { rules: { impostors: 0 }, text: tx`Keine Impostoren.` },
 ]
 
 function buildStop(rng: Rng, title: string, seats: Difficulty[], mutators: number, chips: number): Stop {
@@ -83,7 +84,7 @@ const TOUR_SEATS: Difficulty[][] = [
 export function tourStop(seed: number, stage: number): Stop {
   const rng = new Rng(seed + stage * 7919)
   const seats = TOUR_SEATS[Math.min(stage, TOUR_SEATS.length) - 1]
-  return buildStop(rng, `Halt ${stage}`, seats, stage >= 4 ? 2 : 1, 6)
+  return buildStop(rng, tx`Halt ${stage}`, seats, stage >= 4 ? 2 : 1, 6)
 }
 
 // ── The daily hand: one table a day, the same for everybody ──────────────────
@@ -116,7 +117,7 @@ export interface Daily extends Stop {
 export function dailyStop(date: string): Daily {
   const seed = seedOf(date)
   const rng = new Rng(seed)
-  const stop = buildStop(rng, 'Tageshand', ['medium', 'easy'], 1, 5)
+  const stop = buildStop(rng, tx`Tageshand`, ['medium', 'easy'], 1, 5)
   return { ...stop, seed, tokens: rng.shuffle([...TOKEN_IDS]).slice(0, 3) }
 }
 

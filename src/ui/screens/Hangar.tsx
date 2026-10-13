@@ -9,6 +9,7 @@ import common from '../common/common.module.css'
 import { RankBar } from '../common/Rank'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 const HULLS = [
   { body: '#6b4a34', shade: '#4a3222', stripe: 'none' },
@@ -69,7 +70,7 @@ function Ship({ levels, free }: { levels: Record<string, number>; free: boolean 
         )}
         {(levels.hull ?? 0) >= 3 && (
           <text x="208" y="138" textAnchor="middle" fontSize="9" fontWeight="800" letterSpacing="3" fill="#1c1612" fontFamily="var(--font-display)">
-            SANDLÄUFER
+            {tx`SANDLÄUFER`}
           </text>
         )}
 
@@ -113,10 +114,10 @@ export function HangarScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={() => go('home')} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={() => go('home')} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Sandläufer</h1>
+        <h1 className={common.screenTitle}>{tx`Sandläufer`}</h1>
         <span className={common.credits}>{career.credits}</span>
       </header>
       <div className={common.screenBody}>
@@ -126,26 +127,26 @@ export function HangarScreen() {
           <div className={s.dock}>
             <Ship levels={career.ship} free={free} />
             <p className={cx(s.dockNote, free && s.dockFree)}>
-              {free ? 'Sie gehört wieder dir. Startklar, wann immer du willst.' : 'Gepfändet in Madame Oshis Hangar. Schrauben darfst du trotzdem – fliegen erst nach der Kessel-Krone.'}
+              {free ? tx`Sie gehört wieder dir. Startklar, wann immer du willst.` : tx`Gepfändet in Madame Oshis Hangar. Schrauben darfst du trotzdem – fliegen erst nach der Kessel-Krone.`}
             </p>
           </div>
 
           <div className={s.hubLinks}>
             <button className={common.btn} onClick={() => go('collection')}>
-              Sammlung
+              {tx`Sammlung`}
               <small className="num">
                 {owned}/{COSMETICS.length}
               </small>
             </button>
             <button className={common.btn} onClick={() => go('achievements')}>
-              Erfolge
+              {tx`Erfolge`}
               <small className="num">
                 {done}/{ACHIEVEMENTS.length}
               </small>
             </button>
           </div>
 
-          <h2 className={s.fieldLabel}>Ausbau</h2>
+          <h2 className={s.fieldLabel}>{tx`Ausbau`}</h2>
           <div className={s.modules}>
             {SHIP_MODULES.map((module, i) => {
               const level = career.ship[module.id] ?? 0
@@ -160,7 +161,7 @@ export function HangarScreen() {
                       ))}
                     </span>
                     <em>{level > 0 && module.perks ? module.perks[level - 1] : module.text}</em>
-                    {price !== undefined && module.perks && <em className={s.moduleNext}>Nächste Stufe: {module.perks[level]}</em>}
+                    {price !== undefined && module.perks && <em className={s.moduleNext}>{tx`Nächste Stufe: `}{module.perks[level]}</em>}
                   </div>
                   {price !== undefined ? (
                     <button className={cx(common.btn, career.credits >= price && common.btnPrimary)} disabled={career.credits < price} onClick={() => career.upgrade(module.id)}>

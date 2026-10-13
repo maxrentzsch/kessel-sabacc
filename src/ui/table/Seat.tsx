@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import type { Character } from '../../ai/personalities'
 import { SUITS } from '../../engine'
 import type { GameState, Player, PlayerResult, Suit } from '../../engine'
-import { scoreLabel, TOKEN_TEXT } from '../../i18n/de'
+import { scoreLabel, TOKEN_TEXT } from '../../i18n/texts'
 import { useGame } from '../../store/game'
 import { Portrait } from '../art/Portrait'
 import { TokenIcon } from '../art/TokenIcon'
@@ -11,6 +11,7 @@ import { useChipFloaters, useReveal, useSeatLife } from './feed'
 import { useInspect } from './inspect'
 import { PlayingCard } from './PlayingCard'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 /** Phases in which nobody takes a turn any more. */
 export const REVEAL_PHASES: GameState['phase'][] = ['impostor', 'showdown', 'handEnd', 'gameOver']
@@ -133,7 +134,7 @@ export function Seat({ player, character, slot, opponents }: Props) {
         {!player.eliminated && !result && (
           <span className={s.seatTokens}>
             {player.tokens.map((token, i) => (
-              <button key={`${token}-${i}`} className={s.seatToken} onClick={() => useInspect.getState().showToken(token, false)} aria-label={`${player.name}: Token ${TOKEN_TEXT[token].name} ansehen`}>
+              <button key={`${token}-${i}`} className={s.seatToken} onClick={() => useInspect.getState().showToken(token, false)} aria-label={tx`${player.name}: Token ${TOKEN_TEXT[token].name} ansehen`}>
                 <TokenIcon token={token} size="58%" />
               </button>
             ))}
@@ -162,14 +163,14 @@ export function Seat({ player, character, slot, opponents }: Props) {
             <i className={s.chipDot} />
             {player.chips}
             {player.invested > 0 && (
-              <em className={s.seatInvested} title="Einsatz">
+              <em className={s.seatInvested} title={tx`Einsatz`}>
                 +{player.invested}
               </em>
             )}
             <ChipFloaters playerId={player.id} />
           </span>
           {thinking && (
-            <span className={s.thinking} aria-label="überlegt">
+            <span className={s.thinking} aria-label={tx`überlegt`}>
               <i />
               <i />
               <i />
@@ -210,7 +211,7 @@ export function Seat({ player, character, slot, opponents }: Props) {
               className={cx(s.miniCard, s.miniPending)}
             />
           )}
-          {!player.hand && <span className={s.seatGone}>ausgeschieden</span>}
+          {!player.hand && <span className={s.seatGone}>{tx`ausgeschieden`}</span>}
           {/* stock next to the hand, the bet pushed towards the middle of the table */}
           <span className={cx(s.stacks, x > 0 || (x === 0 && opponents > 1) ? s.stacksLeft : undefined)} aria-hidden>
             <ChipColumn owner={player.id} from={0} count={player.chips} />
@@ -218,9 +219,9 @@ export function Seat({ player, character, slot, opponents }: Props) {
           </span>
           {!reveal.shown && (
             <span className={s.seatStatus}>
-              {player.immune && <span className={cx(s.status, s.statusImmune)}>Immun</span>}
-              {player.embargoed && <span className={cx(s.status, s.statusBad)}>Embargo</span>}
-              {player.standing && !player.embargoed && <span className={s.status}>Steht</span>}
+              {player.immune && <span className={cx(s.status, s.statusImmune)}>{tx`Immun`}</span>}
+              {player.embargoed && <span className={cx(s.status, s.statusBad)}>{tx`Embargo`}</span>}
+              {player.standing && !player.embargoed && <span className={s.status}>{tx`Steht`}</span>}
             </span>
           )}
         </div>

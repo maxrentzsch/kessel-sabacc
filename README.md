@@ -1,60 +1,79 @@
 # Kessel Sabacc
 
-Kessel Sabacc als installierbare Web-App (PWA) für Mac und Handy, mit den Regeln aus
-*Star Wars Outlaws*: zwei Karten, drei Runden, alle 16 Shift-Tokens – gegen 1–3 KI-Gegner.
+Kessel Sabacc as an installable web app (PWA) for desktop and phone, with the rules from
+*Star Wars Outlaws*: two cards, three rounds, all 16 shift tokens – against one to three AI
+opponents. In English and German.
 
-## Was drin ist
+**Play it: <https://maxrentzsch.github.io/kessel-sabacc/>**
 
-- **Karriere** über sechs Schauplätze auf einer Sektorkarte, mit eigener Geschichte, Hausregeln,
-  Rivalen-Duellen, drei Einsatzhöhen und einem Legendenmodus danach.
-- **Auf Tour** (Tisch um Tisch um einen wachsenden Topf), **Tageshand** (ein fester Tisch pro Tag)
-  und **freies Spiel** mit eigenen Regeln.
-- **Langzeitziele:** Ruf und Ränge, Erfolge, eine Sammlung aus Kartenrücken, Filz, Chips und Titeln
-  und das eigene Schiff, das sich ausbauen lässt.
-- **Am Tisch:** Spähen mit Verdacht, ein Geber-Droide, Wischgesten, Tipps der KI, Übungshand und
-  Regelbuch.
-- **Spielstand** als Code sichern und auf ein anderes Gerät übertragen (Profil).
+## What is in it
 
-Offene Ideen stehen in [IDEEN.md](IDEEN.md).
+- **Career** across six venues on a sector map, with a story of its own, house rules, duels
+  against rivals, three stakes and a legend mode afterwards.
+- **On Tour** (table after table for a growing pot), **Daily Hand** (one fixed table a day) and
+  **Free Play** with your own rules.
+- **Long-term goals:** reputation and ranks, achievements, a collection of card backs, felt, chips
+  and titles, and a ship of your own to upgrade.
+- **At the table:** peeking with suspicion, a dealer droid, swipe gestures, tips from the AI, a
+  practice hand and a rule book.
+- **Saves** as a code, to back up a career or move it to another device (Profile).
 
-## Entwickeln
+Open ideas are collected in [IDEAS.md](IDEAS.md).
+
+## Development
 
 ```bash
 npm install
-npm run dev            # Dev-Server auf http://localhost:5173
-npm run dev -- --host  # zusätzlich im WLAN erreichbar, z. B. fürs Handy
-npm test               # Regel-Tests und KI-Simulation
-npm run build          # Produktions-Build nach dist/
-npm run preview        # Build lokal ansehen (inkl. Service Worker)
+npm run dev            # dev server on http://localhost:5173
+npm run dev -- --host  # also reachable on the local network, e.g. from a phone
+npm test               # rule tests, AI simulation, translation catalogue
+npm run build          # production build into dist/
+npm run preview        # look at the build locally (including the service worker)
 ```
 
-## Aufbau
+## Layout
 
-| Ordner | Inhalt |
+| Folder | Contents |
 |---|---|
-| `src/engine` | Regelwerk als reiner Reducer: `applyAction(state, action) → { state, events }`. Kein React, deterministisch über einen Seed. |
-| `src/ai` | Handbewertung (`evaluate.ts`), Zug- und Token-Strategie (`policy.ts`), Gegner (`personalities.ts`). |
-| `src/career` | Alles rund um den Fortschritt: Tische, Schauplätze, Geschichte, Ruf, Erfolge, Sammlung, Schiff, Tour und Tageshand, Spielstand-Codes. |
-| `src/store` | Zustand-Stores: laufende Partie, Karriere-Spielstand, Einstellungen, Navigation. |
-| `src/audio` | Alle Geräusche, zur Laufzeit erzeugt – es gibt keine Audiodateien. |
-| `src/ui` | Screens, Spieltisch, SVG-Grafiken und Design-Tokens. |
-| `legacy/python` | Der ursprüngliche Python-Prototyp (andere, vereinfachte Regeln). |
+| `src/engine` | The rules as a pure reducer: `applyAction(state, action) → { state, events }`. No React, deterministic from a seed. |
+| `src/ai` | Hand evaluation (`evaluate.ts`), move and token strategy (`policy.ts`), opponents (`personalities.ts`). |
+| `src/career` | Everything about progress: tables, venues, story, reputation, achievements, collection, ship, tour and daily hand, save codes. |
+| `src/store` | Zustand stores: the running game, the career save, settings, navigation. |
+| `src/i18n` | The two languages, see below. |
+| `src/audio` | All sounds, generated at run time – there are no audio files. |
+| `src/ui` | Screens, the table, SVG artwork and design tokens. |
+| `legacy/python` | The original Python prototype (different, simplified rules). |
 
-Spielstand, Einstellungen und eine unterbrochene Partie liegen im `localStorage` des Browsers.
-`src/career/balance.test.ts` spielt die Karriere mit KI-Stellvertretern durch und hält die
-Schwierigkeitskurve fest; wer an Gegnern, Tokens oder Auszahlungen dreht, sollte sie laufen lassen.
+The save, the settings and an interrupted game live in the browser's `localStorage`.
+`src/career/balance.test.ts` plays the career with AI stand-ins and pins down the difficulty
+curve; run it after touching opponents, tokens or payouts.
 
-Offline funktioniert die App nur aus einem Build und nur über HTTPS (oder `localhost`): Der
-Service Worker wird sonst vom Browser nicht zugelassen. Übers WLAN vom Dev-Server geladen lässt
-sie sich aufs Handy legen, braucht dort aber weiter die Verbindung zum Rechner.
+The app only works offline from a build and only over HTTPS (or `localhost`): browsers do not
+allow a service worker otherwise. Loaded from the dev server over the local network it can be put
+on a phone's home screen, but it keeps needing the connection to the computer there.
 
-## Veröffentlichen
+## Languages
 
-`.github/workflows/deploy.yml` baut bei jedem Push auf `main` und veröffentlicht `dist/` über
-GitHub Pages. Dafür im Repository unter *Settings → Pages* als Quelle **GitHub Actions** wählen.
+German text in the source is the key of its translation. It is written with the `tx` tag, which
+looks the text up in `src/i18n/en.ts` and falls back to the German:
 
-## Hinweis
+```ts
+tx`Noch ${n} wählen` // key "Noch {0} wählen" → "Pick {0} more"
+```
 
-Inoffizielles Fan-Projekt ohne Verbindung zu Lucasfilm, Disney oder Ubisoft. Das Aussehen orientiert
-sich am Kessel Sabacc aus *Star Wars Outlaws*; alle Grafiken sind selbst gezeichnete SVGs, es werden
-keine Original-Assets verwendet. Namen von Gegnern und Schauplätzen sind eigene Erfindungen.
+`src/i18n/catalogue.test.ts` fails when a text has no English, when the catalogue holds something
+that is no longer used, or when a translation drops a placeholder.
+
+The language is chosen when the page loads (the saved choice, otherwise the browser's language)
+and changed in the profile, which reloads the page.
+
+## Publishing
+
+`.github/workflows/deploy.yml` builds on every push to `main` and publishes `dist/` through
+GitHub Pages.
+
+## Note
+
+An unofficial fan project with no connection to Lucasfilm, Disney or Ubisoft. The look follows
+Kessel Sabacc in *Star Wars Outlaws*; all artwork is hand-drawn SVG, no original assets are used.
+The names of opponents and venues are made up.

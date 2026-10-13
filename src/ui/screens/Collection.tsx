@@ -10,6 +10,7 @@ import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 const KINDS: CosmeticKind[] = ['back', 'felt', 'chip', 'title']
 
@@ -55,15 +56,15 @@ function Tile({ item }: { item: Cosmetic }) {
   return (
     <button className={cx(s.piece, inUse && s.pieceOn, !owned && s.pieceLocked)} onClick={act} disabled={!owned && !affordable} aria-pressed={inUse}>
       <Preview item={item} />
-      <b>{item.kind === 'title' && item.id === 'title-rank' ? 'Dein Rang' : item.name}</b>
+      <b>{item.kind === 'title' && item.id === 'title-rank' ? tx`Dein Rang` : item.name}</b>
       {inUse ? (
         <em className={s.pieceState}>
-          <Icon name="check" size={13} /> In Benutzung
+          <Icon name="check" size={13} />{tx` In Benutzung`}
         </em>
       ) : owned ? (
-        <em>Antippen zum Benutzen</em>
+        <em>{tx`Antippen zum Benutzen`}</em>
       ) : item.price !== undefined ? (
-        <em className={cx(s.piecePrice, 'num')}>{item.price} Credits</em>
+        <em className={cx(s.piecePrice, 'num')}>{item.price}{tx` Credits`}</em>
       ) : (
         <em>
           <Icon name="lock" size={12} /> {item.hint}
@@ -81,10 +82,10 @@ export function CollectionScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={() => go('ship')} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={() => go('ship')} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Sammlung</h1>
+        <h1 className={common.screenTitle}>{tx`Sammlung`}</h1>
         <span className={common.credits}>{credits}</span>
       </header>
       <div className={common.screenBody}>

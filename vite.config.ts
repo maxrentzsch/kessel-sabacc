@@ -13,8 +13,8 @@ export default defineConfig({
       manifest: {
         name: 'Kessel Sabacc',
         short_name: 'Sabacc',
-        description: 'Kessel Sabacc gegen KI-Gegner – Karriere, freies Spiel und alle 16 Shift-Tokens.',
-        lang: 'de',
+        description: 'Kessel Sabacc against AI opponents – career, free play and all 16 shift tokens.',
+        lang: 'en',
         start_url: '.',
         scope: '.',
         display: 'standalone',

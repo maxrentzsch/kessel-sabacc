@@ -1,5 +1,6 @@
 import type { TokenId } from '../engine'
 import type { AiProfile, Difficulty } from './policy'
+import { tx } from '../i18n'
 
 export interface Character {
   id: string
@@ -23,8 +24,8 @@ const profile = (difficulty: Difficulty, aggression: number, tokenRate: number):
 export const CHARACTERS: Record<string, Character> = {
   pim: {
     id: 'pim',
-    name: 'Pim Odo',
-    title: 'Schrottsammler',
+    name: tx`Pim Odo`,
+    title: tx`Schrottsammler`,
     hue: 32,
     sigil: 'visor',
     profile: profile('easy', 0.3, 0.3),
@@ -32,8 +33,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   brakk: {
     id: 'brakk',
-    name: 'Brakk',
-    title: 'Türsteher mit Spielschulden',
+    name: tx`Brakk`,
+    title: tx`Türsteher mit Spielschulden`,
     hue: 8,
     sigil: 'tusks',
     profile: profile('easy', 0.8, 0.5),
@@ -41,8 +42,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   mira: {
     id: 'mira',
-    name: 'Mira Sol',
-    title: 'Frachtpilotin',
+    name: tx`Mira Sol`,
+    title: tx`Frachtpilotin`,
     hue: 190,
     sigil: 'crest',
     profile: profile('medium', 0.1, 0.5),
@@ -50,8 +51,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   kessk: {
     id: 'kessk',
-    name: 'Der alte Kessk',
-    title: 'Zählt jede Karte. Langsam.',
+    name: tx`Der alte Kessk`,
+    title: tx`Zählt jede Karte. Langsam.`,
     hue: 95,
     sigil: 'hood',
     profile: profile('medium', -0.5, 0.3),
@@ -59,8 +60,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   zula: {
     id: 'zula',
-    name: 'Zula Marn',
-    title: 'Zollbeamtin außer Dienst',
+    name: tx`Zula Marn`,
+    title: tx`Zollbeamtin außer Dienst`,
     hue: 280,
     sigil: 'horns',
     profile: profile('medium', 0.2, 0.9),
@@ -68,8 +69,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   tevin: {
     id: 'tevin',
-    name: 'Tevin Rho',
-    title: 'Falschspieler',
+    name: tx`Tevin Rho`,
+    title: tx`Falschspieler`,
     hue: 330,
     sigil: 'visor',
     profile: profile('medium', 0.6, 0.8),
@@ -77,8 +78,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   unit7: {
     id: 'unit7',
-    name: 'K-7 „Kalkül“',
-    title: 'Buchhaltungsdroide',
+    name: tx`K-7 „Kalkül“`,
+    title: tx`Buchhaltungsdroide`,
     hue: 210,
     sigil: 'droid',
     profile: profile('hard', -0.2, 0.5),
@@ -86,8 +87,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   ilsa: {
     id: 'ilsa',
-    name: 'Ilsa Korr',
-    title: 'Schmugglerin',
+    name: tx`Ilsa Korr`,
+    title: tx`Schmugglerin`,
     hue: 150,
     sigil: 'crest',
     profile: profile('hard', 0.4, 0.7),
@@ -95,8 +96,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   dray: {
     id: 'dray',
-    name: 'Dray Venn',
-    title: 'Syndikats-Kassierer',
+    name: tx`Dray Venn`,
+    title: tx`Syndikats-Kassierer`,
     hue: 48,
     sigil: 'horns',
     profile: profile('hard', 0.1, 0.9),
@@ -104,8 +105,8 @@ export const CHARACTERS: Record<string, Character> = {
   },
   oshi: {
     id: 'oshi',
-    name: 'Madame Oshi',
-    title: 'Ungeschlagen seit neun Jahren',
+    name: tx`Madame Oshi`,
+    title: tx`Ungeschlagen seit neun Jahren`,
     hue: 300,
     sigil: 'hood',
     profile: profile('hard', 0.0, 0.8),

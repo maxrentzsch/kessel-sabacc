@@ -12,6 +12,7 @@ import common from '../common/common.module.css'
 import { usePlayerTitle } from '../common/Rank'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 const SAND: Card = { id: 'hero-sand', suit: 'sand', kind: 'number', value: 1 }
 const BLOOD: Card = { id: 'hero-blood', suit: 'blood', kind: 'number', value: 1 }
@@ -69,58 +70,58 @@ export function HomeScreen() {
           </motion.div>
         </div>
         <motion.h1 className={s.logo} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }}>
-          <span>Kessel</span>
-          <b>Sabacc</b>
+          <span>{tx`Kessel`}</span>
+          <b>{tx`Sabacc`}</b>
         </motion.h1>
         <motion.p className={s.tagline} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
-          Zwei Karten. Drei Runden. Kein Erbarmen.
+          {tx`Zwei Karten. Drei Runden. Kein Erbarmen.`}
         </motion.p>
       </div>
 
       <motion.nav className={s.menu} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.5 }}>
         {savedRun && (
           <button className={cx(common.btn, common.btnPrimary, common.btnBlock, s.menuMain)} onClick={continueRun}>
-            <span>Partie fortsetzen</span>
+            <span>{tx`Partie fortsetzen`}</span>
             <small>{savedRun}</small>
           </button>
         )}
         <button className={cx(common.btn, !savedRun && common.btnPrimary, common.btnBlock, s.menuMain)} onClick={() => go('career')}>
-          <span>{games > 0 ? 'Karriere fortsetzen' : 'Karriere starten'}</span>
+          <span>{games > 0 ? tx`Karriere fortsetzen` : tx`Karriere starten`}</span>
           <small className="num">
-            {credits} Credits · {beaten}/{TABLES.length} Tische
+            {credits}{tx` Credits · `}{beaten}/{TABLES.length}{tx` Tische`}
           </small>
         </button>
         <div className={s.menuRow}>
           <button className={cx(common.btn, s.menuTile, dailyOpen && s.menuTileNew)} onClick={() => go('daily')}>
-            <span>Tageshand</span>
-            <small>{dailyOpen ? 'Heute noch offen' : 'Morgen wieder'}</small>
+            <span>{tx`Tageshand`}</span>
+            <small>{dailyOpen ? tx`Heute noch offen` : tx`Morgen wieder`}</small>
           </button>
           <button className={cx(common.btn, s.menuTile)} onClick={() => go('tour')}>
-            <span>Auf Tour</span>
-            <small className="num">{tour ? `Halt ${tour.wins + 1}` : `Rekord ${tourBest}`}</small>
+            <span>{tx`Auf Tour`}</span>
+            <small className="num">{tour ? tx`Halt ${tour.wins + 1}` : tx`Rekord ${tourBest}`}</small>
           </button>
         </div>
         <div className={s.menuRow}>
           <button className={cx(common.btn, s.menuTile)} onClick={() => go('ship')}>
-            <span>Sandläufer</span>
+            <span>{tx`Sandläufer`}</span>
             <small>
-              Rang {rank.level} · {title}
+              {tx`Rang `}{rank.level} · {title}
             </small>
           </button>
           <button className={cx(common.btn, s.menuTile)} onClick={() => go('free')}>
-            <span>Freies Spiel</span>
-            <small>Eigene Regeln</small>
+            <span>{tx`Freies Spiel`}</span>
+            <small>{tx`Eigene Regeln`}</small>
           </button>
         </div>
         <div className={s.menuTrio}>
           <button className={common.btn} onClick={practise}>
-            Übung
+            {tx`Übung`}
           </button>
           <button className={common.btn} onClick={() => go('rules')}>
-            Regeln
+            {tx`Regeln`}
           </button>
           <button className={common.btn} onClick={() => go('profile')}>
-            Profil
+            {tx`Profil`}
           </button>
         </div>
       </motion.nav>

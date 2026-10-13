@@ -4,10 +4,11 @@ import type { Occasion } from '../../ai/banter'
 import type { Character } from '../../ai/personalities'
 import { sfx } from '../../audio/sfx'
 import type { GameEvent, GameState } from '../../engine'
-import { SOURCE_NAME, TOKEN_TEXT } from '../../i18n/de'
+import { SOURCE_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { revealOrder, useGame } from '../../store/game'
 import { tempo } from '../../store/settings'
 import type { Mood } from '../art/Portrait'
+import { tx } from '../../i18n'
 
 /** Run `handler` once for every event published after the component mounted. */
 export function useFeed(handler: (event: GameEvent, id: number) => void): void {
@@ -112,14 +113,14 @@ export function useSeatLife(playerId: number, character: Character): SeatLife {
   useFeed((event, id) => {
     switch (event.type) {
       case 'drew':
-        if (event.playerId === playerId) note(id, event.free ? 'Zieht gratis' : 'Zieht')
+        if (event.playerId === playerId) note(id, event.free ? tx`Zieht gratis` : tx`Zieht`)
         break
       case 'stood':
-        if (event.playerId === playerId) note(id, event.forced ? 'Muss stehen' : 'Steht')
+        if (event.playerId === playerId) note(id, event.forced ? tx`Muss stehen` : tx`Steht`)
         break
       case 'tokenBlocked':
         if (event.playerId !== playerId) break
-        note(id, 'Immun!')
+        note(id, tx`Immun!`)
         feel(id, 'smug')
         break
       case 'tokenPlayed':
@@ -164,29 +165,38 @@ export function useSeatLife(playerId: number, character: Character): SeatLife {
 
 /** One line describing an event for the status ticker. */
 export function describe(event: GameEvent, game: GameState): string | null {
-  const name = (id: number) => (game.players[id].isHuman ? 'Du' : game.players[id].name)
+  const name = (id: number) => game.players[id].name
   const you = (id: number) => game.players[id].isHuman
+  // Whole sentences for every case: the two languages do not build them alike.
   switch (event.type) {
     case 'handStart':
-      return `Hand ${event.hand} – ${you(event.dealer) ? 'du eröffnest' : `${name(event.dealer)} eröffnet`}`
+      return you(event.dealer) ? tx`Hand ${event.hand} – du eröffnest` : tx`Hand ${event.hand} – ${name(event.dealer)} eröffnet`
     case 'tokenPlayed': {
-      const target = event.target !== undefined ? ` gegen ${you(event.target) ? 'dich' : name(event.target)}` : ''
-      return `${name(event.playerId)} ${you(event.playerId) ? 'spielst' : 'spielt'} ${TOKEN_TEXT[event.token].name}${target}`
+      const token = TOKEN_TEXT[event.token].name
+      const who = event.playerId
+      if (event.target === undefined) return you(who) ? tx`Du spielst ${token}` : tx`${name(who)} spielt ${token}`
+      if (you(who)) return tx`Du spielst ${token} gegen ${name(event.target)}`
+      return you(event.target) ? tx`${name(who)} spielt ${token} gegen dich` : tx`${name(who)} spielt ${token} gegen ${name(event.target)}`
     }
-    case 'drew':
-      return `${name(event.playerId)} ${you(event.playerId) ? 'ziehst' : 'zieht'}: ${SOURCE_NAME[event.source]}`
+    case 'drew': {
+      const source = SOURCE_NAME[event.source]
+      return you(event.playerId) ? tx`Du ziehst: ${source}` : tx`${name(event.playerId)} zieht: ${source}`
+    }
     case 'discarded':
-      return `${name(event.playerId)} ${you(event.playerId) ? 'behältst' : 'behält'} die ${event.keep === 'new' ? 'neue' : 'alte'} Karte`
+      if (you(event.playerId)) return event.keep === 'new' ? tx`Du behältst die neue Karte` : tx`Du behältst die alte Karte`
+      return event.keep === 'new' ? tx`${name(event.playerId)} behält die neue Karte` : tx`${name(event.playerId)} behält die alte Karte`
     case 'stood':
-      return `${name(event.playerId)} ${you(event.playerId) ? 'stehst' : 'steht'}${event.forced ? ' (Embargo)' : ''}`
+      if (you(event.playerId)) return event.forced ? tx`Du stehst (Embargo)` : tx`Du stehst`
+      return event.forced ? tx`${name(event.playerId)} steht (Embargo)` : tx`${name(event.playerId)} steht`
     case 'diceRolled':
-      return `${name(event.playerId)} ${you(event.playerId) ? 'würfelst' : 'würfelt'}${event.purpose === 'impostor' ? ' für den Impostor' : ''}`
+      if (you(event.playerId)) return event.purpose === 'impostor' ? tx`Du würfelst für den Impostor` : tx`Du würfelst`
+      return event.purpose === 'impostor' ? tx`${name(event.playerId)} würfelt für den Impostor` : tx`${name(event.playerId)} würfelt`
     case 'handsSwapped':
-      return `${name(event.a)} und ${name(event.b)} tauschen die Hände`
+      return tx`${name(event.a)} und ${name(event.b)} tauschen die Hände`
     case 'handRedrawn':
-      return `${name(event.playerId)} ${you(event.playerId) ? 'bekommst' : 'bekommt'} eine neue Hand`
+      return you(event.playerId) ? tx`Du bekommst eine neue Hand` : tx`${name(event.playerId)} bekommt eine neue Hand`
     case 'showdown':
-      return 'Karten auf den Tisch!'
+      return tx`Karten auf den Tisch!`
     default:
       return null
   }

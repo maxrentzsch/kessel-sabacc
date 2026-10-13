@@ -1,3 +1,4 @@
+import { tx } from '../i18n'
 /**
  * Where a table stands. Every venue repaints the same room – wall, light,
  * floor, felt – and has its own mix of background noise.
@@ -58,7 +59,7 @@ function paint(p: Paint): Venue['colors'] {
 export const VENUES: Record<string, Venue> = {
   // rust and lamp oil
   anchor: {
-    place: 'Schrottwerft Tarsk',
+    place: tx`Schrottwerft Tarsk`,
     sound: { crowd: 0.8, hum: 1.2 },
     colors: paint({
       wall: ['#1d120a', '#4a2b14', '#6b3d1a'],
@@ -76,7 +77,7 @@ export const VENUES: Record<string, Venue> = {
   },
   // sun through the shutters
   dune: {
-    place: 'Karawanenhof Mehr',
+    place: tx`Karawanenhof Mehr`,
     sound: { crowd: 1, hum: 0.5 },
     colors: paint({
       wall: ['#3a2a14', '#8a6430', '#b98a45'],
@@ -94,7 +95,7 @@ export const VENUES: Record<string, Venue> = {
   },
   // cold fog off the docks
   haze: {
-    place: 'Dock 9, Unterstadt',
+    place: tx`Dock 9, Unterstadt`,
     sound: { crowd: 0.5, hum: 1.4 },
     colors: paint({
       wall: ['#0c1518', '#1c3a40', '#2b565c'],
@@ -112,7 +113,7 @@ export const VENUES: Record<string, Venue> = {
   },
   // a back room lit in red
   lodge: {
-    place: 'Hinterzimmer der „Lange Nacht“',
+    place: tx`Hinterzimmer der „Lange Nacht“`,
     sound: { crowd: 0.35, hum: 0.8 },
     colors: paint({
       wall: ['#170808', '#3d1414', '#5c1f1c'],
@@ -130,7 +131,7 @@ export const VENUES: Record<string, Venue> = {
   },
   // steel, starlight and old money
   salon: {
-    place: 'Orbitalstation Vael',
+    place: tx`Orbitalstation Vael`,
     sound: { crowd: 0.9, hum: 1.5 },
     colors: paint({
       wall: ['#0d1118', '#232c3d', '#36435c'],
@@ -148,7 +149,7 @@ export const VENUES: Record<string, Venue> = {
   },
   // gold leaf and crimson for the final
   crown: {
-    place: 'High-Roller-Turnier',
+    place: tx`High-Roller-Turnier`,
     sound: { crowd: 1.5, hum: 0.6 },
     colors: paint({
       wall: ['#1c0d06', '#5a2a0c', '#8a4a12'],

@@ -8,6 +8,7 @@ import { venueOf } from '../../career/venues'
 import { Portrait } from '../art/Portrait'
 import { cx } from '../cx'
 import s from './common.module.css'
+import { tx } from '../../i18n'
 
 interface Props {
   lines: Line[]
@@ -58,7 +59,7 @@ export function Scene({ lines, venue, title, onDone }: Props) {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && next()}
-      aria-label="Weiter"
+      aria-label={tx`Weiter`}
     >
       <div className={s.sceneRoom} aria-hidden />
       <button
@@ -68,7 +69,7 @@ export function Scene({ lines, venue, title, onDone }: Props) {
           onDone()
         }}
       >
-        Überspringen
+        {tx`Überspringen`}
       </button>
       {/* whoever speaks stands in the room, large */}
       <div className={s.sceneStage}>
@@ -100,7 +101,7 @@ export function Scene({ lines, venue, title, onDone }: Props) {
           >
             {line.who && (
               <div className={s.sceneWho}>
-                <b>{speaker ? speaker.name : 'Du'}</b>
+                <b>{speaker ? speaker.name : tx`Du`}</b>
                 {speaker && <em>{speaker.title}</em>}
               </div>
             )}
@@ -110,7 +111,7 @@ export function Scene({ lines, venue, title, onDone }: Props) {
             </p>
           </motion.div>
         </AnimatePresence>
-        <p className={cx(s.sceneMore, typing && s.sceneMoreOff)}>{index < lines.length - 1 ? 'Tippen für weiter' : 'Tippen zum Schließen'}</p>
+        <p className={cx(s.sceneMore, typing && s.sceneMoreOff)}>{index < lines.length - 1 ? tx`Tippen für weiter` : tx`Tippen zum Schließen`}</p>
       </div>
     </motion.div>
   )

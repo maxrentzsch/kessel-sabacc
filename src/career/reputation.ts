@@ -1,3 +1,4 @@
+import { tx } from '../i18n'
 /** Reputation: every game earns some, and enough of it is a new rank. */
 export interface Rank {
   level: number
@@ -7,18 +8,18 @@ export interface Rank {
 }
 
 export const RANKS: Rank[] = [
-  { level: 1, title: 'Niemand', at: 0 },
-  { level: 2, title: 'Glücksritter', at: 60 },
-  { level: 3, title: 'Kartenhai', at: 160 },
-  { level: 4, title: 'Zocker', at: 320 },
-  { level: 5, title: 'Schlitzohr', at: 550 },
-  { level: 6, title: 'Tischschreck', at: 850 },
-  { level: 7, title: 'Hochstapler', at: 1250 },
-  { level: 8, title: 'Syndikatsliebling', at: 1750 },
-  { level: 9, title: 'Sabacc-Meister', at: 2400 },
-  { level: 10, title: 'Kessel-Veteran', at: 3200 },
-  { level: 11, title: 'Unantastbar', at: 4200 },
-  { level: 12, title: 'Legende von Kessel', at: 5500 },
+  { level: 1, title: tx`Niemand`, at: 0 },
+  { level: 2, title: tx`Glücksritter`, at: 60 },
+  { level: 3, title: tx`Kartenhai`, at: 160 },
+  { level: 4, title: tx`Zocker`, at: 320 },
+  { level: 5, title: tx`Schlitzohr`, at: 550 },
+  { level: 6, title: tx`Tischschreck`, at: 850 },
+  { level: 7, title: tx`Hochstapler`, at: 1250 },
+  { level: 8, title: tx`Syndikatsliebling`, at: 1750 },
+  { level: 9, title: tx`Sabacc-Meister`, at: 2400 },
+  { level: 10, title: tx`Kessel-Veteran`, at: 3200 },
+  { level: 11, title: tx`Unantastbar`, at: 4200 },
+  { level: 12, title: tx`Legende von Kessel`, at: 5500 },
 ]
 
 export function rankOf(rep: number): Rank {

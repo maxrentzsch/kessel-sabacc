@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { stakeHandicap, STAKES, tableUnlocking } from '../../career/tables'
 import { TOKEN_IDS } from '../../engine'
 import type { TokenId } from '../../engine'
-import { TOKEN_TEXT } from '../../i18n/de'
+import { TOKEN_TEXT } from '../../i18n/texts'
 import { unlockAudio } from '../../audio/sfx'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
@@ -13,6 +13,7 @@ import { TokenIcon } from '../art/TokenIcon'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
 import s from './Screens.module.css'
+import { tx } from '../../i18n'
 
 const SLOTS = 3
 
@@ -70,24 +71,24 @@ export function LoadoutScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={back} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={back} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Shift-Tokens</h1>
+        <h1 className={common.screenTitle}>{tx`Shift-Tokens`}</h1>
         {paid && <span className={common.credits}>{career.credits}</span>}
       </header>
 
       <div className={common.screenBody}>
         <div className={cx(common.column, s.loadout)}>
           <p className={s.lead}>
-            Wähle {SLOTS} Tokens für <b>{session.title}</b>. Jedes kannst du einmal pro Partie spielen.
+            {tx`Wähle `}{SLOTS}{tx` Tokens für `}<b>{session.title}</b>{tx`. Jedes kannst du einmal pro Partie spielen.`}
           </p>
 
           <div className={s.slots}>
             {Array.from({ length: SLOTS }, (_, i) => {
               const token = picked[i]
               return (
-                <button key={i} className={cx(s.slot, token && s.slotFilled)} onClick={() => token && toggle(token)} aria-label={token ? `${TOKEN_TEXT[token].name} entfernen` : 'Leerer Platz'}>
+                <button key={i} className={cx(s.slot, token && s.slotFilled)} onClick={() => token && toggle(token)} aria-label={token ? tx`${TOKEN_TEXT[token].name} entfernen` : tx`Leerer Platz`}>
                   {token ? (
                     <motion.span key={token} initial={{ scale: 0.3, rotate: -60 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
                       <TokenIcon token={token} size={30} />
@@ -106,12 +107,12 @@ export function LoadoutScreen() {
               {focusLocked && <Icon name="lock" size={15} />}
             </h2>
             <p>{TOKEN_TEXT[focus].long}</p>
-            {unlockAt && <p className={s.focusLock}>Freischalten: erster Sieg bei „{unlockAt.name}“</p>}
+            {unlockAt && <p className={s.focusLock}>{tx`Freischalten: erster Sieg bei „${unlockAt.name}“`}</p>}
           </div>
 
           {paid && (
             <section className={s.field}>
-              <h2 className={s.fieldLabel}>Einsatz</h2>
+              <h2 className={s.fieldLabel}>{tx`Einsatz`}</h2>
               <div className={s.segments} role="radiogroup">
                 {STAKES.map((option) => {
                   const price = (session.buyIn ?? 0) * option.multiplier
@@ -136,11 +137,11 @@ export function LoadoutScreen() {
               </div>
               <p className={s.fieldNote}>
                 {stake.text}
-                {handicap > 0 && ` Du startest mit ${handicap} ${handicap === 1 ? 'Chip' : 'Chips'} weniger.`} Buy-in <b className="num">{cost}</b>, Gewinn <b className="num">{(session.payout ?? 0) * stake.payout}</b>.
+                {handicap > 0 && tx` Du startest mit ${handicap} ${handicap === 1 ? tx`Chip` : tx`Chips`} weniger.`}{tx` Buy-in `}<b className="num">{cost}</b>{tx`, Gewinn `}<b className="num">{(session.payout ?? 0) * stake.payout}</b>.
               </p>
               {!affordable && (
                 <p className={s.fieldWarn}>
-                  Dafür fehlen dir <b className="num">{cost - career.credits}</b> Credits.
+                  {tx`Dafür fehlen dir `}<b className="num">{cost - career.credits}</b>{tx` Credits.`}
                 </p>
               )}
             </section>
@@ -175,7 +176,7 @@ export function LoadoutScreen() {
 
       <footer className={s.stickyFoot}>
         <button className={cx(common.btn, common.btnPrimary, common.btnBlock)} disabled={!ready || !affordable} onClick={begin}>
-          {!ready ? `Noch ${SLOTS - picked.length} wählen` : !affordable ? `${cost - career.credits} Credits fehlen` : paid ?`Platz nehmen · ${cost} Credits` : 'Spiel starten'}
+          {!ready ? tx`Noch ${SLOTS - picked.length} wählen` : !affordable ? tx`${cost - career.credits} Credits fehlen` : paid ?tx`Platz nehmen · ${cost} Credits` : tx`Spiel starten`}
         </button>
       </footer>
     </div>

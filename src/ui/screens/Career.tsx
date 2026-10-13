@@ -6,7 +6,7 @@ import { arrivalScene, PROLOGUE_SCENE, victoryScene } from '../../career/story'
 import type { Line } from '../../career/story'
 import { duelBuyIn, duelPayout, payoutFor, TABLES } from '../../career/tables'
 import type { TableDef } from '../../career/tables'
-import { TOKEN_TEXT } from '../../i18n/de'
+import { TOKEN_TEXT } from '../../i18n/texts'
 import { runnerUpRefund, useCareer } from '../../store/career'
 import type { Session } from '../../store/game'
 import { useNav } from '../../store/nav'
@@ -20,6 +20,7 @@ import { cx } from '../cx'
 import s from './Screens.module.css'
 import { StarMap } from './StarMap'
 import type { Standing } from './StarMap'
+import { tx } from '../../i18n'
 
 /** In a duel the rival plays at their very best, whatever they are like at their own table. */
 function duelist(rival: Character): Character {
@@ -50,7 +51,7 @@ function duelSession(table: TableDef): Session {
     mode: 'career',
     kind: 'duel',
     table,
-    title: `Duell: ${CHARACTERS[table.rival].name}`,
+    title: tx`Duell: ${CHARACTERS[table.rival].name}`,
     venue: table.id,
     rules: table.rules,
     buyIn: duelBuyIn(table),
@@ -111,31 +112,31 @@ function TableCard({ table, index, onSit }: { table: TableDef; index: number; on
 
       {table.ruleText && (
         <p className={s.houseRule}>
-          <b>Hausregel</b>
+          <b>{tx`Hausregel`}</b>
           {table.ruleText}
         </p>
       )}
 
       <dl className={s.tableFacts}>
         <div>
-          <dt>Buy-in</dt>
+          <dt>{tx`Buy-in`}</dt>
           <dd className="num">{session.buyIn}</dd>
         </div>
         <div>
-          <dt>Gewinn</dt>
+          <dt>{tx`Gewinn`}</dt>
           <dd className="num">{session.payout}</dd>
         </div>
         <div>
-          <dt>Chips</dt>
+          <dt>{tx`Chips`}</dt>
           <dd className="num">{session.playerChips ?? table.chips}</dd>
         </div>
       </dl>
 
-      {runnerUpRefund(session) && <p className={s.tableReward}>Platz 2: Buy-in zurück</p>}
+      {runnerUpRefund(session) && <p className={s.tableReward}>{tx`Platz 2: Buy-in zurück`}</p>}
 
       {pendingTokens.length > 0 && (
         <p className={s.tableReward}>
-          <span>Erster Sieg:</span>
+          <span>{tx`Erster Sieg:`}</span>
           {pendingTokens.map((t) => (
             <span key={t} className={s.rewardToken} title={TOKEN_TEXT[t].name}>
               <TokenIcon token={t} size={15} /> {TOKEN_TEXT[t].name}
@@ -149,16 +150,16 @@ function TableCard({ table, index, onSit }: { table: TableDef; index: number; on
         disabled={!unlocked || career.credits < session.buyIn!}
         onClick={() => onSit(session)}
       >
-        {!unlocked ? `Erst „${TABLES[index - 1].name}“ gewinnen` : career.credits < session.buyIn! ? `${session.buyIn! - career.credits} Credits fehlen` : 'Platz nehmen'}
+        {!unlocked ? tx`Erst „${TABLES[index - 1].name}“ gewinnen` : career.credits < session.buyIn! ? tx`${session.buyIn! - career.credits} Credits fehlen` : tx`Platz nehmen`}
       </button>
 
       {!legend && wins > 0 && (
         <div className={cx(s.duel, duels > 0 && s.duelWon)}>
           <Portrait character={rival} size={50} frame />
           <div>
-            <b>Duell gegen {rival.name}</b>
+            <b>{tx`Duell gegen `}{rival.name}</b>
             <em>
-              Eins gegen eins um <span className="num">{duelPayout(table)}</span> Credits{duels > 0 && ` · ${duels}× gewonnen`}
+              {tx`Eins gegen eins um `}<span className="num">{duelPayout(table)}</span>{tx` Credits`}{duels > 0 && tx` · ${duels}× gewonnen`}
             </em>
           </div>
           <button className={common.btn} disabled={career.credits < duelBuyIn(table)} onClick={() => onSit(duelSession(table))}>
@@ -201,7 +202,7 @@ export function CareerScreen() {
   useEffect(() => {
     if (telling) return
     if (!storySeen.includes('prologue')) {
-      setTelling({ lines: PROLOGUE_SCENE, venue: 'crown', title: 'Die Sandläufer', done: () => markStory('prologue') })
+      setTelling({ lines: PROLOGUE_SCENE, venue: 'crown', title: tx`Die Sandläufer`, done: () => markStory('prologue') })
       return
     }
     const untold = TABLES.filter((t) => tableWins[t.id] && !storySeen.includes(`win-${t.id}`))
@@ -240,10 +241,10 @@ export function CareerScreen() {
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
-        <button className={common.iconBtn} onClick={() => go('home')} aria-label="Zurück">
+        <button className={common.iconBtn} onClick={() => go('home')} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>Karriere</h1>
+        <h1 className={common.screenTitle}>{tx`Karriere`}</h1>
         <span className={common.credits}>{career.credits}</span>
       </header>
       <div className={common.screenBody}>
@@ -253,13 +254,13 @@ export function CareerScreen() {
               <div className={s.legendSwitch}>
                 <div className={s.segments} role="radiogroup">
                   <button role="radio" aria-checked={!legend} className={cx(s.segment, !legend && s.segmentOn)} onClick={() => career.setLegend(false)}>
-                    Karriere
+                    {tx`Karriere`}
                   </button>
                   <button role="radio" aria-checked={legend} className={cx(s.segment, legend && s.segmentOn)} onClick={() => career.setLegend(true)}>
-                    Legende
+                    {tx`Legende`}
                   </button>
                 </div>
-                {legend && <p className={s.fieldNote}>Jeder Gegner spielt sein bestes Spiel, du startest mit einem Chip weniger – für doppelten Einsatz und Gewinn.</p>}
+                {legend && <p className={s.fieldNote}>{tx`Jeder Gegner spielt sein bestes Spiel, du startest mit einem Chip weniger – für doppelten Einsatz und Gewinn.`}</p>}
               </div>
             )}
             <StarMap tables={TABLES} standing={standing} selected={selected} onSelect={(t) => setSelected(t.id)} ship={(tableWins.crown ?? 0) > 0} />
@@ -284,13 +285,13 @@ export function CareerScreen() {
       </AnimatePresence>
 
       <Sheet open={bailedOut > 0 && !telling} onClose={() => setBailedOut(0)} dialog>
-        <h2 className={common.sheetTitle}>Aufs Haus</h2>
+        <h2 className={common.sheetTitle}>{tx`Aufs Haus`}</h2>
         <p className={common.sheetText}>
-          Du bist blank. Der Wirt vom Rostigen Anker schiebt dir {bailedOut} Credits über den Tresen – „aber das letzte Mal“. Sagt er jedes Mal.
+          {tx`Du bist blank. Der Wirt vom Rostigen Anker schiebt dir `}{bailedOut}{tx` Credits über den Tresen – „aber das letzte Mal“. Sagt er jedes Mal.`}
         </p>
         <div className={common.sheetActions}>
           <button className={cx(common.btn, common.btnPrimary)} onClick={() => setBailedOut(0)}>
-            Danke
+            {tx`Danke`}
           </button>
         </div>
       </Sheet>

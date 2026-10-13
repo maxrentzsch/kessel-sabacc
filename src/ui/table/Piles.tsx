@@ -2,12 +2,13 @@ import { motion } from 'motion/react'
 import { useRef } from 'react'
 import { canDrawFrom, sourceIsDeck, sourceSuit } from '../../engine'
 import type { DrawSource } from '../../engine'
-import { SOURCE_NAME, SUIT_NAME } from '../../i18n/de'
+import { SOURCE_NAME, SUIT_NAME } from '../../i18n/texts'
 import { useGame } from '../../store/game'
 import { cx } from '../cx'
 import { PlayingCard } from './PlayingCard'
 import { TABLE_LEAN } from './Seat'
 import s from './Table.module.css'
+import { tx } from '../../i18n'
 
 // The two decks side by side in the middle, each with its discard pile on the outside.
 const ORDER: DrawSource[] = ['sandDiscard', 'sandDeck', 'bloodDeck', 'bloodDiscard']
@@ -56,7 +57,7 @@ export function Piles({ enabled, onDraw }: Props) {
               setTimeout(() => (pulled.current = false), 80)
             }}
             onClick={() => !pulled.current && onDraw(source)}
-            aria-label={`${SOURCE_NAME[source]} – ziehen`}
+            aria-label={tx`${SOURCE_NAME[source]} – ziehen`}
             aria-keyshortcuts={String(ORDER.indexOf(source) + 1)}
           >
             <span className={cx(s.pileSlot, deck && cards.length > 1 && s.pileStack)}>
@@ -76,7 +77,7 @@ export function Piles({ enabled, onDraw }: Props) {
               ))}
             </span>
             <span className={s.pileLabel}>
-              {deck ? SUIT_NAME[suit] : 'Ablage'}
+              {deck ? SUIT_NAME[suit] : tx`Ablage`}
               <em className="num">{cards.length}</em>
             </span>
           </motion.button>
