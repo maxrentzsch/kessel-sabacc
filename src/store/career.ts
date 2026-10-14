@@ -4,6 +4,7 @@ import { ACHIEVEMENTS, isDone } from '../career/achievements'
 import type { Progress } from '../career/achievements'
 import { cosmetic, COSMETICS, DEFAULT_LOOK } from '../career/cosmetics'
 import type { CosmeticKind } from '../career/cosmetics'
+import { CAREER_VERSION, migrateCareer } from '../career/migrate'
 import { rankOf, REP } from '../career/reputation'
 import { bailoutAmount, repMultiplier, SHIP_MODULES } from '../career/ship'
 import { STARTING_CREDITS, STARTING_TOKENS, TABLES } from '../career/tables'
@@ -59,6 +60,8 @@ interface CareerState extends Progress {
   /** the last daily hand that was played */
   daily: { date: string; won: boolean } | null
   dailyStreak: number
+  /** games played when the player last made a backup code */
+  backupAt: number
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -71,6 +74,8 @@ interface CareerState extends Progress {
   beginGame(session: Session): void
   finishGame(session: Session | null, won: boolean, tally?: GameTally): GameSummary
   bumpStats(patch: Stats): void
+  /** The player has just made a backup code. */
+  noteBackup(): void
   noteToken(token: TokenId): void
   gain(rep: number): void
   markStory(id: string): void
@@ -109,9 +114,27 @@ const initial = () => ({
   daily: null as CareerState['daily'],
   dailyStreak: 0,
   dailyBest: 0,
+  backupAt: 0,
   gameRep: 0,
   recent: [] as string[],
 })
+
+/** How many games may pass without a backup code before the player is reminded of one. */
+export const BACKUP_EVERY = 15
+/** games played when this session last reminded the player; once per stretch is enough */
+let remindedAt = -Infinity
+
+/** Ask the browser not to clear this site's storage when it runs short; quietly, and only once granted. */
+function keepStorage(): void {
+  try {
+    void navigator.storage
+      ?.persisted?.()
+      .then((kept) => kept || navigator.storage.persist())
+      .catch(() => {})
+  } catch {
+    /* no storage manager here */
+  }
+}
 
 /** Finishing second pays the buy-in back wherever there is a third seat to outlast. */
 export function runnerUpRefund(session: Pick<Session, 'kind' | 'seats'>): boolean {
@@ -254,6 +277,15 @@ export const useCareer = create<CareerState>()(
 
           set({ ...patch, stats, credits: s.credits + summary.payout + summary.refund })
           get().gain(rep)
+
+          // Progress lives in this browser only: keep it there, and now and then suggest a copy.
+          keepStorage()
+          const games = stats.games ?? 0
+          const unsaved = games - s.backupAt
+          if ((unsaved >= BACKUP_EVERY || (summary.firstWin && unsaved >= 3)) && games - remindedAt >= BACKUP_EVERY) {
+            remindedAt = games
+            useToasts.getState().push({ kind: 'note', title: tx`Spielstand sichern`, text: tx`Dein Fortschritt liegt nur auf diesem Gerät. Im Profil machst du daraus einen Code.` })
+          }
           return summary
         },
 
@@ -264,6 +296,10 @@ export const useCareer = create<CareerState>()(
             return { stats }
           })
           settle()
+        },
+
+        noteBackup() {
+          set((s) => ({ backupAt: s.stats.games ?? 0 }))
         },
 
         noteToken(token) {
@@ -353,7 +389,8 @@ export const useCareer = create<CareerState>()(
     },
     {
       name: 'kessel-sabacc-career',
-      version: 1,
+      version: CAREER_VERSION,
+      migrate: (saved, version) => migrateCareer(saved, version) as unknown as CareerState,
       partialize: ({ gameRep: _gameRep, recent: _recent, ...saved }) => saved,
       // Saves from before the collection existed lack its defaults.
       merge: (saved, current) => {

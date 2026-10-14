@@ -8,7 +8,7 @@ import { suspicionCooldown } from '../career/ship'
 import { TABLES } from '../career/tables'
 import { TUTORIAL_OPPONENT, TUTORIAL_STEPS, tutorialGame, tutorialScript } from '../career/tutorial'
 import { applyAction, createGame, randomSeed, Rng, STANDARD_RULES, SUITS } from '../engine'
-import type { Action, GameEvent, GameState, Rules, TokenId } from '../engine'
+import type { Action, GameConfig, GameEvent, GameRecord, GameState, Rules, TokenId } from '../engine'
 import { useCareer } from './career'
 import type { GameSummary, GameTally } from './career'
 import { tempo } from './settings'
@@ -17,6 +17,8 @@ import { tx } from '../i18n'
 export const HUMAN = 0
 
 export interface Session {
+  /** which Sabacc is played; Kessel Sabacc when left out */
+  variant?: 'kessel' | 'spike'
   mode: 'career' | 'free'
   /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables */
   kind?: 'table' | 'duel' | 'tour' | 'daily'
@@ -51,16 +53,21 @@ export interface FeedItem {
 const RUN_KEY = 'kessel-sabacc-run'
 
 interface SavedRun {
-  version: 1
+  /** 1: before games were recorded */
+  version: 1 | 2
   session: Session
   game: GameState
+  /** how the game was set up and every move so far (from version 2) */
+  record?: GameRecord
+  /** where the dice for peeking had got to (from version 2) */
+  peekState?: number
 }
 
 /** A game that was interrupted, e.g. because the phone closed the app. */
 function loadRun(): SavedRun | null {
   try {
     const run = JSON.parse(localStorage.getItem(RUN_KEY) ?? 'null') as SavedRun | null
-    if (run?.version !== 1 || run.game.phase === 'gameOver') return null
+    if ((run?.version !== 1 && run?.version !== 2) || run.game.phase === 'gameOver') return null
     run.game.rules ??= STANDARD_RULES // saved before house rules existed
     return run
   } catch {
@@ -70,7 +77,8 @@ function loadRun(): SavedRun | null {
 
 function saveRun(session: Session, game: GameState): void {
   try {
-    localStorage.setItem(RUN_KEY, JSON.stringify({ version: 1, session, game } satisfies SavedRun))
+    const run: SavedRun = { version: 2, session, game, record: record ?? undefined, peekState: peekRng.state }
+    localStorage.setItem(RUN_KEY, JSON.stringify(run))
   } catch {
     /* storage full or blocked – the game simply is not resumable */
   }
@@ -156,6 +164,15 @@ let generation = 0
 let script: Action[] = []
 let feedId = 0
 let aiRng = new Rng(1)
+/** decides whether a peek is caught; seeded from the deal, so a recorded game stays the same game */
+let peekRng = new Rng(1)
+/** the current game, move by move; null for the practice hand and for games resumed from before recording */
+let record: GameRecord | null = null
+
+/** The game being played as a record that replays to the same result (see engine/replay). */
+export function currentRecord(): GameRecord | null {
+  return record && { config: record.config, actions: [...record.actions] }
+}
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms * tempo()))
 
@@ -254,6 +271,7 @@ export const useGame = create<GameStore>((set, get) => {
     const { game, feed } = get()
     if (!game) return []
     const { state, events } = applyAction(game, action)
+    record?.actions.push(action)
     publish(state, events, feed)
     return events
   }
@@ -395,7 +413,7 @@ export const useGame = create<GameStore>((set, get) => {
 
       // Better tables keep a closer eye on their guests.
       const rank = session.table ? TABLES.indexOf(session.table) : 2
-      const heat = suspicion + (20 + Math.random() * 18) * (1 + Math.max(0, rank) * 0.1)
+      const heat = suspicion + (20 + peekRng.next() * 18) * (1 + Math.max(0, rank) * 0.1)
       tally.peeks++
       useCareer.getState().bumpStats({ peeks: 1 })
       if (heat >= 100) {
@@ -407,7 +425,7 @@ export const useGame = create<GameStore>((set, get) => {
         return 'caught'
       }
       const unseen = SUITS.map((suit) => victim.hand![suit].id).filter((id) => !peeked.includes(id))
-      const card = unseen[Math.floor(Math.random() * unseen.length)]
+      const card = unseen[peekRng.int(unseen.length)]
       set({ suspicion: heat, peekUsed: true, peeked: card ? [...peeked, card] : peeked })
       sfx.card()
       return 'seen'
@@ -421,6 +439,8 @@ export const useGame = create<GameStore>((set, get) => {
       }
       const gen = ++generation
       aiRng = new Rng(randomSeed())
+      record = run.record ?? null
+      peekRng = new Rng(run.peekState ?? randomSeed())
       // What happened before the interruption is lost, so claim nothing special about this game.
       tally = { handsLost: 1, minChips: 99, peeks: 0, caught: 1 }
       set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false , tipsLeft: tipsFor(run.session) })
@@ -434,7 +454,7 @@ export const useGame = create<GameStore>((set, get) => {
       aiRng = new Rng(session.seed !== undefined ? session.seed ^ 0x5bd1e995 : randomSeed())
       tally = { handsLost: 0, minChips: session.playerChips ?? session.startingChips, peeks: 0, caught: 0 }
       useCareer.getState().beginGame(session)
-      const { state, events } = createGame({
+      const config: GameConfig = {
         seed: session.seed ?? randomSeed(),
         startingChips: session.startingChips,
         rules: session.rules,
@@ -443,7 +463,10 @@ export const useGame = create<GameStore>((set, get) => {
             ? { name: c.name, isHuman: false, tokens: c.tokens }
             : { name: tx`Du`, isHuman: true, tokens: humanTokens, chips: session.playerChips },
         ),
-      })
+      }
+      record = { config, actions: [] }
+      peekRng = new Rng(config.seed ^ 0x2545f491)
+      const { state, events } = createGame(config)
       set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(session) })
       publish(state, events, [])
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))
@@ -452,6 +475,7 @@ export const useGame = create<GameStore>((set, get) => {
     startTutorial() {
       const gen = ++generation
       script = tutorialScript()
+      record = null
       const session: Session = { mode: 'free', table: null, title: tx`Übungstisch`, venue: 'anchor', tutorial: true, seats: [null, TUTORIAL_OPPONENT], startingChips: 5 }
       const events: GameEvent[] = [
         { type: 'handStart', hand: 1, dealer: HUMAN },

@@ -441,6 +441,8 @@ export const EN: Record<string, string> = {
   "Eins gegen eins um": "One on one for",
   "Credits": "credits",
   "Guthaben": "Credits",
+  "Hinweis": "Note",
+  "Dein Fortschritt liegt nur auf diesem Gerät. Im Profil machst du daraus einen Code.": "Your progress lives on this device only. Turn it into a code in your profile.",
   "· {0}× gewonnen": "· won {0}×",
   "Die Sandläufer": "The Sandrunner",
   "Karriere": "Career",

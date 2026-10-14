@@ -1,24 +1,17 @@
 import { create } from 'zustand'
-import type { Character } from '../ai/personalities'
 import { sfx } from '../audio/sfx'
 import { Rng, randomSeed } from '../engine/rng'
 import { chooseSpikeAction } from '../spike/ai'
 import { applySpikeAction, createSpikeGame, IllegalSpikeAction } from '../spike'
-import type { SpikeAction, SpikeEvent, SpikeState } from '../spike'
+import type { SpikeAction, SpikeConfig, SpikeEvent, SpikeRecord, SpikeState } from '../spike'
 import { tx } from '../i18n'
 import { useCareer } from './career'
+import type { GameTally } from './career'
+import type { Session } from './game'
 import { tempo } from './settings'
 
 /** The player always sits in the first seat. */
 export const SPIKE_HUMAN = 0
-
-export interface SpikeSession {
-  title: string
-  venue: string
-  /** `null` is the player */
-  seats: (Character | null)[]
-  startingChips: number
-}
 
 export interface SpikeFeedItem {
   id: number
@@ -26,7 +19,7 @@ export interface SpikeFeedItem {
 }
 
 interface SpikeStore {
-  session: SpikeSession | null
+  session: Session | null
   game: SpikeState | null
   /** an animation or an opponent's turn is running; the player cannot act */
   busy: boolean
@@ -35,7 +28,7 @@ interface SpikeStore {
   outcome: 'won' | 'lost' | null
   /** the dice are on show: what they rolled, until the table moves on */
   rolling: [number, number] | null
-  start(session: SpikeSession): void
+  start(session: Session): void
   act(action: SpikeAction): void
   clear(): void
 }
@@ -43,6 +36,15 @@ interface SpikeStore {
 let generation = 0
 let feedId = 0
 let aiRng = new Rng(1)
+/** What the player went through in the current game; feeds the achievements. */
+let tally: GameTally = { handsLost: 0, minChips: 99, peeks: 0, caught: 0 }
+/** the current game, move by move */
+let record: SpikeRecord | null = null
+
+/** The game being played as a record that replays to the same result (see spike/replay). */
+export function currentSpikeRecord(): SpikeRecord | null {
+  return record && { config: record.config, actions: [...record.actions] }
+}
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms * tempo()))
 
@@ -117,18 +119,32 @@ export const useSpike = create<SpikeStore>((set, get) => {
   function publish(state: SpikeState, events: SpikeEvent[]): void {
     playSounds(events, state)
     set((st) => ({ game: state, feed: [...st.feed, ...events.map((event) => ({ id: ++feedId, event }))].slice(-60) }))
-    const { outcome } = get()
-    if (outcome) return
+    const { outcome, session } = get()
+    if (outcome || !session) return
+    trackStats(state, events)
     const me = state.players[SPIKE_HUMAN]
     const won = state.phase === 'gameOver' && state.winner === SPIKE_HUMAN
     if (won || me.eliminated) {
+      tally.runnerUp = !won && state.players.filter((p) => !p.eliminated).length === 1
       set({ outcome: won ? 'won' : 'lost' })
-      useCareer.getState().finishGame(null, won)
+      useCareer.getState().finishGame(session, won, tally)
+    }
+  }
+
+  function trackStats(state: SpikeState, events: SpikeEvent[]): void {
+    const me = state.players[SPIKE_HUMAN]
+    tally.minChips = Math.min(tally.minChips, me.chips)
+    for (const e of events) {
+      if (e.type !== 'settled') continue
+      const won = e.result.winners.includes(SPIKE_HUMAN)
+      if (!won) tally.handsLost++
+      useCareer.getState().bumpStats({ hands: 1, handsWon: won ? 1 : 0 })
     }
   }
 
   function step(action: SpikeAction): SpikeEvent[] {
     const { state, events } = applySpikeAction(get().game!, action)
+    record?.actions.push(action)
     publish(state, events)
     return events
   }
@@ -189,11 +205,15 @@ export const useSpike = create<SpikeStore>((set, get) => {
     start(session) {
       const gen = ++generation
       aiRng = new Rng(randomSeed())
-      const { state, events } = createSpikeGame({
-        seed: randomSeed(),
+      tally = { handsLost: 0, minChips: session.startingChips, peeks: 0, caught: 0 }
+      useCareer.getState().beginGame(session)
+      const config: SpikeConfig = {
+        seed: session.seed ?? randomSeed(),
         startingChips: session.startingChips,
         players: session.seats.map((c) => (c ? { name: c.name, isHuman: false } : { name: tx`Du`, isHuman: true })),
-      })
+      }
+      record = { config, actions: [] }
+      const { state, events } = createSpikeGame(config)
       set({ session, busy: true, thinking: null, feed: [], outcome: null, rolling: null })
       publish(state, events)
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))

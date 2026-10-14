@@ -3,7 +3,7 @@ import { create } from 'zustand'
 /** A short notice that slides in over whatever screen is open. */
 export interface Toast {
   id: number
-  kind: 'achievement' | 'rank' | 'item'
+  kind: 'achievement' | 'rank' | 'item' | 'note'
   title: string
   text: string
 }

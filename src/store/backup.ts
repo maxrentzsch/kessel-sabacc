@@ -11,7 +11,9 @@ function careerData(): Record<string, unknown> {
 
 /** The whole career as a code to copy somewhere safe or to another device. */
 export function exportSave(): string {
-  return encodeSave({ career: careerData(), savedAt: new Date().toISOString() })
+  const code = encodeSave({ career: careerData(), savedAt: new Date().toISOString() })
+  useCareer.getState().noteBackup()
+  return code
 }
 
 export type ImportResult = 'ok' | 'format' | 'damaged' | 'version'

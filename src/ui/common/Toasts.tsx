@@ -6,7 +6,8 @@ import { cx } from '../cx'
 import s from './common.module.css'
 import { tx } from '../../i18n'
 
-const KICKER = { achievement: tx`Erfolg`, rank: tx`Neuer Rang`, item: tx`Sammlung` } as const
+const KICKER = { achievement: tx`Erfolg`, rank: tx`Neuer Rang`, item: tx`Sammlung`, note: tx`Hinweis` } as const
+const ICON = { achievement: 'trophy', rank: 'trophy', item: 'check', note: 'info' } as const
 
 /** Shows queued notices one after the other at the top of the screen. */
 export function Toasts() {
@@ -33,7 +34,7 @@ export function Toasts() {
             transition={{ type: 'spring', stiffness: 380, damping: 28 }}
           >
             <span className={s.toastIcon}>
-              <Icon name={toast.kind === 'item' ? 'check' : 'trophy'} size={22} />
+              <Icon name={ICON[toast.kind]} size={22} />
             </span>
             <span className={s.toastBody}>
               <em>{KICKER[toast.kind]}</em>

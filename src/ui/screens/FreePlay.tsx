@@ -60,7 +60,15 @@ export function FreePlayScreen() {
 
   const playSpike = () => {
     unlockAudio()
-    startSpike({ title: 'Corellian Spike', venue: randomVenueId(), seats: [null, ...pickOpponents(count, difficulty)], startingChips: spikeChips })
+    startSpike({
+      variant: 'spike',
+      mode: 'free',
+      table: null,
+      title: 'Corellian Spike',
+      venue: randomVenueId(),
+      seats: [null, ...pickOpponents(count, difficulty)],
+      startingChips: spikeChips,
+    })
     go('spike')
   }
 
