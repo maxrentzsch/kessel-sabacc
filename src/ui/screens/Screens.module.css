@@ -65,13 +65,8 @@
   font-size: clamp(50px, 16vw, 100px);
   font-weight: 900;
   letter-spacing: 0.01em;
-  /* lamplight running down polished brass */
-  color: var(--accent);
-  background: linear-gradient(180deg, #fff1d6 8%, #f6c27a 46%, #d98a33 64%, #f0b765 92%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 22px rgb(234 150 60 / 0.45)) drop-shadow(0 2px 0 rgb(60 28 6 / 0.9));
+  color: var(--holo);
+  text-shadow: 0 0 26px rgb(118 236 228 / 0.55), 0 0 2px rgb(118 236 228 / 0.9);
 }
 
 .tagline {
@@ -589,7 +584,6 @@
   overflow-wrap: anywhere;
 }
 
-/* shift tokens are projected: turquoise, here as at the table */
 .tokenTileFocus {
   --plate-line: var(--ink-faint);
 }
@@ -1092,12 +1086,12 @@
 
 /* something is waiting today */
 .menuTileNew {
-  --plate-line: var(--accent-dim);
-  --plate-fill: linear-gradient(180deg, var(--accent-wash), transparent 80%), var(--frame-fill);
+  --plate-line: rgb(242 162 58 / 0.7);
+  --plate-fill: linear-gradient(180deg, rgb(242 162 58 / 0.1), transparent 80%), var(--frame-fill);
 }
 
 .menuTileNew small {
-  color: var(--accent);
+  color: var(--sand);
 }
 
 /* ship, rules and profile: quieter, below the ways to play */
@@ -1744,7 +1738,7 @@
   }
 }
 
-/* the chart is a projection: turquoise, in a brass frame */
+/* the chart sits in a frame like every other panel */
 .starFrame {
   --cut: 20px;
   --plate-line: var(--frame-line);

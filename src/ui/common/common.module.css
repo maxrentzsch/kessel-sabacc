@@ -303,10 +303,11 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--cream);
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
 }
 
-/* a small brass card on its side marks every title */
+/* a small card on its side marks every title */
 .screenTitle::before {
   content: '';
   flex: none;
@@ -347,7 +348,7 @@
 
 /* ── Rank ────────────────────────────────────────────────────────────────── */
 
-/* a number on a standing card, outlined in brass */
+/* a number on a standing card */
 .hexBadge {
   flex: none;
   position: relative;
@@ -377,7 +378,7 @@
 
 .hexBadge::after {
   inset: 2px;
-  background: radial-gradient(circle at 50% 30%, #2a1c10, #120c08);
+  background: radial-gradient(circle at 50% 30%, #1d2b30, #0b1113);
 }
 
 .rank {
