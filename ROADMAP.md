@@ -125,7 +125,13 @@ matter later.
   Built from SVG layers and a canvas for sand and stars, with live-synthesised sound; a shorter
   version under reduced motion, and it can be watched again from the profile.
 - **Until act 1 is rebuilt** the sector map after the launch holds today's remaining tables (the
-  Long Night, Vael, the Kessel Crown).
+  Long Night, Vael, the Kessel Crown). Their scenes and the hangar still speak of a ship kept
+  behind glass that the Crown sets free, so they are rewritten in this phase: the ship is yours,
+  the Crown lifts the jump lock.
+- **What waits until the ship is won.** The hangar opens with the stake game. The tour and the
+  daily hand stay outside the story, but until the launch they only play at Tarsk's venues.
+- **Pim's and Kessk's share.** The stake they lent comes back as a story thread, not a second
+  debt: repaying it is the first job of act 1, and Pim's cheaper modules are his thanks.
 
 **Done when:** a new player gets from the scrapyard to the stars without reading the rules page,
 each of the three ways leads to its animal, and a save from 1.2 lands in the right place (see
@@ -139,6 +145,9 @@ The sector map for the first time: everything in it can be reached, nothing outs
   Kessel, where shift workers play for wage tokens (new); the Lump, a casino in a hollowed-out
   asteroid (new); Vael station, the Red Seal's salon (Dray Venn); Oshi's hangar, a table among
   seized ships (new); the finale at the Kessel Crown, Oshi's own tournament.
+- **Nine career tables instead of six.** Buy-ins, payouts and shift-token unlocks are spread anew
+  over the prologue's three and act 1's six tables, and every new table gets a rival for its
+  duel. The progress simulation sets the curve.
 - **Travel.** Every jump costs a little fuel. Routes need an engine level, a hull level or a
   syndicate's leave. Tarsk stays the home port, where Pim fits modules for less.
 - **The debt.** One instalment per act. Winnings can go towards it at any time; an act's last
@@ -330,6 +339,10 @@ the landing field, so they are offered the same ride once when they open the new
 | The daily seed can be worked out from the date, so the cards can be known before playing. | Phase 7b: the server hands out the seed at the start; fully fair only with the server dealing (7c). |
 | Bix's specialities need tells and suspicion per opponent, which come later. | Phase 1 gives all animals the shared abilities; the specialities switch on with phase 3. |
 | Saves from 1.2 never rode to the landing field and have no animal. | Saves from 1.2: they are offered the ride once. |
+| Until act 1 is rebuilt, today's scenes and the hangar still tell of a ship behind glass. | Phase 1: those scenes and the hangar are rewritten with the prologue. |
+| The hangar, the tour and the daily hand are open before the player owns a ship or has left Tarsk. | Phase 1: the hangar opens with the stake game; tour and daily hand stay on Tarsk until the launch. |
+| "You owe Pim and Kessk a share" had no meaning in play. | Phase 1: repaying them is act 1's first job, not a second debt. |
+| The money curve is tuned for six career tables; there will be nine. | Phase 2: buy-ins, payouts and unlocks spread anew by simulation; new tables get rivals. |
 | A card from the sleeve is a duplicate the engines do not allow. | Phase 3: the engines accept an outside card; its twin at the reveal raises suspicion. |
 | A debt the player can simply ignore is no spine. | Phase 2: each act's last table needs its instalment. |
 | A debt that grows by real days punishes anyone who takes a break. | Phase 2: instalments per act, nothing grows while away. |
