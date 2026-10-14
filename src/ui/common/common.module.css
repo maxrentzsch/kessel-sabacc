@@ -1,24 +1,57 @@
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 
+/*
+ * Buttons have the outline of a card lying on its side: pointed at both
+ * ends. The outline and the fill are two layers cut to that shape, so a
+ * variant only changes the custom properties below.
+ */
 .btn {
+  --btn-line: var(--frame-line);
+  --btn-fill: var(--frame-fill);
+  --btn-tip: 14px;
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   min-height: 50px;
-  padding: 0 24px;
-  border-radius: 999px;
+  padding: 0 28px;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 14.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink);
-  /* no blur behind buttons: over the moving table it would be redone every frame */
-  background: rgb(10 15 17 / 0.9);
-  border: 1.5px solid rgb(255 255 255 / 0.22);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.4);
-  transition: transform 0.12s var(--ease-out), border-color 0.2s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
+  transition: transform 0.12s var(--ease-out), opacity 0.2s, filter 0.2s;
+}
+
+.btn::before,
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(var(--btn-tip) 0, calc(100% - var(--btn-tip)) 0, 100% 50%, calc(100% - var(--btn-tip)) 100%, var(--btn-tip) 100%, 0 50%);
+  transition: background 0.2s;
+}
+
+/* no blur behind buttons: over the moving table it would be redone every frame */
+.btn::before {
+  background: var(--btn-line);
+}
+
+.btn::after {
+  inset: 1.5px;
+  background: var(--btn-fill);
+  clip-path: polygon(
+    calc(var(--btn-tip) - 0.7px) 0,
+    calc(100% - var(--btn-tip) + 0.7px) 0,
+    100% 50%,
+    calc(100% - var(--btn-tip) + 0.7px) 100%,
+    calc(var(--btn-tip) - 0.7px) 100%,
+    0 50%
+  );
 }
 
 .btn:active:not(:disabled) {
@@ -31,44 +64,93 @@
 
 @media (hover: hover) {
   .btn:hover:not(:disabled) {
-    border-color: var(--holo);
-    box-shadow: 0 6px 18px rgb(0 0 0 / 0.4), var(--glow);
+    --btn-line: var(--accent);
   }
 }
 
 .btnPrimary {
-  color: #04302d;
-  background: linear-gradient(180deg, #a2f7f0, #58d8d0);
-  border-color: #d2fffb;
-  box-shadow: 0 0 22px rgb(118 236 228 / 0.38), inset 0 1px 0 rgb(255 255 255 / 0.5);
+  --btn-line: var(--accent-hi);
+  --btn-fill: var(--accent-fill);
+  color: var(--accent-ink);
+  filter: drop-shadow(0 0 12px var(--accent-dim));
+}
+
+@media (hover: hover) {
+  .btnPrimary:hover:not(:disabled) {
+    --btn-line: #fff;
+  }
 }
 
 .btnGhost {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
+  --btn-line: transparent;
+  --btn-fill: transparent;
   color: var(--ink-dim);
 }
 
 .btnDanger {
+  --btn-line: rgb(255 123 110 / 0.55);
+  --btn-fill: rgb(70 18 15 / 0.85);
   color: #ffd9d4;
-  border-color: rgb(255 123 110 / 0.55);
-  background: rgb(70 18 15 / 0.85);
 }
 
 .btnBlock {
   width: 100%;
 }
 
+/* a small round control, cut to the same pointed shape */
 .iconBtn {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--ink);
-  border: 1.5px solid rgb(255 255 255 / 0.22);
-  background: rgb(10 15 17 / 0.82);
+  composes: btn;
+  --btn-tip: 11px;
+  flex: none;
+  width: 48px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+/*
+ * A panel with two corners cut off, the way the shift tokens are cut. Like
+ * the buttons it is drawn in two layers, so it needs no border of its own.
+ */
+.plate {
+  --plate-line: var(--frame-line);
+  --plate-fill: var(--frame-fill);
+  --cut: 14px;
+  position: relative;
+  isolation: isolate;
+}
+
+.plate::before,
+.plate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+
+.plate::before {
+  background: var(--plate-line);
+}
+
+.plate::after {
+  inset: 1px;
+  background: var(--plate-fill);
+  clip-path: polygon(
+    calc(var(--cut) - 0.4px) 0,
+    100% 0,
+    100% calc(100% - var(--cut) + 0.4px),
+    calc(100% - var(--cut) + 0.4px) 100%,
+    0 100%,
+    0 calc(var(--cut) - 0.4px)
+  );
+}
+
+/* a plate that can be chosen: lit along its outline when it is */
+.plateOn {
+  --plate-line: var(--accent);
+  --plate-fill: linear-gradient(180deg, var(--accent-wash), transparent 70%), var(--frame-fill);
 }
 
 /* ── Sheets and dialogs: dark glass with a glowing title, like the in-game overlays ── */
@@ -107,17 +189,18 @@
   max-height: 86dvh;
   overflow-y: auto;
   padding: 18px 18px calc(18px + var(--safe-bottom));
-  background: rgb(9 14 16 / 0.97);
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background: var(--sheet-fill);
+  border: 1px solid var(--frame-line);
+  border-top-color: var(--accent-dim);
   border-bottom: 0;
-  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  border-radius: 4px 4px 0 0;
   box-shadow: 0 -18px 50px rgb(0 0 0 / 0.55);
   will-change: transform;
 }
 
 .sheetDialog {
-  border-bottom: 1px solid rgb(255 255 255 / 0.1);
-  border-radius: var(--radius-l);
+  border-bottom: 1px solid var(--frame-line);
+  border-radius: 4px;
   padding-bottom: 18px;
   width: min(100%, 420px);
 }
@@ -128,23 +211,23 @@
   }
 
   .sheet {
-    border-bottom: 1px solid rgb(255 255 255 / 0.1);
-    border-radius: var(--radius-l);
+    border-bottom: 1px solid var(--frame-line);
+    border-radius: 4px;
     padding-bottom: 18px;
   }
 }
 
 .sheetTitle {
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--holo-dim);
+  border-bottom: 1px solid var(--accent-dim);
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-align: center;
-  color: var(--holo);
-  text-shadow: var(--glow);
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
 }
 
 .sheetText {
@@ -164,16 +247,42 @@
 
 /* ── Screen scaffolding ──────────────────────────────────────────────────── */
 
+/*
+ * Every menu is a back room of the cantina: fretwork on the wall, a lamp
+ * overhead and darkness towards the floor. All of it is a still picture,
+ * painted once.
+ */
 .screen {
   position: absolute;
   inset: 0;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   overflow: clip;
   background:
-    radial-gradient(90% 50% at 50% 0%, rgb(214 122 40 / 0.2), transparent 70%),
-    radial-gradient(70% 40% at 50% 100%, rgb(118 236 228 / 0.06), transparent 70%), var(--bg);
+    radial-gradient(80% 46% at 50% -4%, rgb(232 140 52 / 0.3), transparent 72%),
+    linear-gradient(180deg, #1d140d, #120d09 55%, #0b0806);
+}
+
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('../theme/fret.svg') center top / 99px 105px;
+  opacity: 0.05;
+  mask-image: linear-gradient(180deg, #000 0%, rgb(0 0 0 / 0.55) 45%, transparent 85%);
+}
+
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 30%, transparent 45%, rgb(5 3 2 / 0.7) 100%);
 }
 
 .screenHead {
@@ -185,13 +294,27 @@
 
 .screenTitle {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--holo);
-  text-shadow: var(--glow);
+  color: var(--cream);
+}
+
+/* a small brass card on its side marks every title */
+.screenTitle::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 9px;
+  background: var(--accent);
+  clip-path: polygon(30% 0, 70% 0, 100% 50%, 70% 100%, 30% 100%, 0 50%);
+  filter: drop-shadow(0 0 4px var(--accent-dim));
 }
 
 .screenBody {
@@ -207,52 +330,70 @@
 }
 
 .credits {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 13px;
-  border-radius: 999px;
-  border: 1.5px solid rgb(242 162 58 / 0.55);
-  color: var(--sand);
-  font-family: var(--font-display);
-  font-weight: 800;
+  composes: btn;
+  /* the chip in front of the number is painted into the fill */
+  --btn-fill: radial-gradient(circle, var(--chip-b) 0 26%, var(--chip-a) 30% 60%, var(--chip-b) 64% 78%, var(--chip-c) 82%, transparent 86%) 12px 50% / 13px 13px no-repeat,
+    var(--frame-fill);
+  --btn-line: var(--accent-dim);
+  --btn-tip: 10px;
+  min-height: 36px;
+  padding: 0 16px 0 32px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
-  background: rgb(10 15 17 / 0.82);
-}
-
-.credits::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--chip-b) 0 26%, var(--chip-a) 30% 60%, var(--chip-b) 64% 78%, var(--chip-c) 82%);
+  pointer-events: none;
 }
 
 /* ── Rank ────────────────────────────────────────────────────────────────── */
 
+/* a number on a standing card, outlined in brass */
+.hexBadge {
+  flex: none;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 40px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.hexBadge::before,
+.hexBadge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* the outline of a card */
+  clip-path: polygon(28% 0, 72% 0, 100% 46%, 100% 54%, 72% 100%, 28% 100%, 0 54%, 0 46%);
+}
+
+.hexBadge::before {
+  background: var(--badge-line, var(--accent));
+}
+
+.hexBadge::after {
+  inset: 2px;
+  background: radial-gradient(circle at 50% 30%, #2a1c10, #120c08);
+}
+
 .rank {
+  composes: plate;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: var(--radius-l);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(9 14 16 / 0.82);
 }
 
+/* the rank sits on a little standing card */
 .rankLevel {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 900;
-  color: var(--holo);
-  border: 2px solid var(--holo);
-  box-shadow: 0 0 14px rgb(118 236 228 / 0.4);
+  composes: hexBadge;
+  width: 38px;
+  height: 44px;
+  font-size: 18px;
 }
 
 .rankBody {
@@ -285,7 +426,7 @@
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: var(--holo);
+  background: var(--accent);
   transition: width 0.8s var(--ease-out);
 }
 
@@ -316,7 +457,7 @@
   width: min(100%, 420px);
   padding: 10px 14px;
   text-align: left;
-  border-radius: var(--radius-l);
+  border-radius: 4px;
   border: 1px solid rgb(242 162 58 / 0.6);
   background: rgb(9 14 16 / 0.95);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.6), 0 0 22px rgb(242 162 58 / 0.25);
@@ -324,8 +465,8 @@
 }
 
 .toastRank {
-  border-color: var(--holo);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.6), 0 0 22px rgb(118 236 228 / 0.3);
+  border-color: var(--accent);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.6), 0 0 22px rgb(234 164 82 / 0.3);
 }
 
 .toastIcon {
@@ -340,7 +481,7 @@
 }
 
 .toastRank .toastIcon {
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .toastBody {
@@ -360,7 +501,7 @@
 }
 
 .toastRank .toastBody em {
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .toastBody b {
@@ -435,8 +576,8 @@
   font-weight: 800;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--holo);
-  text-shadow: var(--glow);
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
 }
 
 .sceneLine {
@@ -445,8 +586,8 @@
   gap: 10px;
   min-height: 168px;
   padding: 16px 18px 18px;
-  border: 1px solid var(--holo-dim);
-  border-radius: var(--radius-l);
+  border: 1px solid var(--accent-dim);
+  border-radius: 4px;
   background: rgb(9 14 16 / 0.88);
 }
 
@@ -482,7 +623,7 @@
 
 .sceneFigure {
   width: min(64vw, 36vh, 300px);
-  filter: drop-shadow(0 0 26px rgb(118 236 228 / 0.28));
+  filter: drop-shadow(0 0 26px rgb(234 164 82 / 0.28));
 }
 
 .sceneFigure svg {
@@ -500,7 +641,7 @@
   font-family: var(--font-display);
   font-size: 18px;
   text-transform: uppercase;
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .sceneWho em {

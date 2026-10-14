@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 140" width="132" height="140" fill="none" stroke="#eaa452" stroke-width="6" stroke-linejoin="miter">
+  <g transform="translate(66 0)">
+    <path d="M8 9H56V60H8M8 34H36M66 0H-2M66 70H-2" />
+    <path d="M8 9H56V60H8M8 34H36M66 0H-2M66 70H-2" transform="scale(-1 1)" />
+  </g>
+  <g transform="translate(66 70)">
+    <path d="M8 9H56V60H8M8 34H36M66 0H-2M66 70H-2" transform="scale(-1 1) translate(-66 0)" />
+    <path d="M8 9H56V60H8M8 34H36M66 0H-2M66 70H-2" transform="translate(-66 0)" />
+  </g>
+</svg>

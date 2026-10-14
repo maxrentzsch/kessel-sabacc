@@ -66,7 +66,7 @@ export function ProfileScreen() {
   const percent = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)} %` : '–')
 
   const facts: [string, string | number][] = [
-    [tx`Credits`, career.credits],
+    [tx`Guthaben`, career.credits],
     [tx`Tische gewonnen`, `${TABLES.filter((t) => career.tableWins[t.id]).length}/${TABLES.length}`],
     [tx`Tokens`, `${career.unlockedTokens.length}/${TOKEN_IDS.length}`],
     [tx`Partien`, n('games')],

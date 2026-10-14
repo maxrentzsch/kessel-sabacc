@@ -1,5 +1,4 @@
 import { motion } from 'motion/react'
-import { rankOf } from '../../career/reputation'
 import { TABLES } from '../../career/tables'
 import { today } from '../../career/tour'
 import type { Card } from '../../engine'
@@ -8,8 +7,8 @@ import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
 import { useNav } from '../../store/nav'
 import { CardBack, CardFace } from '../art/CardArt'
+import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
-import { usePlayerTitle } from '../common/Rank'
 import { cx } from '../cx'
 import s from './Screens.module.css'
 import { tx } from '../../i18n'
@@ -31,8 +30,6 @@ export function HomeScreen() {
   const tour = useCareer((c) => c.tour)
   const tourBest = useCareer((c) => c.tourBest)
   const dailyOpen = useCareer((c) => c.daily?.date !== today())
-  const rank = rankOf(useCareer((c) => c.rep))
-  const title = usePlayerTitle()
   const savedRun = useGame((g) => g.savedRun)
   const resume = useGame((g) => g.resume)
 
@@ -92,36 +89,35 @@ export function HomeScreen() {
           </small>
         </button>
         <div className={s.menuRow}>
-          <button className={cx(common.btn, s.menuTile, dailyOpen && s.menuTileNew)} onClick={() => go('daily')}>
+          <button className={cx(common.plate, s.menuTile, dailyOpen && s.menuTileNew)} onClick={() => go('daily')}>
             <span>{tx`Tageshand`}</span>
             <small>{dailyOpen ? tx`Heute noch offen` : tx`Morgen wieder`}</small>
           </button>
-          <button className={cx(common.btn, s.menuTile)} onClick={() => go('tour')}>
+          <button className={cx(common.plate, s.menuTile)} onClick={() => go('tour')}>
             <span>{tx`Auf Tour`}</span>
             <small className="num">{tour ? tx`Halt ${tour.wins + 1}` : tx`Rekord ${tourBest}`}</small>
           </button>
-        </div>
-        <div className={s.menuRow}>
-          <button className={cx(common.btn, s.menuTile)} onClick={() => go('ship')}>
-            <span>{tx`Sandläufer`}</span>
-            <small>
-              {tx`Rang `}{rank.level} · {title}
-            </small>
-          </button>
-          <button className={cx(common.btn, s.menuTile)} onClick={() => go('free')}>
+          <button className={cx(common.plate, s.menuTile)} onClick={() => go('free')}>
             <span>{tx`Freies Spiel`}</span>
-            <small>{tx`Eigene Regeln`}</small>
+            <small>{tx`Kessel oder Corellian Spike`}</small>
+          </button>
+          <button className={cx(common.plate, s.menuTile)} onClick={practise}>
+            <span>{tx`Übung`}</span>
+            <small>{tx`Eine Hand mit Erklärung`}</small>
           </button>
         </div>
         <div className={s.menuTrio}>
-          <button className={common.btn} onClick={practise}>
-            {tx`Übung`}
+          <button onClick={() => go('ship')}>
+            <Icon name="ship" size={22} />
+            <span>{tx`Sandläufer`}</span>
           </button>
-          <button className={common.btn} onClick={() => go('rules')}>
-            {tx`Regeln`}
+          <button onClick={() => go('rules')}>
+            <Icon name="book" size={22} />
+            <span>{tx`Regeln`}</span>
           </button>
-          <button className={common.btn} onClick={() => go('profile')}>
-            {tx`Profil`}
+          <button onClick={() => go('profile')}>
+            <Icon name="user" size={22} />
+            <span>{tx`Profil`}</span>
           </button>
         </div>
       </motion.nav>

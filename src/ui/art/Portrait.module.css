@@ -18,12 +18,12 @@
 }
 
 .frameFill {
-  fill: rgb(9 14 16 / 0.9);
+  fill: var(--frame-fill);
 }
 
 .frameLine {
   fill: none;
-  stroke: var(--holo);
+  stroke: var(--accent);
   stroke-opacity: 0.7;
   stroke-width: 3.5;
   stroke-linejoin: round;

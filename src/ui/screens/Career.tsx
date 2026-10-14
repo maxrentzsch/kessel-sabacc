@@ -73,13 +73,13 @@ function TableCard({ table, index, onSit }: { table: TableDef; index: number; on
 
   return (
     <motion.article
-      className={cx(s.tableCard, !unlocked && s.tableLocked, wins > 0 && s.tableWon)}
+      className={cx(common.plate, s.tableCard, !unlocked && s.tableLocked, wins > 0 && s.tableWon)}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
       <header className={s.tableHead}>
-        <span className={cx(s.tableNo, 'num')}>{index + 1}</span>
+        <span className={cx(common.hexBadge, s.tableNo, 'num')}>{index + 1}</span>
         <div>
           <h2 className={s.tableName}>{table.name}</h2>
           <p className={s.tablePlace}>{table.place}</p>
@@ -263,7 +263,9 @@ export function CareerScreen() {
                 {legend && <p className={s.fieldNote}>{tx`Jeder Gegner spielt sein bestes Spiel, du startest mit einem Chip weniger – für doppelten Einsatz und Gewinn.`}</p>}
               </div>
             )}
-            <StarMap tables={TABLES} standing={standing} selected={selected} onSelect={(t) => setSelected(t.id)} ship={(tableWins.crown ?? 0) > 0} />
+            <div className={cx(common.plate, s.starFrame)}>
+              <StarMap tables={TABLES} standing={standing} selected={selected} onSelect={(t) => setSelected(t.id)} ship={(tableWins.crown ?? 0) > 0} />
+            </div>
           </div>
           <TableCard key={`${selected}-${legend}`} table={table} index={TABLES.indexOf(table)} onSit={sit} />
         </div>

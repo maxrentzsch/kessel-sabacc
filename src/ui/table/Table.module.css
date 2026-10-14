@@ -38,6 +38,18 @@
   --rim-b: #cfc4a9;
   /* the copper the table is trimmed with */
   --metal: #b9763f;
+
+  /* at the table every control is part of the projected overlay */
+  --accent: var(--holo);
+  --accent-hi: #d2fffb;
+  --accent-ink: #04302d;
+  --accent-dim: var(--holo-dim);
+  --accent-wash: rgb(118 236 228 / 0.1);
+  --accent-glow: var(--glow);
+  --accent-fill: linear-gradient(180deg, #a2f7f0, #58d8d0);
+  --frame-line: rgb(255 255 255 / 0.22);
+  --frame-fill: rgb(10 15 17 / 0.9);
+  --sheet-fill: rgb(9 14 16 / 0.97);
 }
 
 /*

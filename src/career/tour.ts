@@ -80,12 +80,24 @@ const TOUR_SEATS: Difficulty[][] = [
   ['hard', 'hard', 'hard'],
 ]
 
+/** Who sits at the `stage`-th table (from 1); beyond the last listed stage it stays that hard. */
+export function tourSeats(stage: number): Difficulty[] {
+  return TOUR_SEATS[Math.min(stage, TOUR_SEATS.length) - 1]
+}
+
+/** How many house rules the `stage`-th table has. */
+export function tourRuleCount(stage: number): number {
+  return stage >= 4 ? 2 : 1
+}
+
 /** The `stage`-th table (from 1) of the tour with this seed. Always the same for the same seed. */
 export function tourStop(seed: number, stage: number): Stop {
   const rng = new Rng(seed + stage * 7919)
-  const seats = TOUR_SEATS[Math.min(stage, TOUR_SEATS.length) - 1]
-  return buildStop(rng, tx`Halt ${stage}`, seats, stage >= 4 ? 2 : 1, 6)
+  return buildStop(rng, tx`Halt ${stage}`, tourSeats(stage), tourRuleCount(stage), 6)
 }
+
+/** The stages with a pot of their own; after the last one every win adds the same. */
+export const TOUR_STAGES = TOUR_POTS.length - 1
 
 // ── The daily hand: one table a day, the same for everybody ──────────────────
 

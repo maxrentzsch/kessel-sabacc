@@ -1,5 +1,6 @@
 import { unlockAudio } from '../../audio/sfx'
-import { dailyReward, dailyStop, dayBefore, today, TOUR_ENTRY, TOUR_UNLOCK, tourPot, tourStop } from '../../career/tour'
+import type { Difficulty } from '../../ai/policy'
+import { dailyReward, dailyStop, dayBefore, today, TOUR_ENTRY, TOUR_STAGES, TOUR_UNLOCK, tourPot, tourRuleCount, tourSeats, tourStop } from '../../career/tour'
 import type { Stop } from '../../career/tour'
 import { venueOf } from '../../career/venues'
 import { TOKEN_TEXT } from '../../i18n/texts'
@@ -15,6 +16,10 @@ import { cx } from '../cx'
 import s from './Screens.module.css'
 import { tx } from '../../i18n'
 
+function level(difficulty: Difficulty): string {
+  return difficulty === 'hard' ? tx`spielt hart` : difficulty === 'medium' ? tx`solide` : tx`unerfahren`
+}
+
 /** Who sits at a made-up table and what is different about it. */
 function StopCard({ stop }: { stop: Stop }) {
   return (
@@ -29,7 +34,7 @@ function StopCard({ stop }: { stop: Stop }) {
             <Portrait character={c} size={44} frame />
             <span>
               <b>{c.name}</b>
-              <em>{c.profile.difficulty === 'hard' ? tx`spielt hart` : c.profile.difficulty === 'medium' ? tx`solide` : tx`unerfahren`}</em>
+              <em>{level(c.profile.difficulty)}</em>
             </span>
           </span>
         ))}
@@ -41,6 +46,40 @@ function StopCard({ stop }: { stop: Stop }) {
         </p>
       ))}
     </div>
+  )
+}
+
+/** The whole way ahead: who waits at every stop and what the pot is worth after it. */
+function Route({ wins, on }: { wins: number; on: boolean }) {
+  const stages = Array.from({ length: TOUR_STAGES }, (_, i) => i + 1)
+  const beyond = tourPot(TOUR_STAGES + 1) - tourPot(TOUR_STAGES)
+  return (
+    <section className={s.route}>
+      <h2 className={s.routeHead}>
+        <span className={s.fieldLabel}>{tx`Die Route`}</span>
+        <span className={s.fieldLabel}>{tx`Topf`}</span>
+      </h2>
+      <ol>
+        {stages.map((stage) => {
+          const done = on && stage <= wins
+          const here = on && stage === wins + 1
+          const seats = tourSeats(stage)
+          return (
+            <li key={stage} className={cx(s.routeStop, done && s.routeDone, here && s.routeHere)}>
+              <span className={cx(common.hexBadge, s.routeNo, 'num')}>{done ? <Icon name="check" size={16} /> : stage}</span>
+              <span className={s.routeWho}>
+                <b>{seats.length === 1 ? tx`Duell` : tx`${seats.length} Gegner`}</b>
+                <em>
+                  {seats.map(level).join(', ')} · {tourRuleCount(stage) === 1 ? tx`eine Hausregel` : tx`zwei Hausregeln`}
+                </em>
+              </span>
+              <b className={cx(s.routePot, 'num')}>{tourPot(stage)}</b>
+            </li>
+          )
+        })}
+      </ol>
+      <p className={s.routeMore}>{tx`Danach bringt jeder weitere Sieg ${beyond} Credits mehr.`}</p>
+    </section>
   )
 }
 
@@ -120,6 +159,8 @@ export function TourScreen() {
               </button>
             </>
           )}
+
+          <Route wins={tour?.wins ?? 0} on={!!tour} />
         </div>
       </div>
     </div>
@@ -169,6 +210,18 @@ export function DailyScreen() {
               <dd className="num">{career.dailyBest}</dd>
             </div>
           </dl>
+
+          <div className={s.streak}>
+            <span className={s.fieldLabel}>{tx`Belohnung nach Tagen in Folge`}</span>
+            <ol>
+              {Array.from({ length: 7 }, (_, i) => i + 1).map((day) => (
+                <li key={day} className={cx(day <= (played ? streak : streak - 1) && s.streakDone, !played && day === Math.min(streak, 7) && s.streakToday)}>
+                  <small>{tx`Tag ${day}`}</small>
+                  <b className="num">{dailyReward(day)}</b>
+                </li>
+              ))}
+            </ol>
+          </div>
 
           <StopCard stop={daily} />
 

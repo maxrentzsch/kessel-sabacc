@@ -5,9 +5,8 @@
   justify-content: space-between;
   padding: calc(24px + var(--safe-top)) calc(20px + var(--safe-right)) calc(28px + var(--safe-bottom)) calc(20px + var(--safe-left));
   background:
-    radial-gradient(75% 42% at 50% 26%, rgb(226 132 44 / 0.34), transparent 70%),
-    radial-gradient(70% 40% at 50% 105%, rgb(118 236 228 / 0.1), transparent 70%),
-    linear-gradient(180deg, #1c130c, #100b08);
+    radial-gradient(75% 42% at 50% 26%, rgb(226 132 44 / 0.36), transparent 70%),
+    linear-gradient(180deg, #1e140c, #110b07 60%, #0a0705);
 }
 
 .hero {
@@ -66,8 +65,13 @@
   font-size: clamp(50px, 16vw, 100px);
   font-weight: 900;
   letter-spacing: 0.01em;
-  color: var(--holo);
-  text-shadow: 0 0 26px rgb(118 236 228 / 0.55), 0 0 2px rgb(118 236 228 / 0.9);
+  /* lamplight running down polished brass */
+  color: var(--accent);
+  background: linear-gradient(180deg, #fff1d6 8%, #f6c27a 46%, #d98a33 64%, #f0b765 92%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 22px rgb(234 150 60 / 0.45)) drop-shadow(0 2px 0 rgb(60 28 6 / 0.9));
 }
 
 .tagline {
@@ -85,6 +89,7 @@
 }
 
 .menuMain {
+  --btn-tip: 22px;
   flex-direction: column;
   gap: 2px;
   min-height: 66px;
@@ -121,17 +126,15 @@
 }
 
 .tableCard {
+  --cut: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-radius: var(--radius-l);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(9 14 16 / 0.82);
 }
 
 .tableWon {
-  border-color: rgb(242 162 58 / 0.5);
+  --plate-line: var(--accent-dim);
 }
 
 .tableLocked {
@@ -155,17 +158,7 @@
 }
 
 .tableNo {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
   font-size: 17px;
-  font-weight: 800;
-  color: var(--holo);
-  border: 1.5px solid var(--holo-dim);
-  background: rgb(0 0 0 / 0.3);
 }
 
 .tableName {
@@ -234,8 +227,8 @@
 
 .tableFacts div {
   padding: 8px 10px;
-  border-radius: 10px;
-  background: rgb(0 0 0 / 0.25);
+  border-left: 2px solid var(--accent-dim);
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.04), transparent);
 }
 
 .tableFacts dt {
@@ -277,7 +270,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 8px 12px;
-  border-radius: var(--radius-m);
+  border-radius: 3px;
   font-size: 13px;
   border: 1px solid rgb(242 162 58 / 0.4);
   background: rgb(242 162 58 / 0.08);
@@ -298,7 +291,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: var(--radius-m);
+  border-radius: 3px;
   border: 1px dashed rgb(255 255 255 / 0.22);
 }
 
@@ -345,7 +338,7 @@
   font-family: var(--font-display);
   font-size: 18px;
   text-transform: uppercase;
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .storyHead em {
@@ -361,6 +354,8 @@
 }
 
 .outro {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -368,9 +363,6 @@
   margin-top: 10px;
   padding: 10px 14px;
   text-align: left;
-  border-radius: var(--radius-m);
-  background: rgb(9 14 16 / 0.82);
-  border: 1px solid rgb(255 255 255 / 0.12);
 }
 
 .outro p {
@@ -386,7 +378,7 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--holo);
+  color: var(--accent);
 }
 
 /* ── Free play ───────────────────────────────────────────────────────────── */
@@ -411,7 +403,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .fieldNote {
@@ -422,15 +414,15 @@
 .segments {
   display: flex;
   padding: 4px;
-  border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.14);
-  background: rgb(9 14 16 / 0.82);
+  border-radius: 4px;
+  border: 1px solid var(--frame-line);
+  background: var(--frame-fill);
 }
 
 .segment {
   flex: 1;
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: 2px;
   font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -443,8 +435,9 @@
 }
 
 .segmentOn {
-  color: #04302d;
-  background: linear-gradient(180deg, #a2f7f0, #58d8d0);
+  color: var(--accent-ink);
+  background: var(--accent-fill);
+  box-shadow: 0 0 12px var(--accent-dim);
 }
 
 /* a segment with its price underneath */
@@ -530,11 +523,10 @@
 }
 
 .focus {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
   min-height: 96px;
   padding: 12px 14px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: rgb(0 0 0 / 0.28);
   font-size: 13.5px;
   color: var(--ink-dim);
 }
@@ -564,16 +556,14 @@
 }
 
 .tokenTile {
-  position: relative;
+  composes: plate from '../common/common.module.css';
+  --cut: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   padding: 10px 4px 8px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: var(--panel);
-  transition: border-color 0.2s, background 0.2s, scale 0.12s;
+  transition: scale 0.12s;
 }
 
 .tokenTile:active {
@@ -599,13 +589,14 @@
   overflow-wrap: anywhere;
 }
 
+/* shift tokens are projected: turquoise, here as at the table */
 .tokenTileFocus {
-  border-color: var(--ink-faint);
+  --plate-line: var(--ink-faint);
 }
 
 .tokenTileOn {
-  border-color: var(--holo);
-  background: rgb(118 236 228 / 0.1);
+  --plate-line: var(--holo);
+  --plate-fill: linear-gradient(180deg, rgb(118 236 228 / 0.12), transparent 80%), var(--frame-fill);
 }
 
 .tokenTileOn .tokenTileIcon {
@@ -732,18 +723,18 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--holo);
+  color: var(--accent);
   text-align: center;
 }
 
 .unlock {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
+  --plate-line: var(--holo-dim);
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--holo-dim);
-  background: rgb(9 14 16 / 0.82);
 }
 
 .unlock > span:last-child {
@@ -809,7 +800,7 @@
 }
 
 .rule li::marker {
-  color: var(--brass);
+  color: var(--accent);
 }
 
 .rule kbd {
@@ -830,19 +821,20 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--holo);
-  text-shadow: var(--glow);
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
 }
 
 .ruleTitle span {
   display: grid;
   place-items: center;
-  width: 28px;
+  width: 24px;
   height: 28px;
-  border-radius: 50%;
   font-size: 13px;
-  color: var(--holo);
-  border: 1.5px solid var(--holo-dim);
+  color: var(--accent-ink);
+  background: var(--accent-fill);
+  /* the number sits on a little card */
+  clip-path: polygon(28% 0, 72% 0, 100% 46%, 100% 54%, 72% 100%, 28% 100%, 0 54%, 0 46%);
   text-shadow: none;
 }
 
@@ -875,13 +867,12 @@
 }
 
 .rank {
+  composes: plate from '../common/common.module.css';
+  --cut: 10px;
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 8px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: var(--panel);
 }
 
 .rank > span:last-child {
@@ -924,13 +915,12 @@
 }
 
 .glossaryItem {
+  composes: plate from '../common/common.module.css';
+  --cut: 10px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: var(--panel);
 }
 
 .glossaryItem > span:last-child {
@@ -978,10 +968,9 @@
 }
 
 .stats div {
-  padding: 10px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: var(--panel);
+  padding: 8px 12px;
+  border-left: 2px solid var(--accent-dim);
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.05), transparent);
 }
 
 .stats dt {
@@ -996,11 +985,9 @@
 }
 
 .toggles {
+  composes: plate from '../common/common.module.css';
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--line-soft);
-  background: var(--panel);
   margin-bottom: 14px;
 }
 
@@ -1015,7 +1002,7 @@
 }
 
 .toggle + .toggle {
-  border-top: 1px solid var(--line-soft);
+  border-top: 1px solid var(--frame-line);
 }
 
 .toggle > span {
@@ -1034,9 +1021,9 @@
   position: relative;
   flex: none;
   width: 48px;
-  height: 28px;
-  border-radius: 99px;
-  background: var(--line);
+  height: 26px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.16);
   transition: background 0.2s;
 }
 
@@ -1046,14 +1033,14 @@
   top: 3px;
   left: 3px;
   width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  height: 20px;
+  border-radius: 2px;
   background: var(--ink);
   transition: translate 0.22s var(--ease-spring);
 }
 
 .switchOn {
-  background: var(--brass);
+  background: var(--accent);
 }
 
 .switchOn::after {
@@ -1063,12 +1050,30 @@
 /* ── Home: more ways to play ─────────────────────────────────────────────── */
 
 .menuTile {
+  --cut: 12px;
+  display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 1px;
-  min-height: 58px;
-  padding: 0 10px;
-  border-radius: var(--radius-l);
+  min-height: 60px;
+  padding: 8px 10px;
+  font-family: var(--font-display);
   font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: transform 0.12s var(--ease-out);
+}
+
+.menuTile:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .menuTile:hover {
+    --plate-line: var(--accent);
+  }
 }
 
 .menuTile small,
@@ -1087,23 +1092,51 @@
 
 /* something is waiting today */
 .menuTileNew {
-  border-color: rgb(242 162 58 / 0.7);
+  --plate-line: var(--accent-dim);
+  --plate-fill: linear-gradient(180deg, var(--accent-wash), transparent 80%), var(--frame-fill);
 }
 
 .menuTileNew small {
-  color: var(--sand);
+  color: var(--accent);
 }
 
+/* ship, rules and profile: quieter, below the ways to play */
 .menuTrio {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--frame-line);
 }
 
 .menuTrio button {
-  min-height: 44px;
-  padding: 0 6px;
-  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  transition: color 0.2s, transform 0.12s var(--ease-out);
+}
+
+.menuTrio button svg {
+  color: var(--accent);
+}
+
+.menuTrio button:active {
+  transform: scale(0.95);
+}
+
+@media (hover: hover) {
+  .menuTrio button:hover {
+    color: var(--ink);
+  }
 }
 
 /* ── Hangar ──────────────────────────────────────────────────────────────── */
@@ -1119,12 +1152,10 @@
 }
 
 .dock {
+  composes: plate from '../common/common.module.css';
+  --cut: 20px;
+  --plate-fill: radial-gradient(80% 60% at 50% 0%, rgb(255 217 160 / 0.14), transparent 70%), linear-gradient(180deg, #17120d, #0c0907);
   padding: 8px 12px 12px;
-  border-radius: var(--radius-l);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background:
-    radial-gradient(80% 60% at 50% 0%, rgb(255 217 160 / 0.14), transparent 70%),
-    linear-gradient(180deg, #17120d, #0c0907);
 }
 
 .ship {
@@ -1208,14 +1239,13 @@
 }
 
 .module {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(9 14 16 / 0.82);
 }
 
 .module button {
@@ -1242,7 +1272,7 @@
 }
 
 .moduleInfo .moduleNext {
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .pips {
@@ -1253,7 +1283,7 @@
 .pips i {
   width: 16px;
   height: 6px;
-  border-radius: 3px;
+  border-radius: 1px;
   background: rgb(255 255 255 / 0.16);
 }
 
@@ -1291,16 +1321,14 @@
 }
 
 .piece {
+  composes: plate from '../common/common.module.css';
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   padding: 14px 10px 12px;
   text-align: center;
-  border-radius: var(--radius-l);
-  border: 1.5px solid rgb(255 255 255 / 0.1);
-  background: rgb(9 14 16 / 0.82);
-  transition: border-color 0.2s, box-shadow 0.2s, scale 0.12s;
+  transition: scale 0.12s;
 }
 
 .piece:active:not(:disabled) {
@@ -1321,12 +1349,12 @@
 }
 
 .pieceOn {
-  border-color: var(--holo);
-  box-shadow: 0 0 18px rgb(118 236 228 / 0.3);
+  --plate-line: var(--accent);
+  --plate-fill: linear-gradient(180deg, var(--accent-wash), transparent 80%), var(--frame-fill);
 }
 
 .piece .pieceState {
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .piece .piecePrice {
@@ -1379,8 +1407,8 @@
   font-size: 17px;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--holo);
-  text-shadow: var(--glow);
+  color: var(--accent);
+  text-shadow: var(--accent-glow);
 }
 
 .piecesWide .piece b {
@@ -1389,29 +1417,26 @@
 
 /* ── Achievements ────────────────────────────────────────────────────────── */
 
-.plainCount::before {
-  display: none;
+/* a count without the chip in front */
+.plainCount {
+  --btn-fill: var(--frame-fill);
+  padding: 0 16px;
 }
 
 .feat {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: var(--radius-m);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(9 14 16 / 0.82);
 }
 
 .featIcon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  composes: hexBadge from '../common/common.module.css';
+  --badge-line: rgb(255 255 255 / 0.18);
   color: var(--ink-faint);
-  border: 1.5px solid currentColor;
 }
 
 .featBody {
@@ -1442,7 +1467,7 @@
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: var(--holo);
+  background: var(--accent);
 }
 
 .featReward {
@@ -1463,24 +1488,25 @@
 }
 
 .featDone {
+  --plate-line: var(--accent-dim);
+  --plate-fill: linear-gradient(90deg, var(--accent-wash), transparent 60%), var(--frame-fill);
   grid-template-columns: auto minmax(0, 1fr);
-  border-color: rgb(242 162 58 / 0.4);
 }
 
 .featDone .featIcon {
-  color: var(--sand);
+  --badge-line: var(--accent);
+  color: var(--accent);
 }
 
 /* ── Tour and daily hand ─────────────────────────────────────────────────── */
 
 .stop {
+  composes: plate from '../common/common.module.css';
+  --cut: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border-radius: var(--radius-l);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(9 14 16 / 0.82);
 }
 
 .stop header {
@@ -1508,7 +1534,7 @@
   gap: 8px;
   padding: 14px;
   text-align: center;
-  border-radius: var(--radius-m);
+  border-radius: 3px;
   color: var(--ink-dim);
   border: 1px dashed rgb(255 255 255 / 0.2);
 }
@@ -1556,18 +1582,19 @@
 
 .earnedRep b {
   font-size: 20px;
-  color: var(--holo);
+  color: var(--accent);
 }
 
 .earnedFeat {
+  composes: plate from '../common/common.module.css';
+  --cut: 10px;
+  --plate-line: var(--accent-dim);
+  --plate-fill: linear-gradient(90deg, var(--accent-wash), transparent 70%), var(--frame-fill);
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-radius: var(--radius-m);
-  color: var(--sand);
-  border: 1px solid rgb(242 162 58 / 0.45);
-  background: rgb(242 162 58 / 0.08);
+  color: var(--accent);
 }
 
 .earnedFeat span {
@@ -1671,11 +1698,11 @@
   margin-top: 12px;
   padding: 10px 12px;
   resize: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
+  border: 1px solid var(--frame-line);
+  border-radius: 3px;
   font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
   word-break: break-all;
-  color: var(--holo);
+  color: var(--accent);
   background: rgb(0 0 0 / 0.4);
   user-select: text;
   -webkit-user-select: text;
@@ -1717,12 +1744,17 @@
   }
 }
 
+/* the chart is a projection: turquoise, in a brass frame */
+.starFrame {
+  --cut: 20px;
+  --plate-line: var(--frame-line);
+  --plate-fill: radial-gradient(120% 90% at 30% 20%, #111e25, #06090b 72%);
+  padding: 1px;
+}
+
 .starMap {
   display: block;
   width: 100%;
-  border-radius: var(--radius-l);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: radial-gradient(120% 90% at 30% 20%, #111e25, #06090b 72%);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1821,3 +1853,174 @@
   }
 }
 
+
+/* ── Tour: the way ahead ─────────────────────────────────────────────────── */
+
+.route {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.routeHead {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 14px 0 2px;
+}
+
+.route ol {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.routeStop {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px 6px 2px;
+}
+
+/* the stops hang on one line, lit as far as the player has come */
+.routeStop::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--frame-line);
+  z-index: -1;
+}
+
+.routeStop:first-child::before {
+  top: 50%;
+}
+
+.routeStop:last-child::before {
+  bottom: 50%;
+}
+
+.routeDone::before {
+  background: var(--accent-dim);
+}
+
+.routeNo {
+  --badge-line: rgb(255 255 255 / 0.22);
+  color: var(--ink-dim);
+  font-size: 15px;
+}
+
+.routeDone .routeNo {
+  --badge-line: var(--accent-dim);
+  color: var(--accent);
+}
+
+.routeHere {
+  background: linear-gradient(90deg, var(--accent-wash), transparent 85%);
+}
+
+.routeHere .routeNo {
+  --badge-line: var(--accent);
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px var(--accent-dim));
+}
+
+.routeWho {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.routeWho b {
+  font-size: 14px;
+}
+
+.routeWho em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.routePot {
+  font-size: 16px;
+  color: var(--ink-dim);
+}
+
+.routeDone .routePot,
+.routeHere .routePot {
+  color: var(--accent);
+}
+
+.routeMore {
+  padding-left: 50px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* ── Daily hand: the streak ──────────────────────────────────────────────── */
+
+.streak {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.streak ol {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.streak li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 0 6px;
+  border: 1px solid var(--frame-line);
+  border-radius: 3px;
+  background: var(--frame-fill);
+  line-height: 1.2;
+}
+
+.streak small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.streak b {
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.streakDone {
+  border-color: var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-wash), transparent), var(--frame-fill);
+}
+
+.streakDone b {
+  color: var(--accent);
+}
+
+.streak .streakToday {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-dim);
+}
+
+.streakToday b {
+  color: var(--ink);
+}
