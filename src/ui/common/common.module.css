@@ -666,6 +666,12 @@
   transition: opacity 0.3s;
 }
 
+.sceneChoices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .sceneMoreOff {
   opacity: 0;
 }

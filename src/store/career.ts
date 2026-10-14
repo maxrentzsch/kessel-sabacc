@@ -6,6 +6,8 @@ import { cosmetic, COSMETICS, DEFAULT_LOOK } from '../career/cosmetics'
 import type { CosmeticKind } from '../career/cosmetics'
 import { CAREER_VERSION, migrateCareer } from '../career/migrate'
 import { rankOf, REP } from '../career/reputation'
+import { effectsOf } from '../career/story'
+import type { Choice, Scene } from '../career/story'
 import { bailoutAmount, repMultiplier, SHIP_MODULES } from '../career/ship'
 import { STARTING_CREDITS, STARTING_TOKENS, TABLES } from '../career/tables'
 import type { TableDef } from '../career/tables'
@@ -79,6 +81,8 @@ interface CareerState extends Progress {
   noteToken(token: TokenId): void
   gain(rep: number): void
   markStory(id: string): void
+  /** A scene was played to its end, with the answer the player gave if it asked for one. */
+  finishScene(scene: Scene, choice?: Choice): void
   buy(id: string): boolean
   equip(id: string): void
   owns(id: string): boolean
@@ -319,6 +323,14 @@ export const useCareer = create<CareerState>()(
 
         markStory(id) {
           set((s) => (s.storySeen.includes(id) ? s : { storySeen: [...s.storySeen, id] }))
+        },
+
+        finishScene(scene, choice) {
+          for (const effect of effectsOf(scene, choice)) {
+            if ('flag' in effect) get().markStory(effect.flag)
+            else set((s) => ({ credits: s.credits + effect.credits }))
+          }
+          settle()
         },
 
         owns(id) {

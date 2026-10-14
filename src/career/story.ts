@@ -1,3 +1,4 @@
+import { TABLES } from './tables'
 import type { TableDef } from './tables'
 import { tx } from '../i18n'
 
@@ -13,6 +14,32 @@ export interface Line {
 }
 
 export const YOU = 'you'
+
+/** Something the story changes: a fact to remember, or credits handed over. */
+export type Effect = { flag: string } | { credits: number }
+
+/** An answer the player can give at the end of a scene. */
+export interface Choice {
+  text: string
+  effects?: Effect[]
+  /** the scene that follows this answer */
+  next?: string
+}
+
+/** A piece of the story, with what it changes and what may follow it. */
+export interface Scene {
+  id: string
+  title: string
+  /** whose room it plays in, see career/venues */
+  venue: string
+  lines: Line[]
+  /** what playing the scene to its end changes; every scene also remembers that it was seen */
+  effects?: Effect[]
+  /** answers at the end; without them the scene closes with a tap */
+  choices?: Choice[]
+  /** the scene that follows when there are no answers */
+  next?: string
+}
 
 /** How it all starts: shown once, before the first table. */
 export const PROLOGUE_SCENE: Line[] = [
@@ -93,4 +120,26 @@ const VICTORY: Record<string, Line[]> = {
 /** After the first win at a table, back on the map. */
 export function victoryScene(table: TableDef): Line[] {
   return VICTORY[table.id] ?? [{ who: table.rival, text: table.outro }]
+}
+
+/**
+ * Every scene of the story by its id. A scene's id is also the fact that
+ * it has been seen, kept in the career's `storySeen`.
+ */
+export const SCENES: Record<string, Scene> = Object.fromEntries(
+  [
+    { id: 'prologue', title: tx`Die Sandläufer`, venue: 'crown', lines: PROLOGUE_SCENE },
+    ...TABLES.flatMap((table): Scene[] => [
+      { id: `intro-${table.id}`, title: table.name, venue: table.id, lines: arrivalScene(table) },
+      { id: `win-${table.id}`, title: table.name, venue: table.id, lines: victoryScene(table) },
+    ]),
+  ].map((scene) => [scene.id, scene]),
+)
+
+/** Scenes that something in the game sets off; every other scene is reached from one of these. */
+export const TRIGGERS: string[] = ['prologue', ...TABLES.flatMap((table) => [`intro-${table.id}`, `win-${table.id}`])]
+
+/** Everything a scene and the answer given to it change, the scene's own id first. */
+export function effectsOf(scene: Scene, choice?: Choice): Effect[] {
+  return [{ flag: scene.id }, ...(scene.effects ?? []), ...(choice?.effects ?? [])]
 }

@@ -896,7 +896,7 @@ export const EN: Record<string, string> = {
   "Steig aus.": "Junk your hand.",
   "Erst abwerfen? Tippe die Karte, die weg soll": "Discard first? Tap the card to throw away",
   "Welche Karte gibst du für die {0}?": "Which card do you give for the {0}?",
-  "Stapel = nehmen · Ablage = tauschen · oder stehen": "Deck = take · discard = swap · or stand",
+  "Karte nehmen, tauschen oder stehen": "Take a card, swap or stand",
   "{0} zum Mitgehen": "{0} to call",
   "Schieben oder setzen": "Check or bet",
   "Ziel: Deine Karten sollen zusammen null ergeben – oder so nah dran wie möglich. Grün zählt plus, Rot minus.": "Goal: your cards should add up to zero – or as close as possible. Green counts plus, red minus.",

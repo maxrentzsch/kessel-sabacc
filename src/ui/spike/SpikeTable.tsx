@@ -333,7 +333,7 @@ export function SpikeTableScreen() {
       : mode === 'swap'
         ? tx`Welche Karte gibst du für die ${signed(top?.value ?? 0)}?`
         : cardTurn
-          ? tx`Stapel = nehmen · Ablage = tauschen · oder stehen`
+          ? tx`Karte nehmen, tauschen oder stehen`
           : due > 0
             ? tx`${chipsText(due)} zum Mitgehen`
             : tx`Schieben oder setzen`

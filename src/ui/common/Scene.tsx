@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import { sfx } from '../../audio/sfx'
 import { YOU } from '../../career/story'
-import type { Line } from '../../career/story'
+import type { Choice, Scene as SceneDef } from '../../career/story'
 import { venueOf } from '../../career/venues'
 import { Portrait } from '../art/Portrait'
 import { cx } from '../cx'
@@ -11,12 +11,9 @@ import s from './common.module.css'
 import { tx } from '../../i18n'
 
 interface Props {
-  lines: Line[]
-  /** whose room this plays in; paints the scene */
-  venue?: string
-  /** what the scene is called, in small letters above it */
-  title?: string
-  onDone(): void
+  scene: SceneDef
+  /** the scene is over; `choice` is the answer the player gave, if it asked for one */
+  onDone(choice?: Choice): void
 }
 
 /** How fast the words appear, in letters per tick. */
@@ -24,9 +21,11 @@ const TICK = 22
 
 /**
  * A piece of the story: one line at a time, written out as it is spoken.
- * A tap finishes the line, the next tap moves on.
+ * A tap finishes the line, the next tap moves on. A scene that asks
+ * something waits on its last line for one of the answers.
  */
-export function Scene({ lines, venue, title, onDone }: Props) {
+export function Scene({ scene, onDone }: Props) {
+  const { lines, venue, title, choices } = scene
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const line = lines[index]
@@ -41,10 +40,12 @@ export function Scene({ lines, venue, title, onDone }: Props) {
     // one run per line
   }, [index])
 
+  const last = index === lines.length - 1
+  const asking = last && !typing && !!choices
   const next = () => {
     if (typing) setShown(line.text.length)
-    else if (index < lines.length - 1) setIndex(index + 1)
-    else onDone()
+    else if (!last) setIndex(index + 1)
+    else if (!choices) onDone()
   }
 
   return (
@@ -66,7 +67,10 @@ export function Scene({ lines, venue, title, onDone }: Props) {
         className={s.sceneSkip}
         onClick={(e) => {
           e.stopPropagation()
-          onDone()
+          // A question still needs its answer: skip to it.
+          if (!choices) return onDone()
+          setIndex(lines.length - 1)
+          setShown(lines[lines.length - 1].text.length)
         }}
       >
         {tx`Überspringen`}
@@ -111,7 +115,24 @@ export function Scene({ lines, venue, title, onDone }: Props) {
             </p>
           </motion.div>
         </AnimatePresence>
-        <p className={cx(s.sceneMore, typing && s.sceneMoreOff)}>{index < lines.length - 1 ? tx`Tippen für weiter` : tx`Tippen zum Schließen`}</p>
+        {asking ? (
+          <div className={s.sceneChoices}>
+            {choices.map((choice) => (
+              <button
+                key={choice.text}
+                className={s.btn}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDone(choice)
+                }}
+              >
+                {choice.text}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className={cx(s.sceneMore, typing && s.sceneMoreOff)}>{!last || choices ? tx`Tippen für weiter` : tx`Tippen zum Schließen`}</p>
+        )}
       </div>
     </motion.div>
   )

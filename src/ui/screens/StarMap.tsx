@@ -1,5 +1,7 @@
 import { motion } from 'motion/react'
 import { useRef } from 'react'
+import { placeOf } from '../../career/maps'
+import type { MapDef, Place } from '../../career/maps'
 import type { TableDef } from '../../career/tables'
 import { venueOf } from '../../career/venues'
 import { cx } from '../cx'
@@ -8,16 +10,6 @@ import { tx } from '../../i18n'
 
 export type Standing = 'locked' | 'open' | 'won'
 
-/** Where each table lies on the chart, and what kind of place it is. */
-const SITES: Record<string, { x: number; y: number; r: number; kind: 'planet' | 'ringed' | 'moon' | 'station' | 'crown'; label: 'above' | 'below' }> = {
-  anchor: { x: 66, y: 232, r: 15, kind: 'ringed', label: 'below' },
-  dune: { x: 150, y: 196, r: 17, kind: 'planet', label: 'below' },
-  haze: { x: 78, y: 126, r: 14, kind: 'planet', label: 'above' },
-  lodge: { x: 196, y: 108, r: 12, kind: 'moon', label: 'below' },
-  salon: { x: 296, y: 160, r: 15, kind: 'station', label: 'below' },
-  crown: { x: 286, y: 54, r: 17, kind: 'crown', label: 'above' },
-}
-
 /** Stars in fixed places: the same sky every time. */
 const STARS = (() => {
   let seed = 7
@@ -25,8 +17,7 @@ const STARS = (() => {
   return Array.from({ length: 90 }, () => ({ x: next() * 360, y: next() * 290, r: 0.4 + next() * 1.1, o: 0.25 + next() * 0.6 }))
 })()
 
-function Site({ table, standing, selected, onSelect }: { table: TableDef; standing: Standing; selected: boolean; onSelect(): void }) {
-  const site = SITES[table.id]
+function Site({ table, site, standing, selected, onSelect }: { table: TableDef; site: Place; standing: Standing; selected: boolean; onSelect(): void }) {
   const colors = venueOf(table.id).colors
   const id = `site-${table.id}`
   const { r } = site
@@ -85,6 +76,7 @@ function Site({ table, standing, selected, onSelect }: { table: TableDef; standi
 }
 
 interface Props {
+  map: MapDef
   tables: TableDef[]
   standing(table: TableDef): Standing
   selected: string
@@ -97,8 +89,8 @@ interface Props {
  * The career as a chart of the sector: six places along a route. Whoever
  * plays travels it – on the liner at first, in their own ship at the end.
  */
-export function StarMap({ tables, standing, selected, onSelect, ship }: Props) {
-  const at = SITES[selected]
+export function StarMap({ map, tables, standing, selected, onSelect, ship }: Props) {
+  const at = placeOf(map, selected)
   // The marker points the way it last travelled.
   const last = useRef({ x: at.x, y: at.y, angle: -30 })
   if (last.current.x !== at.x || last.current.y !== at.y) {
@@ -106,7 +98,10 @@ export function StarMap({ tables, standing, selected, onSelect, ship }: Props) {
   }
   // Above the place, or beside it where the name is written above.
   const mark = at.label === 'below' ? { x: at.x, y: at.y - at.r - 13 } : { x: at.x + at.r + 18, y: at.y + 2 }
-  const frontier = tables.reduce((far, table, i) => (standing(table) !== 'locked' ? i : far), 0)
+  const open = (id: string) => {
+    const table = tables.find((t) => t.id === id)
+    return !!table && standing(table) !== 'locked'
+  }
 
   return (
     <svg viewBox="0 0 360 290" className={s.starMap} role="group" aria-label={tx`Sektorkarte`}>
@@ -126,15 +121,15 @@ export function StarMap({ tables, standing, selected, onSelect, ship }: Props) {
         <circle key={i} cx={star.x} cy={star.y} r={star.r} fill="#fff" opacity={star.o} />
       ))}
 
-      {/* the route, lit as far as the player has come */}
-      {tables.slice(1).map((table, i) => {
-        const from = SITES[tables[i].id]
-        const to = SITES[table.id]
-        return <path key={table.id} d={`M${from.x} ${from.y}L${to.x} ${to.y}`} className={cx(s.lane, i < frontier && s.laneOpen)} />
+      {/* the ways between places, lit as far as the player has come */}
+      {map.routes.map(({ from, to }) => {
+        const a = placeOf(map, from)
+        const b = placeOf(map, to)
+        return <path key={`${from}-${to}`} d={`M${a.x} ${a.y}L${b.x} ${b.y}`} className={cx(s.lane, open(from) && open(to) && s.laneOpen)} />
       })}
 
       {tables.map((table) => (
-        <Site key={table.id} table={table} standing={standing(table)} selected={table.id === selected} onSelect={() => onSelect(table)} />
+        <Site key={table.id} table={table} site={placeOf(map, table.id)} standing={standing(table)} selected={table.id === selected} onSelect={() => onSelect(table)} />
       ))}
 
       <motion.g initial={false} animate={mark} transition={{ type: 'spring', stiffness: 60, damping: 15 }} className={s.marker}>

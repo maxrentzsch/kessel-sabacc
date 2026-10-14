@@ -1005,7 +1005,10 @@
   position: relative;
   z-index: 2;
   display: flex;
-  gap: 0.4em;
+  /* name above count: side by side, four piles read as one long line */
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
   font-family: var(--font-display);
   font-size: clamp(9px, calc(var(--t) * 2.2), 13px);
   font-weight: 800;
@@ -1025,6 +1028,8 @@
 
 .pileLabel em {
   font-style: normal;
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
   color: rgb(233 223 201 / 0.6);
 }
 
@@ -1378,9 +1383,9 @@
   line-height: 1.35;
   text-align: center;
   color: var(--ink);
-  border-radius: var(--radius-m);
-  background: rgb(9 14 16 / 0.86);
-  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 4px;
+  background: var(--frame-fill);
+  border: 1px solid var(--frame-line);
 }
 
 /* the practice hand's coach */
@@ -1623,31 +1628,24 @@
 }
 
 .standBtn {
+  composes: btn from '../common/common.module.css';
   flex: 1;
   min-width: 104px;
   height: 50px;
-  border-radius: 999px;
   font-size: 15px;
-  font-weight: 800;
-  color: var(--ink);
-  background: rgb(9 14 16 / 0.85);
-  border: 1.5px solid rgb(255 255 255 / 0.25);
-  transition: opacity 0.2s, box-shadow 0.25s, border-color 0.25s, scale 0.12s;
-}
-
-.standBtn:disabled {
-  opacity: 0.35;
+  transition: opacity 0.2s, filter 0.25s, scale 0.12s;
 }
 
 .standBtn:active:not(:disabled) {
   scale: 0.96;
 }
 
+/* lit when it is the player's move */
 .meActive .standBtn:not(:disabled) {
-  border-color: var(--holo);
+  --btn-line: var(--holo);
   color: var(--holo);
   text-shadow: var(--glow);
-  box-shadow: 0 0 18px rgb(118 236 228 / 0.3);
+  filter: drop-shadow(0 0 10px rgb(118 236 228 / 0.3));
 }
 
 /* ── Token sheet ─────────────────────────────────────────────────────────── */
@@ -2343,9 +2341,9 @@
     align-items: flex-start;
     gap: 6px;
     padding: 10px 14px;
-    border-radius: var(--radius-l);
-    background: rgb(9 14 16 / 0.82);
-    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 4px;
+    background: var(--frame-fill);
+    border: 1px solid var(--frame-line);
   }
 
   /* tokens and the stand button become items of the corner layout */
@@ -2371,6 +2369,13 @@
   .tokenBtn {
     width: 48px;
     height: 62px;
+  }
+
+  /* room enough for name and count on one line, and none to spare above the status line */
+  .pileLabel {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.4em;
   }
 
   .chip {

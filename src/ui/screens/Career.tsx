@@ -2,8 +2,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import type { Character } from '../../ai/personalities'
-import { arrivalScene, PROLOGUE_SCENE, victoryScene } from '../../career/story'
-import type { Line } from '../../career/story'
+import { KESSEL_SECTOR } from '../../career/maps'
+import { SCENES } from '../../career/story'
+import type { Choice, Scene as SceneDef } from '../../career/story'
 import { duelBuyIn, duelPayout, payoutFor, TABLES } from '../../career/tables'
 import type { TableDef } from '../../career/tables'
 import { TOKEN_TEXT } from '../../i18n/texts'
@@ -171,12 +172,10 @@ function TableCard({ table, index, onSit }: { table: TableDef; index: number; on
   )
 }
 
-/** A piece of the story waiting to be told, and what follows from it. */
+/** A piece of the story waiting to be told, and what follows once it has been. */
 interface Telling {
-  lines: Line[]
-  venue: string
-  title: string
-  done(): void
+  scene: SceneDef
+  done?(): void
 }
 
 export function CareerScreen() {
@@ -185,7 +184,7 @@ export function CareerScreen() {
   const career = useCareer()
   const [bailedOut, setBailedOut] = useState(0)
   const [telling, setTelling] = useState<Telling | null>(null)
-  const { legend, storySeen, tableWins, markStory } = career
+  const { legend, storySeen, tableWins, markStory, finishScene } = career
 
   const standing = (table: TableDef): Standing =>
     (legend ? career.legendWins : tableWins)[table.id] ? 'won' : legend || career.isUnlocked(table) ? 'open' : 'locked'
@@ -202,7 +201,7 @@ export function CareerScreen() {
   useEffect(() => {
     if (telling) return
     if (!storySeen.includes('prologue')) {
-      setTelling({ lines: PROLOGUE_SCENE, venue: 'crown', title: tx`Die Sandläufer`, done: () => markStory('prologue') })
+      setTelling({ scene: SCENES.prologue })
       return
     }
     const untold = TABLES.filter((t) => tableWins[t.id] && !storySeen.includes(`win-${t.id}`))
@@ -210,9 +209,7 @@ export function CareerScreen() {
     if (!latest) return
     setSelected(latest.id)
     setTelling({
-      lines: victoryScene(latest),
-      venue: latest.id,
-      title: latest.name,
+      scene: SCENES[`win-${latest.id}`],
       done: () => {
         // Wins from before the story was told stay untold.
         for (const t of untold) markStory(`win-${t.id}`)
@@ -227,15 +224,7 @@ export function CareerScreen() {
     const start = () => prepare({ pool: career.unlockedTokens, session })
     // Whoever holds the table has a word to say before the first game there.
     if (session.kind !== 'table' || session.legend || storySeen.includes(`intro-${at.id}`)) return start()
-    setTelling({
-      lines: arrivalScene(at),
-      venue: at.id,
-      title: at.name,
-      done: () => {
-        markStory(`intro-${at.id}`)
-        start()
-      },
-    })
+    setTelling({ scene: SCENES[`intro-${at.id}`], done: start })
   }
 
   return (
@@ -264,7 +253,7 @@ export function CareerScreen() {
               </div>
             )}
             <div className={cx(common.plate, s.starFrame)}>
-              <StarMap tables={TABLES} standing={standing} selected={selected} onSelect={(t) => setSelected(t.id)} ship={(tableWins.crown ?? 0) > 0} />
+              <StarMap map={KESSEL_SECTOR} tables={TABLES} standing={standing} selected={selected} onSelect={(t) => setSelected(t.id)} ship={(tableWins.crown ?? 0) > 0} />
             </div>
           </div>
           <TableCard key={`${selected}-${legend}`} table={table} index={TABLES.indexOf(table)} onSit={sit} />
@@ -274,13 +263,17 @@ export function CareerScreen() {
       <AnimatePresence>
         {telling && (
           <Scene
-            key={telling.title}
-            lines={telling.lines}
-            venue={telling.venue}
-            title={telling.title}
-            onDone={() => {
-              setTelling(null)
-              telling.done()
+            key={telling.scene.id}
+            scene={telling.scene}
+            onDone={(choice?: Choice) => {
+              finishScene(telling.scene, choice)
+              // An answer may lead on to the next scene; otherwise whatever waited for this one goes ahead.
+              const next = choice?.next ?? telling.scene.next
+              if (next) setTelling({ scene: SCENES[next], done: telling.done })
+              else {
+                setTelling(null)
+                telling.done?.()
+              }
             }}
           />
         )}
