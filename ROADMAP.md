@@ -369,12 +369,13 @@ the landing field, so they are offered the same ride once when they open the new
 - Bix, chosen without being asked, from a vulptex pup, a Loth-cat kitten and a convor chick.
 - Coruscant Shift as the third variant.
 - The order of the phases above.
+- The launch as the full sequence of six shots.
+- The animals drawn in more detail than the first sketches: fur, faceted crystals, irises,
+  feathers.
 
 ## Still open
 
-1. The launch: the full sequence of six shots, or a short one of three (ignition, above the
-   clouds, the sector)?
-2. Heat and the garrison: only in act 3, or from act 1 on?
-3. The *Outlaw* ending with bounty hunters in legend mode afterwards?
-4. A server for phase 7: a free account in your name when the time comes?
-5. Music: generated in the browser (free, more synthetic) or recorded (needs licences)?
+1. Heat and the garrison: only in act 3, or from act 1 on?
+2. The *Outlaw* ending with bounty hunters in legend mode afterwards?
+3. A server for phase 7: a free account in your name when the time comes?
+4. Music: generated in the browser (free, more synthetic) or recorded (needs licences)?
