@@ -1,6 +1,7 @@
 # Ideas
 
-Things that could still be added. Effort is a rough guess: small / medium / large.
+Things that could still be added. Effort is a rough guess: small / medium / large. The larger
+plan, in phases, is in [ROADMAP.md](ROADMAP.md).
 
 ## Next
 
