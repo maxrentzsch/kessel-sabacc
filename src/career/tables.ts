@@ -3,6 +3,8 @@ import { tx } from '../i18n'
 
 export interface TableDef {
   id: string
+  /** on Tarsk, reached by speeder, or out in the sector, which needs the ship */
+  chapter: 'tarsk' | 'kessel'
   name: string
   place: string
   blurb: string
@@ -51,15 +53,13 @@ export function stakeHandicap(stake: Stake, tableChips: number): number {
   return stake.multiplier - 1 + (tableChips >= 7 ? 1 : 0)
 }
 
-export const PROLOGUE =
-  tx`Dein Frachter, die „Sandläufer“, steht als Pfand in Madame Oshis Hangar. Sie gibt ihn nur am Spieltisch zurück: Gewinn die Kessel-Krone, und das Schiff gehört wieder dir. Du hast 150 Credits, drei abgegriffene Shift-Tokens – und einen langen Weg durch sechs Spielhöllen vor dir.`
-
 export const STARTING_CREDITS = 150
 export const STARTING_TOKENS: TokenId[] = ['freeDraw', 'refund', 'generalTariff']
 
 export const TABLES: TableDef[] = [
   {
     id: 'anchor',
+    chapter: 'tarsk',
     name: tx`Zum Rostigen Anker`,
     place: tx`Schrottwerft Tarsk`,
     blurb: tx`Klebrige Tische, kleine Einsätze. Hier fängt jeder an.`,
@@ -74,6 +74,7 @@ export const TABLES: TableDef[] = [
   },
   {
     id: 'dune',
+    chapter: 'tarsk',
     name: tx`Dünenposten`,
     place: tx`Karawanenhof Mehr`,
     blurb: tx`Zwei Stammgäste, die sich seit Jahren gegenseitig ausnehmen.`,
@@ -90,6 +91,7 @@ export const TABLES: TableDef[] = [
   },
   {
     id: 'haze',
+    chapter: 'tarsk',
     name: tx`Nebelhafen`,
     place: tx`Dock 9, Unterstadt`,
     blurb: tx`Wer hier steht, wird geprüft. Wer zieht, wird beobachtet.`,
@@ -102,12 +104,13 @@ export const TABLES: TableDef[] = [
     ruleText: tx`Kurze Hände: nur zwei Runden bis zum Aufdecken.`,
     rival: 'kessk',
     intro: tx`Im Nebelhafen spielt man kurz. Zwei Runden, dann liegen die Karten. Denk schneller, Kind.`,
-    outro: tx`Schnell gelernt. In der Schmugglerloge ist ein Stuhl frei. Zähl dort hinterher deine Finger nach.`,
+    outro: tx`Schnell gelernt. Und jetzt verschwinde, bevor dich hier jemand für einen Glückspilz hält.`,
   },
   {
     id: 'lodge',
+    chapter: 'kessel',
     name: tx`Schmugglerloge`,
-    place: tx`Hinterzimmer der „Lange Nacht“`,
+    place: tx`„Lange Nacht“, Mond Varr`,
     blurb: tx`Vier Stühle, kein Fenster, und niemand spielt sauber.`,
     buyIn: 400,
     payout: 1600,
@@ -122,6 +125,7 @@ export const TABLES: TableDef[] = [
   },
   {
     id: 'salon',
+    chapter: 'kessel',
     name: tx`Syndikatssalon`,
     place: tx`Orbitalstation Vael`,
     blurb: tx`Samt, Messing und ein Droide, der sich nie verrechnet.`,
@@ -138,6 +142,7 @@ export const TABLES: TableDef[] = [
   },
   {
     id: 'crown',
+    chapter: 'kessel',
     name: tx`Die Kessel-Krone`,
     place: tx`High-Roller-Turnier`,
     blurb: tx`Das Finale. Madame Oshi hat diesen Tisch noch nie verloren.`,
@@ -147,10 +152,31 @@ export const TABLES: TableDef[] = [
     opponents: ['ilsa', 'dray', 'oshi'],
     unlocks: ['primeSabacc'],
     rival: 'oshi',
-    intro: tx`Du willst dein Schiff zurück. Wie rührend. Acht Chips, keine Sonderregeln, keine Ausreden.`,
-    outro: tx`… Die Schlüssel liegen im Hangar. Flieg, bevor ich es mir anders überlege.`,
+    intro: tx`Du willst deine Sperre los sein. Wie rührend. Acht Chips, keine Sonderregeln, keine Ausreden.`,
+    outro: tx`… Die Sperre ist aufgehoben. Flieg, bevor ich es mir anders überlege.`,
   },
 ]
+
+/**
+ * The stake game on the landing field of Tarsk: Mira's freighter against
+ * 2,000 borrowed credits. Not one of the career's tables – nothing to pay,
+ * nothing paid out, but a ship to win.
+ */
+export const FIELD: TableDef = {
+  id: 'field',
+  chapter: 'tarsk',
+  name: tx`Das Pfandspiel`,
+  place: tx`Landefeld von Tarsk, Mitternacht`,
+  blurb: tx`Miras Frachter gegen 2.000 geliehene Credits. Eine Partie, und es geht um alles.`,
+  buyIn: 0,
+  payout: 0,
+  chips: 5,
+  opponents: ['mira'],
+  unlocks: [],
+  rival: 'mira',
+  intro: tx`Ein Frachter gegen zweitausend. Eine Partie. Bist du so weit?`,
+  outro: tx`Sie gehört dir. Pass gut auf sie auf.`,
+}
 
 export function tableById(id: string): TableDef | undefined {
   return TABLES.find((t) => t.id === id)

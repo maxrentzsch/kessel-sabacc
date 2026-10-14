@@ -12,8 +12,10 @@ in English and German. Two games:
 
 ## What is in it
 
-- **Career** across six venues on a sector map, with a story of its own, house rules, duels
-  against rivals, three stakes and a legend mode afterwards.
+- **Career** that starts on the desert world Tarsk, where a stake game wins you a ship and the
+  debt that comes with it, then goes out into the Kessel sector: a story with three animals to
+  choose from without being asked, house rules, duels against rivals, three stakes and a legend
+  mode afterwards. The road ahead is in [ROADMAP.md](ROADMAP.md).
 - **On Tour** (table after table for a growing pot), **Daily Hand** (one fixed table a day) and
   **Free Play** with your own rules – the place to play Corellian Spike.
 - **Long-term goals:** reputation and ranks, achievements, a collection of card backs, felt, chips

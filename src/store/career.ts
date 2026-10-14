@@ -7,9 +7,9 @@ import type { CosmeticKind } from '../career/cosmetics'
 import { CAREER_VERSION, migrateCareer } from '../career/migrate'
 import { rankOf, REP } from '../career/reputation'
 import { effectsOf } from '../career/story'
-import type { Choice, Scene } from '../career/story'
+import type { Animal, Choice, Scene } from '../career/story'
 import { bailoutAmount, repMultiplier, SHIP_MODULES } from '../career/ship'
-import { STARTING_CREDITS, STARTING_TOKENS, TABLES } from '../career/tables'
+import { FIELD, STARTING_CREDITS, STARTING_TOKENS, TABLES } from '../career/tables'
 import type { TableDef } from '../career/tables'
 import { dailyReward, dayBefore, today, TOUR_ENTRY, tourPot } from '../career/tour'
 import { randomSeed } from '../engine'
@@ -64,6 +64,10 @@ interface CareerState extends Progress {
   dailyStreak: number
   /** games played when the player last made a backup code */
   backupAt: number
+  /** the Sandrunner has been won in the stake game on Tarsk */
+  hasShip: boolean
+  /** which animal came along on the ride to the landing field */
+  bix: Animal | null
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -119,6 +123,8 @@ const initial = () => ({
   dailyStreak: 0,
   dailyBest: 0,
   backupAt: 0,
+  hasShip: false,
+  bix: null as Animal | null,
   gameRep: 0,
   recent: [] as string[],
 })
@@ -187,8 +193,12 @@ export const useCareer = create<CareerState>()(
         ...initial(),
 
         isUnlocked(table) {
+          const s = get()
+          // The stake game waits for the last table on Tarsk; out in the sector there is no table without the ship.
+          if (table.id === FIELD.id) return (s.tableWins[TABLES.filter((t) => t.chapter === 'tarsk').at(-1)!.id] ?? 0) > 0
+          if (table.chapter === 'kessel' && !s.hasShip) return false
           const index = TABLES.indexOf(table)
-          return index <= 0 || (get().tableWins[TABLES[index - 1].id] ?? 0) > 0
+          return index <= 0 || (s.tableWins[TABLES[index - 1].id] ?? 0) > 0
         },
 
         setLoadout(tokens) {
@@ -257,6 +267,10 @@ export const useCareer = create<CareerState>()(
               summary.firstDuelWin = !s.duelWins[table.id]
               patch.duelWins = { ...s.duelWins, [table.id]: (s.duelWins[table.id] ?? 0) + 1 }
               rep += REP.duelWin(tier)
+            } else if (kind === 'stake') {
+              // Nothing is paid out: Mira's freighter is the prize.
+              patch.hasShip = true
+              rep += REP.tableWin(3)
             } else if (kind === 'tour' && s.tour) {
               const wins = s.tour.wins + 1
               patch.tour = { ...s.tour, wins }
@@ -328,6 +342,7 @@ export const useCareer = create<CareerState>()(
         finishScene(scene, choice) {
           for (const effect of effectsOf(scene, choice)) {
             if ('flag' in effect) get().markStory(effect.flag)
+            else if ('bix' in effect) set({ bix: effect.bix })
             else set((s) => ({ credits: s.credits + effect.credits }))
           }
           settle()

@@ -29,17 +29,39 @@ const SAVE_1_2 = {
 describe('saved careers', () => {
   it('load from 1.2 with everything they had', () => {
     const migrated = migrateCareer(SAVE_1_2, 1)
-    expect(migrated).toMatchObject(SAVE_1_2)
+    expect(migrated).toMatchObject({ ...SAVE_1_2, storySeen: expect.any(Array) })
     expect(migrated.backupAt).toBe(0)
   })
 
   it('pass through unchanged when they are already current', () => {
-    const current = { ...SAVE_1_2, backupAt: 12 }
+    const current = { ...SAVE_1_2, backupAt: 12, hasShip: false, bix: 'convor' }
     expect(migrateCareer(current, CAREER_VERSION)).toEqual(current)
   })
 
   it('survive storage that holds nothing usable', () => {
-    expect(migrateCareer(null, 1)).toEqual({ backupAt: 0 })
-    expect(migrateCareer([1, 2], 1)).toEqual({ backupAt: 0 })
+    expect(migrateCareer(null, 1)).toEqual({ backupAt: 0, hasShip: false, bix: null, storySeen: [] })
+    expect(migrateCareer([1, 2], 1)).toEqual({ backupAt: 0, hasShip: false, bix: null, storySeen: [] })
+  })
+
+  it('keep a player still on Tarsk on Tarsk, without the ship', () => {
+    const migrated = migrateCareer(SAVE_1_2, 1)
+    expect(migrated.hasShip).toBe(false)
+    expect(migrated.bix).toBeNull()
+    // they have played the opening tables already, so the new opening is not told again
+    expect(migrated.storySeen).toEqual(['prologue', 'prologue-tarsk'])
+  })
+
+  it('give the ship to a player who has played out in the sector', () => {
+    for (const tableWins of [{ ...SAVE_1_2.tableWins, lodge: 1 }, { ...SAVE_1_2.tableWins, lodge: 1, salon: 2, crown: 1 }]) {
+      const migrated = migrateCareer({ ...SAVE_1_2, tableWins }, 2)
+      expect(migrated.hasShip).toBe(true)
+      expect(migrated.bix).toBeNull()
+    }
+  })
+
+  it('tell a new player the new opening', () => {
+    const migrated = migrateCareer({ ...SAVE_1_2, tableWins: {}, storySeen: ['prologue'] }, 2)
+    expect(migrated.storySeen).toEqual(['prologue'])
+    expect(migrated.hasShip).toBe(false)
   })
 })

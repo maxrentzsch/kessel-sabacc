@@ -2,6 +2,7 @@ import { unlockAudio } from '../../audio/sfx'
 import type { Difficulty } from '../../ai/policy'
 import { dailyReward, dailyStop, dayBefore, today, TOUR_ENTRY, TOUR_STAGES, TOUR_UNLOCK, tourPot, tourRuleCount, tourSeats, tourStop } from '../../career/tour'
 import type { Stop } from '../../career/tour'
+import { TABLES } from '../../career/tables'
 import { venueOf } from '../../career/venues'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
@@ -102,7 +103,8 @@ export function TourScreen() {
   const prepare = useNav((n) => n.prepare)
   const career = useCareer()
   const tablesWon = Object.values(career.tableWins).filter((n) => n > 0).length
-  const open = tablesWon >= TOUR_UNLOCK
+  // Going on tour means flying from table to table: it needs the ship.
+  const open = career.hasShip && tablesWon >= TOUR_UNLOCK
   const tour = career.tour
   const stop = tour ? tourStop(tour.seed, tour.wins + 1) : null
 
@@ -138,7 +140,8 @@ export function TourScreen() {
 
           {!open && (
             <p className={s.locked}>
-              <Icon name="lock" size={16} />{tx` Gewinne erst an `}{TOUR_UNLOCK}{tx` Karrieretischen (`}{tablesWon}/{TOUR_UNLOCK}).
+              <Icon name="lock" size={16} />
+              {career.hasShip ? tx` Gewinne erst an ${TOUR_UNLOCK} Karrieretischen (${tablesWon}/${TOUR_UNLOCK}).` : tx` Auf Tour geht nur, wer ein Schiff hat.`}
             </p>
           )}
 
@@ -172,7 +175,10 @@ export function DailyScreen() {
   const career = useCareer()
   const start = useGame((g) => g.start)
   const date = today()
-  const daily = dailyStop(date)
+  const day = dailyStop(date)
+  // Until the ship is won the player cannot leave Tarsk, so the day's table stands there.
+  const tarsk = TABLES.filter((t) => t.chapter === 'tarsk')
+  const daily = career.hasShip ? day : { ...day, venue: tarsk[Math.abs(day.seed) % tarsk.length].id }
   const played = career.daily?.date === date
   const won = played && career.daily!.won
   // The streak counts days at the table in a row; it only survives if yesterday was one of them.

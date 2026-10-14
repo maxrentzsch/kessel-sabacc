@@ -1,14 +1,21 @@
+import { tx } from '../i18n'
+
 /**
  * The maps the player travels: places and the ways between them. One shape
  * for every scale – the planet the story starts on, a sector, later the
  * galaxy – drawn by the same chart.
  */
 
-export type PlaceKind = 'planet' | 'ringed' | 'moon' | 'station' | 'crown'
+/** Bodies in space, and on a planet's surface the kinds of place a track leads to. */
+export type PlaceKind = 'planet' | 'ringed' | 'moon' | 'station' | 'crown' | 'yard' | 'oasis' | 'port' | 'pad'
 
 export interface Place {
-  /** the table that is played here */
+  /** the table that is played here, or the map this place opens */
   id: string
+  /** a place that is a whole map of its own: tapping it opens that map */
+  opens?: string
+  /** written next to a place that has no table to take its name from */
+  name?: string
   /** position on the chart, which is 360 × 290 units */
   x: number
   y: number
@@ -32,25 +39,41 @@ export interface MapDef {
   routes: Route[]
 }
 
-export const KESSEL_SECTOR: MapDef = {
-  id: 'kessel',
-  scale: 'sector',
+/** Tarsk from above: the scrapyard, the desert, the spaceport and the tracks between them. */
+export const TARSK: MapDef = {
+  id: 'tarsk',
+  scale: 'planet',
   places: [
-    { id: 'anchor', x: 66, y: 232, r: 15, kind: 'ringed', label: 'below' },
-    { id: 'dune', x: 150, y: 196, r: 17, kind: 'planet', label: 'below' },
-    { id: 'haze', x: 78, y: 126, r: 14, kind: 'planet', label: 'above' },
-    { id: 'lodge', x: 196, y: 108, r: 12, kind: 'moon', label: 'below' },
-    { id: 'salon', x: 296, y: 160, r: 15, kind: 'station', label: 'below' },
-    { id: 'crown', x: 286, y: 54, r: 17, kind: 'crown', label: 'above' },
+    { id: 'anchor', x: 70, y: 214, r: 15, kind: 'yard', label: 'below' },
+    { id: 'dune', x: 196, y: 196, r: 15, kind: 'oasis', label: 'below' },
+    { id: 'haze', x: 136, y: 96, r: 15, kind: 'port', label: 'above' },
+    { id: 'field', x: 276, y: 74, r: 15, kind: 'pad', label: 'below' },
   ],
   routes: [
     { from: 'anchor', to: 'dune' },
     { from: 'dune', to: 'haze' },
-    { from: 'haze', to: 'lodge' },
+    { from: 'haze', to: 'field' },
+  ],
+}
+
+/** The Kessel sector: Tarsk, where it all began, and the tables out in space. */
+export const KESSEL_SECTOR: MapDef = {
+  id: 'kessel',
+  scale: 'sector',
+  places: [
+    { id: 'tarsk', opens: 'tarsk', name: tx`Tarsk`, x: 72, y: 214, r: 17, kind: 'ringed', label: 'below' },
+    { id: 'lodge', x: 166, y: 132, r: 12, kind: 'moon', label: 'below' },
+    { id: 'salon', x: 290, y: 176, r: 15, kind: 'station', label: 'below' },
+    { id: 'crown', x: 270, y: 60, r: 17, kind: 'crown', label: 'above' },
+  ],
+  routes: [
+    { from: 'tarsk', to: 'lodge' },
     { from: 'lodge', to: 'salon' },
     { from: 'salon', to: 'crown' },
   ],
 }
+
+export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR }
 
 export function placeOf(map: MapDef, id: string): Place {
   const place = map.places.find((p) => p.id === id)

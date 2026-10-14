@@ -2,7 +2,7 @@ import { animate, motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import { achievement } from '../../career/achievements'
-import { TABLES } from '../../career/tables'
+import { FIELD, TABLES } from '../../career/tables'
 import { tourPot } from '../../career/tour'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
@@ -59,7 +59,9 @@ export function ResultScreen() {
   const won = outcome === 'won'
   const career = session.mode === 'career'
   const table = session.table
-  const nextTable = table ? TABLES[TABLES.indexOf(table) + 1] : undefined
+  const following = table ? TABLES[TABLES.indexOf(table) + 1] : undefined
+  // From Tarsk the way out leads through the stake game, not straight to the next table.
+  const nextTable = table?.chapter === 'tarsk' && following?.chapter === 'kessel' ? FIELD : following
   const duel = session.kind === 'duel'
   const tour = session.kind === 'tour'
   const daily = session.kind === 'daily'

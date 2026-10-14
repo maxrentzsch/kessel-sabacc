@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { TABLES } from '../../career/tables'
 import { TOKEN_IDS } from '../../engine'
@@ -10,6 +11,7 @@ import { useNav } from '../../store/nav'
 import { useSettings } from '../../store/settings'
 import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
+import { Launch } from '../common/Launch'
 import { RankBar } from '../common/Rank'
 import { Sheet } from '../common/Sheet'
 import { cx } from '../cx'
@@ -40,6 +42,7 @@ export function ProfileScreen() {
   const [pasted, setPasted] = useState<string | null>(null)
   const [problem, setProblem] = useState<ImportResult | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [watching, setWatching] = useState(false)
 
   const copy = async () => {
     if (!saved) return
@@ -103,6 +106,12 @@ export function ProfileScreen() {
               </div>
             ))}
           </dl>
+
+          {career.storySeen.includes('launch') && (
+            <button className={cx(common.btn, common.btnBlock)} onClick={() => setWatching(true)}>
+              {tx`Den Start von Tarsk noch einmal ansehen`}
+            </button>
+          )}
 
           <h2 className={s.fieldLabel}>{tx`Sprache`}</h2>
           <div className={s.segments} role="radiogroup" aria-label={tx`Sprache`}>
@@ -251,6 +260,7 @@ export function ProfileScreen() {
           </button>
         </div>
       </Sheet>
+      <AnimatePresence>{watching && <Launch replay onDone={() => setWatching(false)} />}</AnimatePresence>
     </div>
   )
 }

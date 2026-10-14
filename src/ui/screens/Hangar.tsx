@@ -107,6 +107,7 @@ function Ship({ levels, free }: { levels: Record<string, number>; free: boolean 
 export function HangarScreen() {
   const go = useNav((n) => n.go)
   const career = useCareer()
+  // The ship is won in the stake game on Tarsk; Oshi's seals stay on the hyperdrive until the Kessel Crown.
   const free = (career.tableWins.crown ?? 0) > 0
   const done = Object.keys(career.achievements).length
   const owned = career.owned.length
@@ -125,10 +126,16 @@ export function HangarScreen() {
           <RankBar />
 
           <div className={s.dock}>
-            <Ship levels={career.ship} free={free} />
-            <p className={cx(s.dockNote, free && s.dockFree)}>
-              {free ? tx`Sie gehört wieder dir. Startklar, wann immer du willst.` : tx`Gepfändet in Madame Oshis Hangar. Schrauben darfst du trotzdem – fliegen erst nach der Kessel-Krone.`}
-            </p>
+            {career.hasShip ? (
+              <>
+                <Ship levels={career.ship} free={free} />
+                <p className={cx(s.dockNote, free && s.dockFree)}>
+                  {free ? tx`Keine Siegel mehr am Hyperantrieb. Startklar, wohin du willst.` : tx`Dein Schiff. Der Hyperantrieb trägt noch Oshis Siegel – springen kannst du nur im Kessel-Sektor.`}
+                </p>
+              </>
+            ) : (
+              <p className={s.dockEmpty}>{tx`Noch kein Schiff. Auf Tarsk fliegt nur, wer eins gewinnt.`}</p>
+            )}
           </div>
 
           <div className={s.hubLinks}>
@@ -146,8 +153,8 @@ export function HangarScreen() {
             </button>
           </div>
 
-          <h2 className={s.fieldLabel}>{tx`Ausbau`}</h2>
-          <div className={s.modules}>
+          {career.hasShip && <h2 className={s.fieldLabel}>{tx`Ausbau`}</h2>}
+          <div className={s.modules} hidden={!career.hasShip}>
             {SHIP_MODULES.map((module, i) => {
               const level = career.ship[module.id] ?? 0
               const price = module.levels[level]

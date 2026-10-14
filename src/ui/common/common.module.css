@@ -672,6 +672,28 @@
   gap: 8px;
 }
 
+/* an answer is a sentence, so it reads like one */
+.sceneChoice {
+  composes: plate;
+  --cut: 10px;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+  transition: transform 0.12s var(--ease-out);
+}
+
+.sceneChoice:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) {
+  .sceneChoice:hover {
+    --plate-line: var(--accent);
+  }
+}
+
 .sceneMoreOff {
   opacity: 0;
 }

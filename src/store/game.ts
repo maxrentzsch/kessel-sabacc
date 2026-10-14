@@ -20,8 +20,8 @@ export interface Session {
   /** which Sabacc is played; Kessel Sabacc when left out */
   variant?: 'kessel' | 'spike'
   mode: 'career' | 'free'
-  /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables */
-  kind?: 'table' | 'duel' | 'tour' | 'daily'
+  /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables; the stake game wins a ship */
+  kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake'
   /** how many times the normal stake the player put up */
   stake?: number
   /** the second, merciless run through the career */

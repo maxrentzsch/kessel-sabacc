@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { KESSEL_SECTOR } from './maps'
-import type { MapDef } from './maps'
-import { TABLES } from './tables'
+import { KESSEL_SECTOR, MAPS as BY_ID, TARSK } from './maps'
+import { FIELD, TABLES } from './tables'
 
-const MAPS: MapDef[] = [KESSEL_SECTOR]
+const MAPS = Object.values(BY_ID)
 
 describe('maps', () => {
   for (const map of MAPS) {
@@ -40,7 +39,13 @@ describe('maps', () => {
     })
   }
 
-  it('the Kessel sector holds every career table', () => {
-    expect(KESSEL_SECTOR.places.map((p) => p.id).sort()).toEqual(TABLES.map((t) => t.id).sort())
+  it('puts every table on the map of its chapter', () => {
+    const tables = (map: typeof TARSK) => map.places.filter((p) => !p.opens).map((p) => p.id).sort()
+    expect(tables(TARSK)).toEqual([...TABLES.filter((t) => t.chapter === 'tarsk').map((t) => t.id), FIELD.id].sort())
+    expect(tables(KESSEL_SECTOR)).toEqual(TABLES.filter((t) => t.chapter === 'kessel').map((t) => t.id).sort())
+  })
+
+  it('opens only maps that exist', () => {
+    for (const map of MAPS) for (const p of map.places) if (p.opens) expect(BY_ID[p.opens], p.id).toBeDefined()
   })
 })

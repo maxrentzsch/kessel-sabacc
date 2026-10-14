@@ -147,6 +147,24 @@ export const VENUES: Record<string, Venue> = {
       rim: ['#e8e6e0', '#c7c4bb'],
     }),
   },
+  // the landing field of Tarsk at midnight: sand, floodlights, a storm coming
+  field: {
+    place: tx`Landefeld von Tarsk`,
+    sound: { crowd: 0.3, hum: 1.6 },
+    colors: paint({
+      wall: ['#0a0f16', '#1c2430', '#3a3a3c'],
+      niche: ['#141a22', '#4a4438'],
+      trim: '#06090d',
+      pane: ['#fff4d8', '#f0b860', '#8a5a24'],
+      door: ['#f6d79a', '#b8792c'],
+      lamp: '#ffe2b0',
+      floor: ['#3a2c1c', '#0c0905'],
+      ceiling: '#05070a',
+      haze: '230 190 130',
+      felt: ['#6f7f86', '#58676e', '#414e54'],
+      rim: ['#d8d2c4', '#b4ad9c'],
+    }),
+  },
   // gold leaf and crimson for the final
   crown: {
     place: tx`High-Roller-Turnier`,

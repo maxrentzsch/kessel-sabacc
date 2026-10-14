@@ -2,9 +2,10 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import { sfx } from '../../audio/sfx'
-import { YOU } from '../../career/story'
-import type { Choice, Scene as SceneDef } from '../../career/story'
+import { ANIMALS, YOU } from '../../career/story'
+import type { Animal, Choice, Scene as SceneDef } from '../../career/story'
 import { venueOf } from '../../career/venues'
+import { ANIMAL_NAME, ANIMAL_VOICE, Critter } from '../art/Critter'
 import { Portrait } from '../art/Portrait'
 import { cx } from '../cx'
 import s from './common.module.css'
@@ -29,12 +30,14 @@ export function Scene({ scene, onDone }: Props) {
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const line = lines[index]
-  const speaker = line.who && line.who !== YOU ? CHARACTERS[line.who] : null
+  const animal = (ANIMALS as readonly (string | null)[]).includes(line.who) ? (line.who as Animal) : null
+  const speaker = line.who && line.who !== YOU && !animal ? CHARACTERS[line.who] : null
   const typing = shown < line.text.length
 
   useEffect(() => {
     setShown(0)
     if (speaker) sfx.voice(speaker.hue, 2 + Math.ceil(line.text.length / 12), speaker.sigil === 'droid')
+    else if (animal) sfx.voice(ANIMAL_VOICE[animal], 2, false)
     const timer = setInterval(() => setShown((n) => n + 2), TICK)
     return () => clearInterval(timer)
     // one run per line
@@ -87,7 +90,7 @@ export function Scene({ scene, onDone }: Props) {
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Portrait character={speaker} mood={line.mood ?? 'idle'} talking={typing} alive frame size="100%" />
+              {animal ? <Critter animal={animal} size="100%" /> : <Portrait character={speaker} mood={line.mood ?? 'idle'} talking={typing} alive frame size="100%" />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -105,7 +108,7 @@ export function Scene({ scene, onDone }: Props) {
           >
             {line.who && (
               <div className={s.sceneWho}>
-                <b>{speaker ? speaker.name : tx`Du`}</b>
+                <b>{speaker ? speaker.name : animal ? ANIMAL_NAME[animal] : tx`Du`}</b>
                 {speaker && <em>{speaker.title}</em>}
               </div>
             )}
@@ -120,7 +123,7 @@ export function Scene({ scene, onDone }: Props) {
             {choices.map((choice) => (
               <button
                 key={choice.text}
-                className={s.btn}
+                className={s.sceneChoice}
                 onClick={(e) => {
                   e.stopPropagation()
                   onDone(choice)

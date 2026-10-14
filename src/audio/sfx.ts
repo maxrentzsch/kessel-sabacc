@@ -348,6 +348,83 @@ let ambienceMix = { crowd: 1, hum: 1 }
 let ambienceParts: { crowd: GainNode; hum: GainNode } | null = null
 
 /** How present the room is: 0 = off, 1 = sitting at the table. */
+/**
+ * The soundtrack of the launch from Tarsk, timed to its pictures (see
+ * ui/common/Launch): engines coughing, ignition, the storm, a chord above the
+ * clouds, a shimmer as the worlds of the sector light up. Returns a function
+ * that fades it all out early, for a skip.
+ */
+export function launchScore(): () => void {
+  const g = live()
+  if (!g) return () => {}
+  const t0 = g.ctx.currentTime + 0.05
+  const bus = g.ctx.createGain()
+  bus.gain.value = 1
+  route(g, bus, 0.25)
+  const sources: AudioScheduledSourceNode[] = []
+
+  // A looped noise through a filter, with its loudness drawn as points in time.
+  const bed = (filter: BiquadFilterType, freq: [number, number, number], curve: [number, number][]) => {
+    const src = g.ctx.createBufferSource()
+    src.buffer = g.noise
+    src.loop = true
+    const f = g.ctx.createBiquadFilter()
+    f.type = filter
+    f.frequency.setValueAtTime(freq[0], t0)
+    f.frequency.linearRampToValueAtTime(freq[1], t0 + freq[2])
+    const gain = g.ctx.createGain()
+    gain.gain.setValueAtTime(0, t0)
+    for (const [at, level] of curve) gain.gain.linearRampToValueAtTime(level, t0 + at)
+    src.connect(f).connect(gain).connect(bus)
+    src.start(t0)
+    src.stop(t0 + curve[curve.length - 1][0] + 0.1)
+    sources.push(src)
+  }
+  // A held note that swells in and fades away.
+  const pad = (freq: number, from: number, to: number, level: number) => {
+    const osc = g.ctx.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.value = freq
+    const gain = g.ctx.createGain()
+    gain.gain.setValueAtTime(0, t0 + from)
+    gain.gain.linearRampToValueAtTime(level, t0 + from + 2.5)
+    gain.gain.setValueAtTime(level, t0 + to - 2.5)
+    gain.gain.linearRampToValueAtTime(0, t0 + to)
+    osc.connect(gain).connect(bus)
+    osc.start(t0 + from)
+    osc.stop(t0 + to + 0.1)
+    sources.push(osc)
+  }
+
+  // the engines cough three times
+  for (const at of [0.8, 1.9, 3.1]) {
+    noise(0.35, { freq: 180, q: 0.7, gain: 0.3, delay: t0 - g.ctx.currentTime + at, room: 0.4 })
+    tone(52, 0.4, { gain: 0.2, slideTo: 38, delay: t0 - g.ctx.currentTime + at, room: 0.3 })
+  }
+  // ignition and the climb: a rumble that swells, holds, and thins out above the clouds
+  bed('lowpass', [90, 420, 9], [[4.6, 0], [6.2, 0.55], [13, 0.5], [17, 0.12], [22, 0]])
+  // the sandstorm whistling past
+  bed('bandpass', [700, 1600, 14], [[8.6, 0], [10, 0.16], [13.2, 0.14], [14.6, 0]])
+  // above the clouds: an open chord
+  for (const [freq, level] of [[110, 0.06], [165, 0.05], [220, 0.045], [277, 0.035], [330, 0.03]] as const) pad(freq, 14, 31, level)
+  // the worlds of the sector lighting up one by one
+  ;[659, 784, 988, 1175, 1319].forEach((f, i) => tone(f, 1.2, { type: 'sine', gain: 0.05, delay: t0 - g.ctx.currentTime + 24.4 + i * 0.55, room: 0.8 }))
+
+  return () => {
+    const now = g.ctx.currentTime
+    bus.gain.cancelScheduledValues(now)
+    bus.gain.setValueAtTime(bus.gain.value, now)
+    bus.gain.linearRampToValueAtTime(0, now + 0.4)
+    for (const src of sources) {
+      try {
+        src.stop(now + 0.45)
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
+}
+
 export function setAmbience(level: number): void {
   ambienceLevel = level
   syncAmbience()
