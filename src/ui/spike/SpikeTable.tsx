@@ -15,7 +15,7 @@ import { isHotseat, seatsAround } from '../../store/game'
 import { useNav } from '../../store/nav'
 import { tempo, useSettings } from '../../store/settings'
 import { useCareer } from '../../store/career'
-import { useSpike } from '../../store/spike'
+import { SPIKE_NOTES, SPIKE_TUTORIAL, SPIKE_TUTORIAL_RESULT, useSpike } from '../../store/spike'
 import { Critter } from '../art/Critter'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
@@ -418,6 +418,10 @@ export function SpikeTableScreen() {
   const takeTip = useSpike((g) => g.takeTip)
   const suspicion = useSpike((g) => g.suspicion)
   const peekUsed = useSpike((g) => g.peekUsed)
+  const tutorialStep = useSpike((g) => g.tutorialStep)
+  const note = useSpike((g) => g.note)
+  const dismissNote = useSpike((g) => g.dismissNote)
+  const nudge = useSpike((g) => g.nudge)
   const go = useNav((n) => n.go)
   const hints = useSettings((st) => st.hints)
   const bix = useCareer((c) => (c.hasShip ? c.bix : null))
@@ -500,9 +504,11 @@ export function SpikeTableScreen() {
             ? tx`Nach jeder Runde rollen die Spike-Würfel. Bei einem Pasch bekommen alle neue Karten.`
             : null
   const advice = tip && tip.game === game ? tip.text : null
-  const hintText = advice ?? (hints ? coaching : null)
+  // In the practice hand Dessa does the talking, whatever the settings say.
+  const coach = session.tutorial && cardTurn ? (SPIKE_TUTORIAL[tutorialStep]?.text ?? null) : null
+  const hintText = coach ?? advice ?? (hints ? coaching : null)
   const hint: ReactNode = hintText ? (
-    <p className={cx(t.hint, advice !== null && t.tip)}>
+    <p key={coach ? `coach-${tutorialStep}-${nudge}` : undefined} className={cx(t.hint, coach !== null && t.coach, advice !== null && t.tip)}>
       {advice !== null && <Icon name="bulb" size={16} />}
       <span>{hintText}</span>
     </p>
@@ -512,8 +518,9 @@ export function SpikeTableScreen() {
   const winners = result?.winners ?? []
   const iWon = winners.includes(viewer)
   const champion = game.winner !== null ? game.players[game.winner] : null
-  const endTitle =
-    hotseat && outcome
+  const endTitle = session.tutorial
+    ? tx`Übung geschafft`
+    : hotseat && outcome
       ? champion
         ? tx`${champion.name} gewinnt die Partie`
         : tx`Alle am Gerät sind pleite`
@@ -532,12 +539,16 @@ export function SpikeTableScreen() {
 
   // Where the table leads once it is done with: the career's result screen, or back to setting up.
   const leave = () => {
+    if (session.tutorial) {
+      go(useSpike.getState().tutorialFrom)
+      return clear()
+    }
     if (career && outcome) return go('result')
     go(career ? 'career' : 'free')
     clear()
   }
   const quit = () => {
-    go(career ? 'career' : 'free')
+    go(session.tutorial ? useSpike.getState().tutorialFrom : career ? 'career' : 'free')
     forfeit()
   }
   const again = () => start(session)
@@ -722,6 +733,7 @@ export function SpikeTableScreen() {
           <h2 className={cx(common.sheetTitle, iWon ? t.titleWin : undefined)}>{endTitle}</h2>
           {result && (
             <>
+              {session.tutorial && <p className={common.sheetText}>{SPIKE_TUTORIAL_RESULT}</p>}
               <p className={common.sheetText}>
                 {result.uncontested
                   ? tx`Alle anderen sind ausgestiegen. Der Hand-Topf (${result.handPot}) geht ohne Aufdecken an den Letzten.`
@@ -759,7 +771,11 @@ export function SpikeTableScreen() {
             </>
           )}
           <div className={common.sheetActions}>
-            {outcome && !career && !hotseat ? (
+            {session.tutorial ? (
+              <button className={cx(common.btn, common.btnPrimary)} onClick={leave}>
+                {useSpike.getState().tutorialFrom === 'rules' ? tx`Zurück zu den Regeln` : tx`Zurück zu Dessa`}
+              </button>
+            ) : outcome && !career && !hotseat ? (
               <>
                 <button className={cx(common.btn, common.btnGhost)} onClick={leave}>
                   {tx`Hauptmenü`}
@@ -777,6 +793,20 @@ export function SpikeTableScreen() {
                 {tx`Nächste Hand`}
               </button>
             )}
+          </div>
+        </Sheet>
+
+        <Sheet open={note !== null} onClose={dismissNote} dialog>
+          {note && (
+            <>
+              <h2 className={common.sheetTitle}>{SPIKE_NOTES[note].title}</h2>
+              <p className={common.sheetText}>{SPIKE_NOTES[note].text}</p>
+            </>
+          )}
+          <div className={common.sheetActions}>
+            <button className={cx(common.btn, common.btnPrimary)} onClick={dismissNote}>
+              {tx`Verstanden`}
+            </button>
           </div>
         </Sheet>
 

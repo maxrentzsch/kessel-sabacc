@@ -68,7 +68,7 @@ export function ResultScreen() {
   const tour = session.kind === 'tour'
   const daily = session.kind === 'daily'
   const canRetry = !career || credits >= basePrice
-  const champion = won && career && !duel && table === TABLES[TABLES.length - 1]
+  const champion = won && career && !duel && !!table?.finale
   const rival = table ? CHARACTERS[table.rival] : null
 
   const leave = (to: 'career' | 'home' | 'loadout' | 'tour' | 'daily') => {
@@ -88,11 +88,13 @@ export function ResultScreen() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.15 }}
         >
-          {champion ? tx`Kessel-Krone!` : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
+          {champion ? (table?.id === 'banquet' ? tx`Das Bankett!` : tx`Kessel-Krone!`) : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
         </motion.h1>
         <motion.p className={s.resultText} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           {champion
-            ? tx`Madame Oshi legt wortlos ihre Karten ab. Die „Sandläufer“ gehört wieder dir – und die ganze Galaxis weiß es.`
+            ? table?.id === 'banquet'
+              ? tx`Corvin Ashe applaudiert, langsam. Die drei Schlüssel klicken in den Navcomputer, und die Spur der Leeren Krone führt in den Kern.`
+              : tx`Madame Oshi legt wortlos ihre Karten ab. Die Siegel am Hyperantrieb fallen – der Weg aus dem Sektor ist frei.`
             : tour
               ? won
                 ? tx`Halt ${tourState?.wins ?? 0} geschafft. Im Topf liegen jetzt ${tourPot(tourState?.wins ?? 0)} Credits – aussteigen oder weiterziehen?`

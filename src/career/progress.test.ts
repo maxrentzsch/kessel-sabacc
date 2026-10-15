@@ -91,15 +91,19 @@ describe('tour and daily hand', () => {
 })
 
 describe('table money', () => {
-  it('pays every table well above its buy-in, and more the further up', () => {
-    TABLES.forEach((table, i) => {
-      expect(payoutFor(table)).toBeGreaterThan(table.buyIn * 2)
-      if (i > 0) {
-        expect(table.buyIn).toBeGreaterThan(TABLES[i - 1].buyIn)
-        // what a win leaves over pays for a seat at the next table
-        expect(payoutFor(TABLES[i - 1]) - TABLES[i - 1].buyIn).toBeGreaterThanOrEqual(i === 1 ? table.buyIn / 2 : table.buyIn)
-      }
-    })
+  it('pays every table well above its buy-in, and more the further up within an act', () => {
+    // Tarsk and the Kessel sector are one climb; the trade route starts small again with its learning tables.
+    const climbs = [TABLES.filter((t) => t.chapter !== 'trade'), TABLES.filter((t) => t.chapter === 'trade')]
+    for (const climb of climbs) {
+      climb.forEach((table, i) => {
+        expect(payoutFor(table)).toBeGreaterThan(table.buyIn * 2)
+        if (i > 0) {
+          expect(table.buyIn).toBeGreaterThan(climb[i - 1].buyIn)
+          // what a win leaves over pays for a seat at the next table
+          expect(payoutFor(climb[i - 1]) - climb[i - 1].buyIn).toBeGreaterThanOrEqual(i === 1 ? table.buyIn / 2 : table.buyIn)
+        }
+      })
+    }
   })
 
   it('makes a higher stake pay more than it costs, for fewer chips', () => {

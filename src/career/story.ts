@@ -89,6 +89,42 @@ const ARRIVAL: Record<string, { place: string; reply: Line }> = {
     place: tx`Das High-Roller-Turnier in Oshis Palast. Draußen am Dock wartet die Sandläufer, die Siegel noch am Hyperantrieb.`,
     reply: { who: YOU, text: tx`Dann fangen wir an.` },
   },
+  hallis1: {
+    place: tx`Werft Hallis. Zwischen zwei Rümpfen im Trockendock steht die Kantine, und in der Kantine ein Tisch voller Karten, die du nicht kennst.`,
+    reply: { who: 'rook', mood: 'happy', text: tx`Ein Neuer! Endlich verliert mal jemand anders.` },
+  },
+  hallis2: {
+    place: tx`Mittagspause in der Kantine. Jemand hat Chips auf den Tisch gelegt – richtige Chips diesmal.`,
+    reply: { who: 'mags', text: tx`Ab hier kostet Zögern. Langsam und gerade, dann passiert dir nichts.` },
+  },
+  hallis3: {
+    place: tx`Schichtende. Die Schweißer kommen herein, und Dessa holt die Spike-Würfel aus der Schublade.`,
+    reply: { who: 'rook', text: tx`Jetzt wird's laut.` },
+  },
+  convoy: {
+    place: tx`Der Laderaum der „Lange Leine“, zwischen zwei Sprüngen. Durch die Luken zuckt blaues Licht.`,
+    reply: { who: 'ilsa', mood: 'smug', text: tx`Na sieh an. Der Pilot aus der Loge. Die Route ist kleiner, als man denkt.` },
+  },
+  swoop: {
+    place: tx`Teska. Unter der Bar donnern die Swoops vorbei, und die Gläser zittern im Takt.`,
+    reply: { who: 'harl', text: tx`Ich hab schon eine Quote auf dich. Keine gute.` },
+  },
+  barge: {
+    place: tx`Die Gasbarke „Corona“ treibt durch bernsteinfarbene Wolken. Unten, sehr weit unten, glüht der Kern von Yavvis.`,
+    reply: { who: 'tevin', mood: 'smug', text: tx`Du schon wieder. Die Glasfinger haben eine Akte über dich angelegt, weißt du das?` },
+  },
+  archive: {
+    place: tx`Datenstation Mirr. Regale bis unter die Decke, und auf jedem Datenkristall ein Geheimnis, das jemand teuer bezahlt hat.`,
+    reply: { who: 'juno', text: tx`Pssst. Hier darf man nicht mal laut gewinnen.` },
+  },
+  casino: {
+    place: tx`Das Große Casino des Roten Siegels. Kristall, Samt, und an jeder Tür zwei Wachen in Rot.`,
+    reply: { who: 'dray', mood: 'smug', text: tx`Ich hab auf dich gewartet. Das Siegel will die Navdaten. Und ich will mein Duell.` },
+  },
+  banquet: {
+    place: tx`Das Bankett der Händler. Eine Tafel so lang wie ein Frachter, und am Kopfende Corvin Ashe.`,
+    reply: { who: 'veyra', text: tx`Das Siegel spielt mit. Natürlich.` },
+  },
 }
 
 /**
@@ -118,11 +154,57 @@ const ON_TARSK: Record<string, Line[]> = {
 /** Sitting down at a table for the first time. */
 export function arrivalScene(table: TableDef): Line[] {
   const extra = ARRIVAL[table.id]
-  const welcome: Line = { who: table.rival, text: table.intro }
+  const welcome: Line = { who: table.host ?? table.rival, text: table.intro }
   return [...(extra ? [{ who: null, text: extra.place }, welcome, extra.reply] : [welcome]), ...(ON_TARSK[table.id] ?? [])]
 }
 
 const VICTORY: Record<string, Line[]> = {
+  hallis1: [
+    { who: 'dessa', mood: 'happy', text: tx`Siehst du? Null ist nicht schwer. Nur selten.` },
+    { who: 'dessa', text: tx`Am nächsten Tisch wird gesetzt. Dann lernst du, wann man aussteigt.` },
+  ],
+  hallis2: [
+    { who: 'mags', text: tx`Gut abgesetzt.` },
+    { who: 'dessa', text: tx`Bleibt nur noch das Schichtende: zwei Töpfe, die Würfel, und die Hände mit Namen.` },
+  ],
+  hallis3: [
+    { who: 'dessa', mood: 'happy', text: tx`Das war's. Mehr kann ich dir nicht beibringen.` },
+    { who: 'dessa', mood: 'thinking', text: tx`Dein Navcomputer übrigens – ich hab mal reingeschaut. Dreifach verschlüsselt. Die Schlüssel liegen bei drei Syndikaten auf dieser Route.` },
+    { who: 'dessa', text: tx`Der Konvoi „Lange Leine“ legt morgen ab. Da wird um mehr gespielt als um Kantinengeld.` },
+  ],
+  convoy: [
+    { who: 'quill', text: tx`Ihr Gewinn ist verbucht. Und drei Nachrichten sind eingegangen, für Sie.` },
+    { who: null, text: tx`Drei Hologramme flackern über dem Tisch auf.` },
+    { who: 'veyra', text: tx`Das Rote Siegel bietet Schutz und einen der drei Schlüssel. Dafür gehören die Navdaten am Ende uns.` },
+    { who: 'sable', text: tx`Die Glasfinger bieten Wissen. Wir sagen Ihnen, wo die anderen Schlüssel liegen. Und wir wollen nur eine Kopie.` },
+    { who: 'ilsa', mood: 'smug', text: tx`Und die Schrottkrone bietet dir Freunde, die nicht fragen. Du kennst uns ja schon.` },
+    { who: YOU, text: tx`Wem vertraue ich?` },
+  ],
+  swoop: [
+    { who: 'juno', mood: 'angry', text: tx`Okay. Okay! Du bist schnell. Aber den Schlüssel kriegst du nicht geschenkt.` },
+    { who: 'harl', text: tx`Ich hab meine Quote angepasst. Nach oben.` },
+  ],
+  barge: [
+    { who: 'vesh', text: tx`Sie fallen nicht. Das ist selten in diesen Wolken.` },
+    { who: 'vesh', mood: 'thinking', text: tx`Ein Rat: Im Archiv auf Mirr liegt mehr über Ihren Navcomputer als in Ihrem Navcomputer.` },
+  ],
+  archive: [
+    { who: 'sable', mood: 'thinking', text: tx`Ich habe Ihre Akte gelesen. Sie ist kurz. Noch.` },
+    { who: 'sable', text: tx`Die Leere Krone ist kein Märchen. Wir haben ihre letzte Position. Ihr Navcomputer hat den Rest.` },
+  ],
+  casino: [
+    { who: 'dray', mood: 'angry', text: tx`Das Siegel verliert nicht. Hat es nie.` },
+    { who: 'veyra', mood: 'smug', text: tx`Heute schon. Lass gut sein, Dray. Corvin Ashe hat dem Piloten einen Platz am Bankett freigehalten.` },
+  ],
+  banquet: [
+    { who: null, text: tx`Die letzte Karte fällt. An der langen Tafel wird es still – dann applaudiert Corvin Ashe, langsam.` },
+    { who: 'corvin', text: tx`Gewonnen ist gewonnen. Was verlangen Sie?` },
+    { who: YOU, text: tx`Die drei Schlüssel. Zusammen, hier, vor allen.` },
+    { who: null, text: tx`Drei Datenkristalle klicken in den Navcomputer der Sandläufer. Eine Sternkarte entfaltet sich über dem Tisch – und eine Koordinate, tief im Kern der Galaxis.` },
+    { who: 'sable', mood: 'thinking', text: tx`Coruscant. Die untersten Ebenen. Dort hat die Leere Krone zuletzt angelegt.` },
+    { who: YOU, text: tx`Oshi weiß es in einer Stunde. Bis dahin bin ich weg.` },
+    { who: null, text: tx`Ende von Akt 2. Die dritte Rate, der Kern und Coruscant Shift warten.` },
+  ],
   anchor: [
     { who: 'pim', mood: 'happy', text: tx`Sag ich doch: Talent! Nimm meinen Speeder – im Karawanenhof Mehr zahlen sie besser.` },
     { who: null, text: tx`Zwei neue Shift-Tokens in der Tasche, und ein Name mehr, der sich herumspricht.` },
@@ -178,6 +260,19 @@ const VICTORY: Record<string, Line[]> = {
     { who: 'oshi', mood: 'thinking', text: tx`Ein Vorschlag, ehe du gehst: Fliege für mich. Kurierdienste, keine Fragen. Dafür werden deine Raten kleiner.` },
   ],
 }
+
+/** After the convoy: which syndicate the player trusts with the nav data. Its key comes with it. */
+const PATRON: Choice[] = (['seal', 'glass', 'scrap'] as const).map((syndicate) => ({
+  text: { seal: tx`Das Rote Siegel: Schutz, und die Daten gehören ihnen`, glass: tx`Die Glasfinger: Wissen, gegen eine Kopie`, scrap: tx`Die Schrottkrone: Freunde, die nicht fragen` }[syndicate],
+  effects: [{ flag: `patron-${syndicate}` }, { flag: `key-${syndicate}` }, { standing: syndicate, delta: 1 }],
+}))
+
+/** The first table of Hallis: Dessa offers a practice hand, or the player knows the game already. */
+const DESSA_CHOICES: Choice[] = [
+  { text: tx`Zeig mir erst eine Übungshand`, effects: [{ flag: 'practice-spike' }] },
+  { text: tx`Fangen wir einfach an` },
+  { text: tx`Ich kenne Corellian Spike schon`, effects: [{ flag: 'spike-known' }], next: 'spike-known' },
+]
 
 /** After the Kessel Crown: Oshi's offer, accepted or refused. */
 const OSHI_OFFER: Choice[] = [
@@ -293,6 +388,43 @@ const TARSK_SCENES: Scene[] = [
   { id: 'repaid', title: tx`Zum Rostigen Anker`, venue: 'anchor', lines: REPAID },
 ]
 
+// ── Act 2: the trade route ──────────────────────────────────────────────────
+
+/** The long jump out of the Kessel sector; how it goes depends on the answer given to Oshi. */
+const ARRIVAL_COURIER: Line[] = [
+  { who: null, text: tx`Der Hyperantrieb springt. Zum ersten Mal seit Tarsk liegt der Kessel-Sektor hinter dir.` },
+  { who: 'oshi', mood: 'smug', text: tx`Ein Kurier hält Wort. Gut. Auf der Gasbarke „Corona“ wartet eine Kiste für Vesh. Die bringst du zuerst hin.` },
+  { who: 'oshi', text: tx`Dafür ist deine nächste Rate dreitausend leichter. Ich bin nicht unvernünftig.` },
+  { who: null, text: tx`Die Verbindung bricht ab. Im Cockpit ist es still. Dann räuspert sich Mira.` },
+]
+const ARRIVAL_SOLD: Line[] = [
+  { who: null, text: tx`Der Hyperantrieb springt. Zum ersten Mal seit Tarsk liegt der Kessel-Sektor hinter dir.` },
+  { who: 'dray', mood: 'smug', text: tx`Neuigkeiten, Pilot. Madame Oshi hat deine Schuld verkauft. An das Rote Siegel.` },
+  { who: 'dray', text: tx`Dein Gläubiger sitzt ab jetzt mit am Tisch. Ich, zum Beispiel. Die Rate bleibt, wie sie ist.` },
+  { who: null, text: tx`Die Verbindung bricht ab. Im Cockpit ist es still. Dann räuspert sich Mira.` },
+]
+const CONFESSION: Line[] = [
+  { who: 'mira', mood: 'worried', text: tx`Ich muss dir was sagen. Oshi wusste immer, wo wir sind. Von mir.` },
+  { who: 'mira', text: tx`Seit Tarsk. Sie hat mir die Hälfte meiner Schuld erlassen, dafür hab ich berichtet. Jeden Tisch, jeden Sprung.` },
+  { who: 'mira', mood: 'worried', text: tx`Ich hab's nicht mehr ausgehalten. Wenn du willst, steig ich auf Hallis aus.` },
+  { who: 'bix', text: tx`…?` },
+]
+const CONFESSION_CHOICES: Choice[] = [
+  { text: tx`Du bleibst. Ab jetzt berichtest du Oshi, was ich dir sage.`, effects: [{ flag: 'mira-stays' }, { standing: 'oshi', delta: 1 }] },
+  { text: tx`Steig auf Hallis aus. Ich fliege allein weiter.`, effects: [{ flag: 'mira-left' }, { standing: 'oshi', delta: -1 }] },
+]
+const SPIKE_KNOWN: Line[] = [
+  { who: 'dessa', mood: 'happy', text: tx`Dann spar ich mir die Kantinenvorträge. Die Lerntische stehen trotzdem offen, wenn du üben willst.` },
+  { who: 'dessa', mood: 'thinking', text: tx`Dein Navcomputer übrigens – dreifach verschlüsselt. Die Schlüssel liegen bei drei Syndikaten auf dieser Route. Der Konvoi „Lange Leine“ ist ein guter Anfang.` },
+]
+
+const TRADE_SCENES: Scene[] = [
+  { id: 'trade-arrival-courier', title: tx`Die Handelsroute`, venue: 'convoy', lines: ARRIVAL_COURIER, next: 'mira-confession' },
+  { id: 'trade-arrival-sold', title: tx`Die Handelsroute`, venue: 'convoy', lines: ARRIVAL_SOLD, next: 'mira-confession' },
+  { id: 'mira-confession', title: tx`Miras Geständnis`, venue: 'convoy', lines: CONFESSION, choices: CONFESSION_CHOICES },
+  { id: 'spike-known', title: tx`Werft Hallis`, venue: 'hallis', lines: SPIKE_KNOWN },
+]
+
 /** The table the player chose to practise at first: the anchor asks before the first game. */
 const PRACTICE_CHOICES: Choice[] = [
   { text: tx`Zeig mir erst, wie es geht`, effects: [{ flag: 'practice' }] },
@@ -306,15 +438,22 @@ const PRACTICE_CHOICES: Choice[] = [
 export const SCENES: Record<string, Scene> = Object.fromEntries(
   [
     ...TARSK_SCENES,
+    ...TRADE_SCENES,
     ...TABLES.flatMap((table): Scene[] => [
       {
         id: `intro-${table.id}`,
         title: table.name,
         venue: table.id,
         lines: arrivalScene(table),
-        ...(table.id === 'anchor' ? { choices: PRACTICE_CHOICES } : {}),
+        ...(table.id === 'anchor' ? { choices: PRACTICE_CHOICES } : table.id === 'hallis1' ? { choices: DESSA_CHOICES } : {}),
       },
-      { id: `win-${table.id}`, title: table.name, venue: table.id, lines: victoryScene(table), ...(table.id === 'crown' ? { choices: OSHI_OFFER } : {}) },
+      {
+        id: `win-${table.id}`,
+        title: table.name,
+        venue: table.id,
+        lines: victoryScene(table),
+        ...(table.id === 'crown' ? { choices: OSHI_OFFER } : table.id === 'convoy' ? { choices: PATRON } : {}),
+      },
     ]),
   ].map((scene) => [scene.id, scene]),
 )
@@ -326,6 +465,8 @@ export const TRIGGERS: string[] = [
   'flashback',
   'jump-lock',
   'repaid',
+  'trade-arrival-courier',
+  'trade-arrival-sold',
   ...ANIMALS.map((animal) => `win-${FIELD.id}-${animal}`),
   ...TABLES.flatMap((table) => [`intro-${table.id}`, `win-${table.id}`]),
 ]

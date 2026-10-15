@@ -1,11 +1,18 @@
 import type { Rules, TokenId } from '../engine'
+import type { SpikeRules } from '../spike'
 import type { Syndicate } from './syndicates'
 import { tx } from '../i18n'
 
 export interface TableDef {
   id: string
-  /** on Tarsk, reached by speeder, or out in the sector, which needs the ship */
-  chapter: 'tarsk' | 'kessel'
+  /** on Tarsk, reached by speeder; out in the Kessel sector, which needs the ship; or on the trade route of act 2 */
+  chapter: 'tarsk' | 'kessel' | 'trade'
+  /** which Sabacc is played here; Kessel Sabacc when left out */
+  variant?: 'spike'
+  /** Corellian Spike: what this table changes about the rules */
+  spikeRules?: Partial<SpikeRules>
+  /** the last table of an act */
+  finale?: boolean
   /** the syndicate that runs the table; standing with it counts here */
   syndicate?: Syndicate
   name: string
@@ -25,7 +32,9 @@ export interface TableDef {
   ruleText?: string
   /** who holds this table – and comes back for a duel once it is won */
   rival: string
-  /** what the rival says before the first game and after the first win */
+  /** who welcomes the player when it is not the rival */
+  host?: string
+  /** what the rival (or host) says before the first game and after the first win */
   intro: string
   outro: string
 }
@@ -212,8 +221,173 @@ export const TABLES: TableDef[] = [
     opponents: ['ilsa', 'dray', 'oshi'],
     unlocks: ['primeSabacc'],
     rival: 'oshi',
+    finale: true,
     intro: tx`Du willst deine Sperre los sein. Wie rührend. Acht Chips, keine Sonderregeln, keine Ausreden.`,
     outro: tx`… Die Sperre ist aufgehoben. Flieg, bevor ich es mir anders überlege.`,
+  },
+  // ── Act 2: the trade route. Corellian Spike from here on; the first three tables teach it. ──
+  {
+    id: 'hallis1',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Kantine: Tisch eins`,
+    place: tx`Werft Hallis, Kantine`,
+    blurb: tx`Nur Karten, ein Topf. Wer am nächsten an null ist, gewinnt. Dessa erklärt.`,
+    buyIn: 150,
+    payout: 500,
+    chips: 10,
+    opponents: ['dessa', 'rook'],
+    unlocks: [],
+    spikeRules: { betting: false, dice: false, simple: true },
+    ruleText: tx`Lerntisch: kein Setzen, keine Würfel, keine benannten Hände.`,
+    rival: 'rook',
+    host: 'dessa',
+    intro: tx`Hier lernt jeder Neue. Ohne Setzen, ohne Würfel. Nur du, deine Karten und die Null.`,
+    outro: tx`Nicht schlecht. Am zweiten Tisch wird gesetzt – dann wird's ernst.`,
+  },
+  {
+    id: 'hallis2',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Kantine: Tisch zwei`,
+    place: tx`Werft Hallis, Kantine`,
+    blurb: tx`Jetzt wird nach jeder Kartenrunde gesetzt. Wer aussteigt, verliert, was er im Topf hat.`,
+    buyIn: 250,
+    payout: 850,
+    chips: 12,
+    opponents: ['dessa', 'mags'],
+    unlocks: [],
+    spikeRules: { dice: false, simple: true },
+    ruleText: tx`Lerntisch: mit Setzen, aber ohne Würfel und benannte Hände.`,
+    rival: 'mags',
+    host: 'dessa',
+    intro: tx`Jetzt kostet Mut was. Nach jeder Kartenrunde wird gesetzt. Mitgehen, erhöhen – oder aussteigen.`,
+    outro: tx`Du weißt, wann man aussteigt. Das können die wenigsten. Am letzten Tisch rollen die Würfel.`,
+  },
+  {
+    id: 'hallis3',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Kantine: Schichtende`,
+    place: tx`Werft Hallis, Kantine`,
+    blurb: tx`Das ganze Spiel: zwei Töpfe, Spike-Würfel und die benannten Hände. Danach kann dir keiner mehr was erklären.`,
+    buyIn: 400,
+    payout: 1400,
+    chips: 14,
+    opponents: ['dessa', 'rook', 'mags'],
+    unlocks: [],
+    rival: 'dessa',
+    intro: tx`Schichtende. Jetzt spielen wir richtig: zwei Töpfe, die Würfel, und eine Null mit Namen schlägt eine ohne.`,
+    outro: tx`Dann bist du so weit. Draußen auf der Route spielt keiner mehr nett.`,
+  },
+  {
+    id: 'convoy',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Konvoi „Lange Leine“`,
+    place: tx`Frachtkonvoi im Korridor`,
+    blurb: tx`Ein Tisch im Laderaum, der mit dem Konvoi reist. Gespielt wird zwischen zwei Sprüngen.`,
+    buyIn: 600,
+    payout: 2100,
+    chips: 16,
+    opponents: ['quill', 'ilsa', 'rook'],
+    unlocks: [],
+    rival: 'quill',
+    intro: tx`Willkommen an Bord. Ihr Einsatz wird verbucht, Ihr Verlust ebenfalls.`,
+    outro: tx`Ihr Gewinn ist verbucht. Man hat sich nach Ihnen erkundigt. Drei Syndikate, um genau zu sein.`,
+  },
+  {
+    id: 'swoop',
+    chapter: 'trade',
+    variant: 'spike',
+    syndicate: 'scrap',
+    name: tx`Bar an der Swoop-Bahn`,
+    place: tx`Rennplanet Teska`,
+    blurb: tx`Unten heulen die Swoops, oben fliegen die Einsätze. Die Schrottkrone hält die Bahn.`,
+    buyIn: 850,
+    payout: 2900,
+    chips: 18,
+    opponents: ['juno', 'harl', 'ilsa'],
+    unlocks: [],
+    spikeRules: { anteEvery: 3 },
+    ruleText: tx`Renntempo: der Grundeinsatz steigt alle drei Hände.`,
+    rival: 'juno',
+    intro: tx`Hier geht alles schneller. Der Grundeinsatz auch. Halt mit, oder sieh von der Tribüne zu.`,
+    outro: tx`Zu schnell für mich? Das hat noch keiner geschafft. Revanche, wann immer du willst.`,
+  },
+  {
+    id: 'barge',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Gasbarke „Corona“`,
+    place: tx`In den Wolken von Yavvis`,
+    blurb: tx`Ein Casino, das durch die Wolken eines Gasriesen treibt. Wer zu hoch setzt, fällt tief.`,
+    buyIn: 1100,
+    payout: 3800,
+    chips: 18,
+    opponents: ['vesh', 'harl', 'tevin'],
+    unlocks: [],
+    spikeRules: { maxRaises: 3 },
+    ruleText: tx`Hohe Wolken: dreimal erhöhen pro Setzrunde.`,
+    rival: 'vesh',
+    intro: tx`Willkommen an Bord der Corona. Hier darf dreimal erhöht werden. Die Luft ist dünn, die Einsätze nicht.`,
+    outro: tx`Sie fallen nicht. Bemerkenswert. Die Glasfinger werden von Ihnen hören wollen.`,
+  },
+  {
+    id: 'archive',
+    chapter: 'trade',
+    variant: 'spike',
+    syndicate: 'glass',
+    name: tx`Archiv der Glasfinger`,
+    place: tx`Datenstation Mirr`,
+    blurb: tx`Zwischen Regalen voller Geheimnisse wird leise gespielt. Jede Hand wird mitgeschrieben.`,
+    buyIn: 1500,
+    payout: 5000,
+    chips: 20,
+    opponents: ['sable', 'tevin', 'juno'],
+    unlocks: [],
+    spikeRules: { handLimit: 4 },
+    ruleText: tx`Knappe Akten: höchstens vier Karten auf der Hand.`,
+    rival: 'sable',
+    intro: tx`Sprechen Sie leise. Mehr als vier Karten duldet das Archiv nicht. Ordnung ist alles.`,
+    outro: tx`Ihre Akte wird dicker. Das Rote Siegel liest übrigens mit.`,
+  },
+  {
+    id: 'casino',
+    chapter: 'trade',
+    variant: 'spike',
+    syndicate: 'seal',
+    name: tx`Großes Casino des Siegels`,
+    place: tx`Siegelstadt, Orbitalring`,
+    blurb: tx`Kristallleuchter, rote Teppiche und Einsätze, für die anderswo Schiffe den Besitzer wechseln.`,
+    buyIn: 2000,
+    payout: 6600,
+    chips: 20,
+    opponents: ['veyra', 'dray', 'vesh'],
+    unlocks: [],
+    spikeRules: { bets: [2, 2, 4] },
+    ruleText: tx`Siegelpreise: jeder Einsatz kostet das Doppelte.`,
+    rival: 'dray',
+    host: 'veyra',
+    intro: tx`Im Haus des Siegels setzt man doppelt. Und Dray wartet schon auf Sie – er wartet immer.`,
+    outro: tx`Das Siegel ist … überrascht. Das kommt selten vor.`,
+  },
+  {
+    id: 'banquet',
+    chapter: 'trade',
+    variant: 'spike',
+    name: tx`Bankett der Händler`,
+    place: tx`Handelsposten Ashe`,
+    blurb: tx`Einmal im Jahr laden die Handelsfürsten zum Spiel. Wer hier gewinnt, bekommt, was er verlangt.`,
+    buyIn: 2600,
+    payout: 9000,
+    chips: 20,
+    opponents: ['corvin', 'veyra', 'sable'],
+    unlocks: [],
+    rival: 'corvin',
+    finale: true,
+    intro: tx`Drei Schlüssel, eine Rate, ein Platz an meiner Tafel. Sie haben sich das verdient. Jetzt beweisen Sie es.`,
+    outro: tx`Der Navcomputer gehört entsperrt. Was Sie darin finden, ist Ihr Problem.`,
   },
 ]
 

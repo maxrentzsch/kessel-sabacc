@@ -14,7 +14,7 @@ export interface Place {
   id: string
   /** a place that is a whole map of its own: tapping it opens that map */
   opens?: string
-  /** written next to a place that has no table to take its name from */
+  /** written next to the place, instead of the table's name where that is too long for the chart */
   name?: string
   /** position on the chart, which is 360 × 290 units */
   x: number
@@ -68,6 +68,7 @@ export const KESSEL_SECTOR: MapDef = {
     { id: 'salon', x: 306, y: 200, r: 15, kind: 'station', label: 'below' },
     { id: 'hangar', x: 302, y: 112, r: 13, kind: 'station', label: 'below' },
     { id: 'crown', x: 250, y: 42, r: 17, kind: 'crown', label: 'above' },
+    { id: 'route', opens: 'trade', name: tx`Handelsroute`, x: 318, y: 46, r: 12, kind: 'ringed', label: 'below' },
   ],
   routes: [
     { from: 'tarsk', to: 'lodge' },
@@ -76,10 +77,40 @@ export const KESSEL_SECTOR: MapDef = {
     { from: 'mine', to: 'salon' },
     { from: 'salon', to: 'hangar' },
     { from: 'hangar', to: 'crown' },
+    { from: 'crown', to: 'route' },
   ],
 }
 
-export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR }
+/** Act 2: the trade route, from Hallis shipyard to the merchants' banquet. */
+export const TRADE_ROUTE: MapDef = {
+  id: 'trade',
+  scale: 'sector',
+  places: [
+    { id: 'kesselgate', opens: 'kessel', name: tx`Kessel`, x: 32, y: 128, r: 14, kind: 'ringed', label: 'below' },
+    { id: 'hallis1', name: tx`Hallis I`, x: 74, y: 214, r: 9, kind: 'station', label: 'below' },
+    { id: 'hallis2', name: tx`Hallis II`, x: 128, y: 252, r: 9, kind: 'station', label: 'below' },
+    { id: 'hallis3', name: tx`Hallis III`, x: 132, y: 188, r: 9, kind: 'station', label: 'above' },
+    { id: 'convoy', name: tx`Konvoi`, x: 196, y: 244, r: 10, kind: 'station', label: 'below' },
+    { id: 'swoop', name: tx`Swoop-Bahn`, x: 248, y: 182, r: 14, kind: 'planet', label: 'below' },
+    { id: 'barge', name: tx`Corona`, x: 164, y: 104, r: 18, kind: 'ringed', label: 'above' },
+    { id: 'archive', name: tx`Archiv`, x: 252, y: 92, r: 11, kind: 'station', label: 'below' },
+    { id: 'casino', name: tx`Casino`, x: 318, y: 150, r: 14, kind: 'station', label: 'below' },
+    { id: 'banquet', name: tx`Bankett`, x: 310, y: 40, r: 16, kind: 'crown', label: 'below' },
+  ],
+  routes: [
+    { from: 'kesselgate', to: 'hallis1' },
+    { from: 'hallis1', to: 'hallis2' },
+    { from: 'hallis2', to: 'hallis3' },
+    { from: 'hallis3', to: 'convoy' },
+    { from: 'convoy', to: 'swoop' },
+    { from: 'swoop', to: 'barge' },
+    { from: 'barge', to: 'archive' },
+    { from: 'archive', to: 'casino' },
+    { from: 'casino', to: 'banquet' },
+  ],
+}
+
+export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR, trade: TRADE_ROUTE }
 
 export function placeOf(map: MapDef, id: string): Place {
   const place = map.places.find((p) => p.id === id)

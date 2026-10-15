@@ -9,7 +9,8 @@ import type { DebtState } from '../career/debt'
 import { jobById, jobDone } from '../career/jobs'
 import type { Job } from '../career/jobs'
 import { CAREER_VERSION, migrateCareer } from '../career/migrate'
-import { clampStanding } from '../career/syndicates'
+import { banquetMissing, keyFlag } from '../career/route'
+import { clampStanding, SYNDICATE } from '../career/syndicates'
 import type { Syndicate } from '../career/syndicates'
 import { rankOf, REP } from '../career/reputation'
 import { effectsOf } from '../career/story'
@@ -121,6 +122,8 @@ interface CareerState extends Progress {
   /** Do a job that asks for credits only. */
   payJob(job: Job): boolean
   shiftStanding(syndicate: Syndicate, delta: number): void
+  /** One of the three keys to the nav data, with a word that it was found. */
+  gainKey(syndicate: Syndicate): void
   /** Fuel for the trip from where the player is to a table. */
   tripCost(tableId: string): number
   /** Go to a table, paying the fuel; false if the credits do not stretch. */
@@ -268,11 +271,15 @@ export const useCareer = create<CareerState>()(
           const s = get()
           // The stake game waits for the last table on Tarsk; out in the sector there is no table without the ship.
           if (table.id === FIELD.id) return (s.tableWins[TABLES.filter((t) => t.chapter === 'tarsk').at(-1)!.id] ?? 0) > 0
-          if (table.chapter === 'kessel' && !s.hasShip) return false
+          if (table.chapter !== 'tarsk' && !s.hasShip) return false
           // Oshi's table waits for her instalment.
           if (table.id === 'crown' && instalmentDue(s.debt) > 0 && !s.tableWins.crown) return false
+          // The banquet waits for the three keys and the second instalment.
+          if (table.id === 'banquet' && !s.tableWins.banquet && banquetMissing(s).length > 0) return false
           const index = TABLES.indexOf(table)
-          return index <= 0 || (s.tableWins[TABLES[index - 1].id] ?? 0) > 0
+          if (index <= 0 || (s.tableWins[TABLES[index - 1].id] ?? 0) > 0) return true
+          // Whoever already knows Corellian Spike may skip the canteen's learning tables.
+          return s.storySeen.includes('spike-known') && ['hallis2', 'hallis3', 'convoy'].includes(table.id)
         },
 
         setLoadout(tokens) {
@@ -409,6 +416,7 @@ export const useCareer = create<CareerState>()(
           }
 
           set({ ...patch, stats, credits: s.credits + summary.payout + summary.refund })
+          if (summary.job?.done && job?.reward.key) get().gainKey(job.reward.key)
           get().gain(rep)
 
           // Progress lives in this browser only: keep it there, and now and then suggest a copy.
@@ -476,6 +484,7 @@ export const useCareer = create<CareerState>()(
           if (job.goal.kind !== 'pay' || s.jobsDone.includes(job.id) || s.credits < job.goal.amount) return false
           set({ credits: s.credits - job.goal.amount, jobsDone: [...s.jobsDone, job.id] })
           if (job.reward.standing) get().shiftStanding(job.reward.standing, 1)
+          if (job.reward.key) get().gainKey(job.reward.key)
           settle()
           return true
         },
@@ -503,6 +512,12 @@ export const useCareer = create<CareerState>()(
             const d = s.dossiers[characterId] ?? emptyDossier()
             return { dossiers: { ...s.dossiers, [characterId]: { ...d, tellProof: d.tellProof + 1 } } }
           })
+        },
+
+        gainKey(syndicate) {
+          if (get().storySeen.includes(keyFlag(syndicate))) return
+          get().markStory(keyFlag(syndicate))
+          useToasts.getState().push({ kind: 'item', title: tx`Schlüssel: ${SYNDICATE[syndicate].name}`, text: tx`Ein Teil der Navdaten ist entsperrt` })
         },
 
         shiftStanding(syndicate, delta) {

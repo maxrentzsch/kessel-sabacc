@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { KESSEL_SECTOR, MAPS as BY_ID, TARSK } from './maps'
+import { KESSEL_SECTOR, MAPS as BY_ID, TARSK, TRADE_ROUTE } from './maps'
 import { FIELD, TABLES } from './tables'
 
 const MAPS = Object.values(BY_ID)
@@ -43,6 +43,7 @@ describe('maps', () => {
     const tables = (map: typeof TARSK) => map.places.filter((p) => !p.opens).map((p) => p.id).sort()
     expect(tables(TARSK)).toEqual([...TABLES.filter((t) => t.chapter === 'tarsk').map((t) => t.id), FIELD.id].sort())
     expect(tables(KESSEL_SECTOR)).toEqual(TABLES.filter((t) => t.chapter === 'kessel').map((t) => t.id).sort())
+    expect(tables(TRADE_ROUTE)).toEqual(TABLES.filter((t) => t.chapter === 'trade').map((t) => t.id).sort())
   })
 
   it('opens only maps that exist', () => {

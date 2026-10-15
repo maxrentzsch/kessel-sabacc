@@ -78,7 +78,7 @@ function Site({ table, site, standing, selected, onSelect }: { table: TableDef; 
         </g>
       )}
       <text y={site.label === 'below' ? r + 17 : -r - 10} className={s.siteName}>
-        {table.name}
+        {site.name ?? table.name}
       </text>
     </g>
   )
@@ -126,10 +126,10 @@ function Ground({ kind, r, lamp, wall }: { kind: 'yard' | 'oasis' | 'port' | 'pa
 }
 
 /** A place that holds a whole map of its own, such as Tarsk on the sector chart. */
-function Gate({ site, onOpen }: { site: Place; onOpen(): void }) {
+function Gate({ site, locked, onOpen }: { site: Place; locked: boolean; onOpen(): void }) {
   const { r } = site
   return (
-    <g transform={`translate(${site.x} ${site.y})`} className={s.site} onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen()} aria-label={tx`${site.name ?? site.id} öffnen`}>
+    <g transform={`translate(${site.x} ${site.y})`} className={cx(s.site, locked && s.siteLocked)} onClick={locked ? undefined : onOpen} role="button" tabIndex={0} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen()} aria-label={tx`${site.name ?? site.id} öffnen`}>
       <circle r="30" fill="transparent" />
       <circle r={r} fill="#c98a45" />
       <path d={`M${-r * 0.9} ${-r * 0.15}q${r} ${r * 0.4} ${r * 1.8} 0M${-r * 0.7} ${r * 0.4}q${r * 0.7} ${r * 0.3} ${r * 1.4} 0`} fill="none" stroke="#8a5a28" strokeWidth="1.600" opacity="0.6" />
@@ -146,6 +146,8 @@ interface Props {
   tables: TableDef[]
   /** a place that is a map of its own was tapped */
   onOpen?(mapId: string): void
+  /** whether the map a place leads to can be opened yet; all of them when left out */
+  canOpen?(mapId: string): boolean
   /** where the player is; the marker stands there, or at the selected place when that is elsewhere */
   here?: string
   standing(table: TableDef): Standing
@@ -159,7 +161,7 @@ interface Props {
  * The career as a chart of the sector: six places along a route. Whoever
  * plays travels it – on the liner at first, in their own ship at the end.
  */
-export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpen, here }: Props) {
+export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpen, canOpen = () => true, here }: Props) {
   const planet = map.scale === 'planet'
   const at = placeOf(map, here && map.places.some((p) => p.id === here) ? here : selected)
   // The marker points the way it last travelled.
@@ -170,8 +172,9 @@ export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpe
   // Above the place, or beside it where the name is written above.
   const mark = at.label === 'below' ? { x: at.x, y: at.y - at.r - 13 } : { x: at.x + at.r + 18, y: at.y + 2 }
   const open = (id: string) => {
-    // a place that opens a map of its own, such as home, is always within reach
-    if (map.places.find((p) => p.id === id)?.opens) return true
+    // a place that opens a map of its own, such as home, is within reach once that map is
+    const gate = map.places.find((p) => p.id === id)?.opens
+    if (gate) return canOpen(gate)
     const table = tables.find((t) => t.id === id)
     return !!table && standing(table) !== 'locked'
   }
@@ -226,7 +229,7 @@ export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpe
       {map.places
         .filter((p) => p.opens)
         .map((p) => (
-          <Gate key={p.id} site={p} onOpen={() => onOpen?.(p.opens!)} />
+          <Gate key={p.id} site={p} locked={!canOpen(p.opens!)} onOpen={() => onOpen?.(p.opens!)} />
         ))}
 
       {tables.map((table) => (

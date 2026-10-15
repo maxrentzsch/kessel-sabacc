@@ -13,13 +13,15 @@ in English and German. Two games:
 ## What is in it
 
 - **Career** that starts on the desert world Tarsk, where a stake game wins you a ship and the
-  debt that comes with it, then goes out into the Kessel sector: a story with three animals to
-  choose from without being asked, Oshi's instalment to pay, four syndicates whose standing
-  changes prices and seats, jobs on every table's board, fuel for every jump, house rules, duels
-  against rivals, three stakes and a legend mode afterwards. The road ahead is in [ROADMAP.md](ROADMAP.md).
+  debt that comes with it, then goes out into the Kessel sector and, in act 2, along the trade
+  route, where Corellian Spike is played: a story with three animals to choose from without being
+  asked, Oshi's instalments to pay, four syndicates whose standing changes prices and seats, a
+  patron to choose and three keys to the ship's nav data, jobs on every table's board, fuel for
+  every jump, house rules, duels against rivals, three stakes and a legend mode. Corellian Spike
+  is taught at three learning tables with a practice hand. The road ahead is in [ROADMAP.md](ROADMAP.md).
 - **On Tour** (table after table for a growing pot), **Daily Hand** (one fixed table a day) and
-  **Free Play** with your own rules – the place to play Corellian Spike, and to pass one device
-  round between two to four people.
+  **Free Play** with your own rules, also for passing one device round between two to four
+  people.
 - **Long-term goals:** reputation and ranks, achievements, a collection of card backs, felt, chips
   and titles, and a ship of your own to upgrade.
 - **At the table:** peeking with suspicion, a dealer droid, swipe gestures, tips from the AI, a

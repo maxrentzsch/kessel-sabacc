@@ -29,6 +29,16 @@ export const TELLS: Record<string, Tell> = {
   lio: { gesture: tx`tippt mit dem Fuß`, meaning: 'weak' },
   grex: { gesture: tx`starrt auf die Ablage`, meaning: 'weak' },
   oshi: { gesture: tx`legt die Hände zusammen`, meaning: 'strong' },
+  dessa: { gesture: tx`wischt sich Öl von den Fingern`, meaning: 'strong' },
+  rook: { gesture: tx`wippt mit dem Knie`, meaning: 'weak' },
+  mags: { gesture: tx`legt die Karten ordentlich übereinander`, meaning: 'strong' },
+  quill: { gesture: tx`richtet die Brille`, meaning: 'weak' },
+  juno: { gesture: tx`trommelt einen Rennrhythmus`, meaning: 'strong' },
+  harl: { gesture: tx`kaut auf dem Stift`, meaning: 'weak' },
+  vesh: { gesture: tx`dreht ihren Ring`, meaning: 'strong' },
+  sable: { gesture: tx`blättert in einem leeren Notizbuch`, meaning: 'weak' },
+  veyra: { gesture: tx`lächelt nur mit einem Mundwinkel`, meaning: 'strong' },
+  corvin: { gesture: tx`schwenkt sein Glas`, meaning: 'weak' },
 }
 
 /**

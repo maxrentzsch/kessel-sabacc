@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { unlockAudio } from '../../audio/sfx'
 import { TOKEN_IDS } from '../../engine'
 import type { Card, CardKind, Suit } from '../../engine'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useNav } from '../../store/nav'
+import { useSpike } from '../../store/spike'
 import { CardFace } from '../art/CardArt'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
@@ -45,6 +47,7 @@ export function Section({ no, title, children }: { no: number; title: string; ch
 export function RulesScreen() {
   const go = useNav((n) => n.go)
   const [variant, setVariant] = useState<'kessel' | 'spike'>('kessel')
+  const startSpikeTutorial = useSpike((g) => g.startTutorial)
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
@@ -64,6 +67,18 @@ export function RulesScreen() {
             </button>
           </div>
           {variant === 'spike' ? <SpikeRules /> : <KesselRules />}
+          {variant === 'spike' && (
+            <button
+              className={cx(common.btn, common.btnPrimary, common.btnBlock)}
+              onClick={() => {
+                unlockAudio()
+                startSpikeTutorial('rules')
+                go('spike')
+              }}
+            >
+              {tx`Übungshand mit Dessa`}
+            </button>
+          )}
         </div>
       </div>
     </div>

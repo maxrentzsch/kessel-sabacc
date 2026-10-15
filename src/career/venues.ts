@@ -237,7 +237,137 @@ export const VENUES: Record<string, Venue> = {
       rim: ['#f3e2ae', '#d9bf74'],
     }),
   },
+  // ── Act 2: the trade route ──
+  // a shipyard canteen: work lamps, welding glow, steel tables
+  hallis: {
+    place: tx`Werft Hallis, Kantine`,
+    sound: { crowd: 1.1, hum: 1.6 },
+    colors: paint({
+      wall: ['#10141a', '#2a3440', '#45525e'],
+      niche: ['#1c242c', '#5c6e7c'],
+      trim: '#0a0d10',
+      pane: ['#fff2d6', '#ffb35c', '#b35a1a'],
+      door: ['#ffd9a8', '#e0782a'],
+      lamp: '#ffe6bf',
+      floor: ['#262c33', '#08090b'],
+      ceiling: '#07090b',
+      haze: '255 170 90',
+      felt: ['#4f7a6e', '#3e6358', '#2d4b42'],
+      rim: ['#d9d6cf', '#b8b3a8'],
+    }),
+  },
+  // a cargo hold between two jumps: crates, strapping, blue hyperspace light
+  convoy: {
+    place: tx`Laderaum der „Lange Leine“`,
+    sound: { crowd: 0.5, hum: 2 },
+    colors: paint({
+      wall: ['#0a0e16', '#1a2638', '#2c3e58'],
+      niche: ['#141c2a', '#3e5c86'],
+      trim: '#06080d',
+      pane: ['#e8f4ff', '#7fb8ff', '#2a5aa8'],
+      door: ['#cfe4ff', '#4a86d8'],
+      lamp: '#dceaff',
+      floor: ['#1a2230', '#05070a'],
+      ceiling: '#05070b',
+      haze: '130 180 255',
+      felt: ['#6a6450', '#55503f', '#403c2f'],
+      rim: ['#d6d3c8', '#b3ae9f'],
+    }),
+  },
+  // a bar over the track: neon, exhaust and the roar from below
+  swoop: {
+    place: tx`Rennplanet Teska`,
+    sound: { crowd: 1.6, hum: 1.3 },
+    colors: paint({
+      wall: ['#160a12', '#3c1430', '#5e1e4a'],
+      niche: ['#2a0e22', '#8a2a6a'],
+      trim: '#0c050a',
+      pane: ['#ffe0f4', '#ff5ab8', '#a8186e'],
+      door: ['#ffc2e6', '#e03a96'],
+      lamp: '#ffd6ee',
+      floor: ['#2a1022', '#090408'],
+      ceiling: '#0a0408',
+      haze: '255 90 180',
+      felt: ['#3e6a7a', '#305563', '#22404b'],
+      rim: ['#e2d8de', '#c4b6be'],
+    }),
+  },
+  // a casino adrift in a gas giant: amber clouds through every window
+  barge: {
+    place: tx`In den Wolken von Yavvis`,
+    sound: { crowd: 1, hum: 1.1 },
+    colors: paint({
+      wall: ['#1a0f06', '#4a2a10', '#7a4a1c'],
+      niche: ['#33200c', '#a8682a'],
+      trim: '#120a04',
+      pane: ['#fff0d0', '#ffb860', '#c4661c'],
+      door: ['#ffdca0', '#e88a30'],
+      lamp: '#ffe8c0',
+      floor: ['#3a2210', '#0e0804'],
+      ceiling: '#100803',
+      haze: '255 180 110',
+      felt: ['#6e3a5a', '#592e49', '#432237'],
+      rim: ['#ecdcc4', '#d2bea0'],
+    }),
+  },
+  // shelves of secrets in green archive light
+  archive: {
+    place: tx`Datenstation Mirr`,
+    sound: { crowd: 0.25, hum: 1.2 },
+    colors: paint({
+      wall: ['#06100c', '#12302a', '#1e4a40'],
+      niche: ['#0c2018', '#2a7060'],
+      trim: '#040a08',
+      pane: ['#e0fff4', '#6ee0b8', '#1e8a66'],
+      door: ['#c4f8e4', '#3ab890'],
+      lamp: '#d4fff0',
+      floor: ['#10261f', '#040907'],
+      ceiling: '#040a08',
+      haze: '110 230 190',
+      felt: ['#5a4a6e', '#483b59', '#352b43'],
+      rim: ['#d8e0dc', '#b6c2bc'],
+    }),
+  },
+  // crystal and crimson: the Red Seal's own house
+  casino: {
+    place: tx`Siegelstadt, Orbitalring`,
+    sound: { crowd: 1.4, hum: 0.7 },
+    colors: paint({
+      wall: ['#1a0608', '#4a1018', '#781a26'],
+      niche: ['#300a10', '#a82a3a'],
+      trim: '#120406',
+      pane: ['#fff0f0', '#ff8a96', '#b01e30'],
+      door: ['#ffd0d6', '#d83a4c'],
+      lamp: '#fff0e6',
+      floor: ['#300c12', '#0c0305'],
+      ceiling: '#0e0306',
+      haze: '255 110 120',
+      felt: ['#1f5a4a', '#18493c', '#11382e'],
+      rim: ['#f0e2c8', '#d8c49c'],
+    }),
+  },
+  // the merchants' banquet: candlelight, silverware, a long table
+  banquet: {
+    place: tx`Handelsposten Ashe`,
+    sound: { crowd: 1.2, hum: 0.5 },
+    colors: paint({
+      wall: ['#14100a', '#3a2e1a', '#5e4a28'],
+      niche: ['#2a2010', '#8a6e36'],
+      trim: '#0e0a06',
+      pane: ['#fffbe8', '#ffe08a', '#c49a2a'],
+      door: ['#fff0c0', '#e2b84a'],
+      lamp: '#fff4d0',
+      floor: ['#2c2212', '#0a0805'],
+      ceiling: '#0c0905',
+      haze: '255 220 140',
+      felt: ['#2e3e6a', '#243256', '#1a2542'],
+      rim: ['#f4ead2', '#dccba4'],
+    }),
+  },
 }
+
+// the three learning tables share the canteen
+VENUES.hallis1 = VENUES.hallis2 = VENUES.hallis3 = VENUES.hallis
 
 export function venueOf(id: string | undefined): Venue {
   return (id && VENUES[id]) || VENUES.anchor

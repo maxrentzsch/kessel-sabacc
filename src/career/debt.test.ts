@@ -13,6 +13,19 @@ describe('the debt', () => {
     expect(instalmentDue({ paid: 9000, extra: 0 })).toBe(0)
   })
 
+  it('adds up the instalments act by act, less a courier’s relief', () => {
+    expect(instalmentDue({ paid: 6000, extra: 0 }, 1)).toBe(12000)
+    expect(instalmentDue({ paid: 6000, extra: 0 }, 1, 3000)).toBe(9000)
+    expect(instalmentDue({ paid: 20000, extra: 500 }, 1)).toBe(0)
+  })
+
+  it('lets act 2 pay its instalment and the banquet from its own tables', () => {
+    const tables = TABLES.filter((t) => t.chapter === 'trade' && !t.finale)
+    const net = tables.reduce((sum, t) => sum + t.payout - t.buyIn, 0)
+    const banquet = TABLES.find((t) => t.id === 'banquet')!
+    expect(net).toBeGreaterThanOrEqual(INSTALMENTS[1] + banquet.buyIn)
+  })
+
   it('can be met from the act’s own tables', () => {
     // net winnings of a first win at each table in the sector before the Crown
     const net = TABLES.filter((t) => t.chapter === 'kessel' && t.id !== 'crown').reduce((sum, t) => sum + t.payout - t.buyIn, 0)
@@ -29,5 +42,12 @@ describe('travel', () => {
     expect(fuelCost('anchor', 'dune', 0)).toBe(0)
     expect(fuelCost('lodge', 'lump', 0)).toBe(25)
     expect(fuelCost('lodge', 'lump', 2)).toBe(15)
+  })
+
+  it('takes the long jump between the sectors', () => {
+    // crown → route is one jump, then the long one, then on to the first table of Hallis
+    expect(hops('crown', 'hallis1')).toBe(1 + 4 + 1)
+    expect(hops('hallis1', 'banquet')).toBe(8)
+    expect(hops('anchor', 'convoy')).toBe(hops('anchor', 'crown') + hops('crown', 'convoy'))
   })
 })

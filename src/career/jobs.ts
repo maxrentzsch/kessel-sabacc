@@ -9,7 +9,7 @@ export type JobGoal =
   /** hand over credits */
   | { kind: 'pay'; amount: number }
   /** win the game, with a condition */
-  | { kind: 'win'; noTokens?: boolean; noPeek?: boolean; maxHandsLost?: number; keepChips?: boolean; sabacc?: boolean }
+  | { kind: 'win'; noTokens?: boolean; noPeek?: boolean; minPeeks?: number; maxHandsLost?: number; keepChips?: boolean; sabacc?: boolean }
   /** lose the game, and the right person has to win it */
   | { kind: 'throw'; to: string }
   /** beat somebody one-on-one */
@@ -22,7 +22,10 @@ export interface Job {
   title: string
   text: string
   goal: JobGoal
-  reward: { credits: number; standing?: Syndicate }
+  /** a key to the nav data: the job is gone once the player holds it */
+  reward: { credits: number; standing?: Syndicate; key?: Syndicate }
+  /** a story flag the job waits for */
+  requires?: string
 }
 
 export const JOBS: Job[] = [
@@ -90,6 +93,97 @@ export const JOBS: Job[] = [
     goal: { kind: 'duel', against: 'brakk', buyIn: 400 },
     reward: { credits: 1200, standing: 'oshi' },
   },
+
+  // ── Act 2: the trade route ──
+  {
+    id: 'manifest',
+    table: 'convoy',
+    title: tx`Saubere Ladeliste`,
+    text: tx`Quill zahlt, wer seine Bücher nicht durcheinanderbringt. Gewinn und behalte mindestens so viele Chips, wie du hattest.`,
+    goal: { kind: 'win', keepChips: true },
+    reward: { credits: 700 },
+  },
+  {
+    id: 'buy-key-scrap',
+    table: 'swoop',
+    title: tx`Schlüssel der Schrottkrone kaufen`,
+    text: tx`Ilsa verkauft dir den Schlüssel zu den Navdaten. Zum Freundschaftspreis, sagt sie.`,
+    goal: { kind: 'pay', amount: 2000 },
+    reward: { credits: 0, key: 'scrap' },
+  },
+  {
+    id: 'steal-key-scrap',
+    table: 'swoop',
+    title: tx`Junos Zündschlüssel`,
+    text: tx`Der Schlüssel steckt in Junos Swoop. Gewinn ihn ihr im Duell ab – sie fährt nicht langsamer, nur weil du fragst.`,
+    goal: { kind: 'duel', against: 'juno', buyIn: 600 },
+    reward: { credits: 0, key: 'scrap' },
+  },
+  {
+    id: 'track-bet',
+    table: 'swoop',
+    title: tx`Harls Wette`,
+    text: tx`Harl wettet gegen dich. Gewinn die Partie und verlier dabei höchstens zwei Hände.`,
+    goal: { kind: 'win', maxHandsLost: 2 },
+    reward: { credits: 900, standing: 'scrap' },
+  },
+  {
+    id: 'oshi-run',
+    table: 'barge',
+    title: tx`Oshis Fracht`,
+    text: tx`Oshis Kurier hat eine Kiste für Vesh. Bring sie an Bord – und spiel, als wäre nichts. Gewinn, ohne Chips zu verlieren.`,
+    goal: { kind: 'win', keepChips: true },
+    reward: { credits: 0, standing: 'oshi' },
+    requires: 'oshi-courier',
+  },
+  {
+    id: 'cloud-dive',
+    table: 'barge',
+    title: tx`Sturz durch die Wolken`,
+    text: tx`Vesh zahlt für eine Null mit Ansage. Gewinn die Partie und dabei mindestens eine Hand mit einer Null.`,
+    goal: { kind: 'win', sabacc: true },
+    reward: { credits: 1200 },
+  },
+  {
+    id: 'buy-key-glass',
+    table: 'archive',
+    title: tx`Schlüssel der Glasfinger kaufen`,
+    text: tx`Sable verkauft alles, was in ihren Akten steht. Auch den Schlüssel. Für den richtigen Preis.`,
+    goal: { kind: 'pay', amount: 2500 },
+    reward: { credits: 0, key: 'glass' },
+  },
+  {
+    id: 'steal-key-glass',
+    table: 'archive',
+    title: tx`Ein Blick in Sables Akten`,
+    text: tx`Der Schlüssel steht irgendwo in ihren Karten. Schau mindestens zweimal in fremde Karten und gewinn trotzdem.`,
+    goal: { kind: 'win', minPeeks: 2 },
+    reward: { credits: 0, key: 'glass' },
+  },
+  {
+    id: 'buy-key-seal',
+    table: 'casino',
+    title: tx`Schlüssel des Siegels kaufen`,
+    text: tx`Veyra nennt einen Preis. Er ist nicht verhandelbar.`,
+    goal: { kind: 'pay', amount: 3000 },
+    reward: { credits: 0, key: 'seal' },
+  },
+  {
+    id: 'steal-key-seal',
+    table: 'casino',
+    title: tx`Drays Schlüssel`,
+    text: tx`Dray trägt den Schlüssel am Gürtel und sucht seit Wochen ein Duell mit dir. Gib es ihm.`,
+    goal: { kind: 'duel', against: 'dray', buyIn: 1000 },
+    reward: { credits: 0, key: 'seal' },
+  },
+  {
+    id: 'house-honour',
+    table: 'casino',
+    title: tx`Die Ehre des Hauses`,
+    text: tx`Im Haus des Siegels wird nicht geschummelt. Gewinn, ohne in fremde Karten zu schauen.`,
+    goal: { kind: 'win', noPeek: true },
+    reward: { credits: 1500, standing: 'seal' },
+  },
 ]
 
 export function jobById(id: string | undefined): Job | undefined {
@@ -100,6 +194,7 @@ export function jobById(id: string | undefined): Job | undefined {
 export interface JobFacts {
   won: boolean
   tokensPlayed: number
+  /** looks at other hands that were not caught */
   peeks: number
   handsLost: number
   sabaccWins: number
@@ -123,6 +218,7 @@ export function jobDone(goal: JobGoal, facts: JobFacts): boolean {
         facts.won &&
         (!goal.noTokens || facts.tokensPlayed === 0) &&
         (!goal.noPeek || facts.peeks === 0) &&
+        (goal.minPeeks === undefined || facts.peeks >= goal.minPeeks) &&
         (goal.maxHandsLost === undefined || facts.handsLost <= goal.maxHandsLost) &&
         (!goal.keepChips || facts.finalChips >= facts.startChips) &&
         (!goal.sabacc || facts.sabaccWins > 0)

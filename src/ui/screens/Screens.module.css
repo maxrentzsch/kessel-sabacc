@@ -2311,3 +2311,39 @@
   outline: none;
   border-color: var(--accent);
 }
+
+/* the three keys to the nav data, on the trade route */
+.ledgerKeys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ledgerKeys > .fieldLabel {
+  margin: 0;
+  width: 100%;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-faint);
+}
+
+.key em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.keyHeld {
+  color: var(--ink);
+}
+
+.keyHeld svg {
+  color: var(--good);
+}

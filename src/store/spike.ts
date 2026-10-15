@@ -5,6 +5,7 @@ import { Rng, randomSeed } from '../engine/rng'
 import { showsTell, strengthOf, TELLS, tellHeld } from '../ai/tells'
 import { chooseSpikeAction, spikeWinChance } from '../spike/ai'
 import { isSabacc } from '../spike/scoring'
+import { CHARACTERS } from '../ai/personalities'
 import { applySpikeAction, createSpikeGame, IllegalSpikeAction } from '../spike'
 import type { SpikeAction, SpikeConfig, SpikeEvent, SpikeRecord, SpikeState } from '../spike'
 import { tx } from '../i18n'
@@ -57,8 +58,19 @@ interface SpikeStore {
   bixCover: number
   /** how often the player may still ask for advice in this game */
   tipsLeft: number
+  /** practice hand: index of the step the coach is on */
+  tutorialStep: number
+  /** counts up when the player tries something the practice hand is not asking for */
+  nudge: number
 
   start(session: Session): void
+  /** Dessa's practice hand: a fixed deal that shows what zero means. `from` is where it goes back to. */
+  startTutorial(from?: 'career' | 'rules'): void
+  /** where the practice hand was started from */
+  tutorialFrom: 'career' | 'rules'
+  /** something happening for the first time in the career, explained while the table waits */
+  note: SpikeNote | null
+  dismissNote(): void
   act(action: SpikeAction): void
   /** The next person has the device: uncover the table for them. */
   takeOver(): void
@@ -85,6 +97,47 @@ let record: SpikeRecord | null = null
 /** seats that made their gesture in the current hand */
 let handTells = new Set<number>()
 let gestureId = 0
+
+/**
+ * Dessa's practice hand, step by step: what the coach says in the player's
+ * turn of each round, and the one move it asks for. The deal is fixed so
+ * that the move is there to be found.
+ */
+export const SPIKE_TUTORIAL: { text: string; expect(action: SpikeAction): boolean }[] = [
+  {
+    text: tx`Ziel: Deine Karten sollen zusammen null ergeben. +4 und −1 sind +3. Oben auf der Ablage liegt eine −4 – tipp auf die Ablage und gib dafür die −1.`,
+    expect: (a) => a.type === 'swap' && a.give === 'circle-1',
+  },
+  {
+    text: tx`+4 und −4: genau null. Besser geht es nicht. Bleib stehen.`,
+    expect: (a) => a.type === 'stand',
+  },
+  {
+    text: tx`Letzte Runde. Wer danach am nächsten an null ist, gewinnt den Topf. Bleib stehen und sieh zu.`,
+    expect: (a) => a.type === 'stand',
+  },
+]
+
+/** What is explained the first time it comes up at a career table. */
+export type SpikeNote = 'bet' | 'shift' | 'pots'
+
+export const SPIKE_NOTES: Record<SpikeNote, { title: string; text: string }> = {
+  bet: {
+    title: tx`Die erste Setzrunde`,
+    text: tx`Schieben kostet nichts, Setzen bringt Chips in den Hand-Topf. Liegt ein Einsatz, gehst du mit, erhöhst – oder steigst aus und verlierst, was du schon im Topf hast.`,
+  },
+  shift: {
+    title: 'Sabacc Shift',
+    text: tx`Ein Pasch auf den Spike-Würfeln: Alle werfen ihre Karten ab und bekommen gleich viele neue. Eine gute Hand kann so verschwinden – eine schlechte auch.`,
+  },
+  pots: {
+    title: tx`Zwei Töpfe`,
+    text: tx`Der Hand-Topf geht an die beste Hand. Den Sabacc-Topf gibt es nur für eine Hand, die genau null ergibt – sonst bleibt er liegen und wächst bis zur nächsten Null.`,
+  },
+}
+
+/** What the practice hand teaches, said once it is over. */
+export const SPIKE_TUTORIAL_RESULT = tx`Null gewinnt. Am Tisch kommen dann Setzrunden dazu, und am Ende die Würfel – eins nach dem anderen.`
 
 /** The game being played as a record that replays to the same result (see spike/replay). */
 export function currentSpikeRecord(): SpikeRecord | null {
@@ -270,6 +323,21 @@ export const useSpike = create<SpikeStore>((set, get) => {
     return 'caught'
   }
 
+  /** The first time something comes up at a career table: say what it is, once. */
+  function firstTime(note: SpikeNote): boolean {
+    const { session } = get()
+    const flag = `note-${note}`
+    if (!session || session.mode !== 'career' || session.tutorial || useCareer.getState().storySeen.includes(flag)) return false
+    useCareer.getState().markStory(flag)
+    set({ note })
+    return true
+  }
+
+  /** The table waits while a first-time note is open. */
+  async function held(gen: number): Promise<void> {
+    while (gen === generation && get().note) await new Promise((resolve) => setTimeout(resolve, 150))
+  }
+
   /** Let the opponents and the table's own steps run until a person is needed. */
   async function pump(gen: number): Promise<void> {
     for (;;) {
@@ -287,6 +355,7 @@ export const useSpike = create<SpikeStore>((set, get) => {
           set({ rolling: rolled.dice })
           await wait(rolled.shift ? 3000 : 1700)
           if (gen !== generation) return
+          if (rolled.shift && firstTime('shift')) await held(gen)
           set({ rolling: null })
         }
         continue
@@ -297,6 +366,8 @@ export const useSpike = create<SpikeStore>((set, get) => {
         // time to read the hands before the pots move
         await wait(game.result!.uncontested ? 1400 : 3200)
         if (gen !== generation) return
+        if (!game.rules.simple && !game.result!.uncontested && firstTime('pots')) await held(gen)
+        if (gen !== generation) return
         await wait(pauseAfter(step({ type: 'settle' }), game.players.length))
         continue
       }
@@ -304,6 +375,7 @@ export const useSpike = create<SpikeStore>((set, get) => {
       const actor = game.players[game.current]
       if (actor.isHuman) {
         if (isHotseat(session) && actor.id !== get().viewer) set({ handoff: actor.id })
+        if (game.phase === 'bet') firstTime('bet')
         break
       }
 
@@ -311,14 +383,15 @@ export const useSpike = create<SpikeStore>((set, get) => {
       gesture(game, actor.id, session)
       await wait(650 + Math.random() * 500)
       if (gen !== generation) return
-      const action = chooseSpikeAction(get().game!, session.seats[actor.id]!.profile, aiRng)
+      // In the practice hand Dessa only ever stands and lets the player find the move.
+      const action: SpikeAction = session.tutorial ? { type: 'stand' } : chooseSpikeAction(get().game!, session.seats[actor.id]!.profile, aiRng)
       set({ thinking: null })
       await wait(pauseAfter(step(action), game.players.length))
     }
     if (gen === generation) set({ busy: false, thinking: null })
   }
 
-  const fresh = { thinking: null, feed: [], outcome: null, summary: null, rolling: null, gesture: null, peeked: [], peekUsed: false, sleeveUsed: false, caught: 0 }
+  const fresh = { thinking: null, feed: [], outcome: null, summary: null, rolling: null, gesture: null, peeked: [], peekUsed: false, sleeveUsed: false, caught: 0, note: null }
 
   return {
     session: null,
@@ -331,6 +404,10 @@ export const useSpike = create<SpikeStore>((set, get) => {
     watch: [],
     bixCover: 0,
     tipsLeft: 0,
+    tutorialStep: 0,
+    nudge: 0,
+    tutorialFrom: 'career',
+    note: null,
 
     start(session) {
       const gen = ++generation
@@ -367,8 +444,13 @@ export const useSpike = create<SpikeStore>((set, get) => {
     },
 
     act(action) {
-      const { game, busy } = get()
+      const { game, busy, session, tutorialStep, nudge } = get()
       if (!game || busy) return
+      // The practice hand only accepts the move it is currently teaching.
+      if (session?.tutorial && game.phase === 'card') {
+        if (!SPIKE_TUTORIAL[tutorialStep]?.expect(action)) return set({ nudge: nudge + 1 })
+        set({ tutorialStep: tutorialStep + 1 })
+      }
       const gen = generation
       set({ busy: true })
       let events: SpikeEvent[]
@@ -380,6 +462,40 @@ export const useSpike = create<SpikeStore>((set, get) => {
         throw error
       }
       void wait(pauseAfter(events, game.players.length)).then(() => pump(gen))
+    },
+
+    startTutorial(from = 'career') {
+      const gen = ++generation
+      const session: Session = {
+        variant: 'spike',
+        mode: 'free',
+        table: null,
+        title: tx`Übungshand`,
+        venue: 'hallis',
+        tutorial: true,
+        seats: [null, CHARACTERS.dessa],
+        startingChips: 10,
+        spikeRules: { betting: false, dice: false, simple: true },
+      }
+      const config: SpikeConfig = { seed: 1, startingChips: 10, rules: session.spikeRules, players: [{ name: tx`Du`, isHuman: true }, { name: CHARACTERS.dessa.name, isHuman: false }] }
+      record = null
+      const { state, events } = createSpikeGame(config)
+      // The fixed deal: +4 and −1 for the player, the −4 on the discard pile, +7 and −6 for Dessa, who deals.
+      const take = (id: string) => state.deck.splice(state.deck.findIndex((c) => c.id === id), 1)[0]
+      state.deck.push(...state.discard.splice(0), ...state.players.flatMap((p) => p.hand.splice(0)))
+      state.players[0].hand = [take('triangle+4'), take('circle-1')]
+      state.players[1].hand = [take('square+7'), take('square-6')]
+      state.discard = [take('circle-4')]
+      state.dealer = 1
+      state.current = 0
+      state.pending = [0, 1]
+      set({ session, busy: true, ...fresh, ...firstView(session), ...watching([0, 0]), bixCover: 0, tipsLeft: 0, tutorialStep: 0, nudge: 0, tutorialFrom: from })
+      publish(state, events.filter((e) => e.type !== 'turnStart'))
+      void wait(pauseAfter(events, 2)).then(() => pump(gen))
+    },
+
+    dismissNote() {
+      set({ note: null })
     },
 
     takeOver() {

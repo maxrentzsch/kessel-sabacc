@@ -1,4 +1,4 @@
-import { KESSEL_SECTOR } from './maps'
+import { KESSEL_SECTOR, TRADE_ROUTE } from './maps'
 import { tableById } from './tables'
 
 /**
@@ -16,9 +16,17 @@ export interface DebtState {
   extra: number
 }
 
-/** What is still owed on the first instalment, the one due before the Kessel Crown. */
-export function instalmentDue(debt: DebtState): number {
-  return Math.max(0, INSTALMENTS[0] + debt.extra - debt.paid)
+/** What Oshi takes off the second instalment for a courier; it is owed with the third instead. */
+export const COURIER_RELIEF = 3000
+
+/**
+ * What is still owed on an instalment: the first is due before the Kessel
+ * Crown, the second before the merchants' banquet. Everything paid counts
+ * towards the earliest one; `relief` is taken off this instalment.
+ */
+export function instalmentDue(debt: DebtState, act = 0, relief = 0): number {
+  const owed = INSTALMENTS.slice(0, act + 1).reduce((a, b) => a + b, 0) - relief
+  return Math.max(0, owed + debt.extra - debt.paid)
 }
 
 /** What the whole debt still stands at. */
@@ -31,30 +39,39 @@ export function debtLeft(debt: DebtState): number {
 /** Credits of fuel for each jump between two places on the sector chart. */
 export const FUEL_PER_HOP = 25
 
-/** Where on the sector chart a table is: anything on Tarsk is Tarsk. */
+/** The jump between the Kessel sector and the trade route counts as this many ordinary ones. */
+export const SECTOR_JUMP = 4
+
+/** Where on the charts a table is: anything on Tarsk is Tarsk on the sector chart. */
 export function sectorPlace(tableId: string): string {
-  return tableById(tableId)?.chapter === 'kessel' ? tableId : 'tarsk'
+  return tableById(tableId)?.chapter === 'tarsk' ? 'tarsk' : tableId
 }
 
-/** How many jumps lie between two places on the sector chart. */
+/** Every way through space, the long jump between the two sectors included. */
+const LANES: { from: string; to: string; length: number }[] = [
+  ...[...KESSEL_SECTOR.routes, ...TRADE_ROUTE.routes].map((r) => ({ ...r, length: 1 })),
+  { from: 'route', to: 'kesselgate', length: SECTOR_JUMP },
+]
+
+/** How many jumps lie between two places, on one chart or across both. */
 export function hops(from: string, to: string): number {
   const a = sectorPlace(from)
   const b = sectorPlace(to)
   if (a === b) return 0
-  const seen = new Map([[a, 0]])
-  const queue = [a]
-  while (queue.length) {
-    const at = queue.shift()!
-    for (const { from: x, to: y } of KESSEL_SECTOR.routes) {
-      const next = x === at ? y : y === at ? x : null
-      if (next && !seen.has(next)) {
-        seen.set(next, seen.get(at)! + 1)
-        if (next === b) return seen.get(next)!
-        queue.push(next)
-      }
+  // the shortest way: few places, so a plain search for the nearest unvisited one will do
+  const best = new Map([[a, 0]])
+  const done = new Set<string>()
+  for (;;) {
+    let at: string | null = null
+    for (const [id, d] of best) if (!done.has(id) && (at === null || d < best.get(at)!)) at = id
+    if (at === null) return 0
+    if (at === b) return best.get(at)!
+    done.add(at)
+    for (const lane of LANES) {
+      const next = lane.from === at ? lane.to : lane.to === at ? lane.from : null
+      if (next && best.get(at)! + lane.length < (best.get(next) ?? Infinity)) best.set(next, best.get(at)! + lane.length)
     }
   }
-  return 0
 }
 
 /** What a trip costs: fuel for every jump, less with a better engine. On Tarsk the speeder is free. */

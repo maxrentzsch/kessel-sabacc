@@ -6,10 +6,12 @@ Where Kessel Sabacc could go after 1.2. Smaller ideas that do not belong to a ph
 ## Where we stand
 
 - Two variants with pure, seeded rules engines and AI: Kessel Sabacc (`src/engine`) and Corellian
-  Spike (`src/spike`). Corellian Spike is only in free play.
-- A career of six tables on one sector map, duels, legend mode, stakes, the tour, the daily hand,
-  the Sandrunner with five modules, a collection, 34 achievements and short story scenes.
-- Peeking at an opponent's card with a suspicion meter; getting caught costs chips.
+  Spike (`src/spike`), both in the career since 2.0.
+- A career over three charts: Tarsk, the Kessel sector (act 1) and the trade route (act 2), with
+  duels, legend mode, stakes, jobs, syndicates, the tour, the daily hand, the Sandrunner with five
+  modules, a collection, achievements and story scenes. Acts 3 and 4 are still to come.
+- Peeking with suspicion per opponent and the sleeve, in both variants; one device for several
+  players, in both variants.
 - German and English, enforced by a catalogue test.
 - A static web app on GitHub Pages: no server, saves in `localStorage`, backup codes to move a save.
 - All art is drawn in code (SVG and CSS); all sound is synthesised (`src/audio/sfx.ts`).
@@ -211,6 +213,19 @@ and every new line exists in both languages.
 - **Cheating at the Spike table**: peeking with suspicion per opponent and the sleeve, as in
   Kessel Sabacc since 1.7, so that tells, dossier and sleeve finally work in both variants.
 - **Passing the device at the Spike table**, as in Kessel Sabacc since 1.8.
+- *As built in 2.0:* nine tables on a chart of their own. Three learning tables in the Hallis
+  canteen with Dessa, a guided practice hand (also on the rules page) and notes the first time
+  betting, a sabacc shift or the two pots come up; players who know the game may skip the canteen.
+  Then the convoy, the swoop track (Scrap Crown), the gas barge, the Glassfingers' archive, the
+  Red Seal's casino with Dray, and the merchants' banquet as the finale. After the convoy the
+  player chooses a patron, whose key comes with it; the other two keys are bought or stolen
+  through jobs on the boards of the swoop track, the archive and the casino (a duel with Juno, a
+  win with two looks at other hands, a duel with Dray). The banquet waits for all three keys and
+  the second instalment. The answer given to Oshi after the Crown decides the turn: as her
+  courier the instalment is 3,000 lighter but her freight has to go to the barge first; otherwise
+  the debt is sold to the Red Seal and Dray sits in at the convoy and the barge. Mira's confession
+  follows the jump, and she stays or leaves. Opening tables in act 3 through the patron comes with
+  act 3.
 - *Built in 1.9, ahead of the act:* the engine plays the learning tables' rules (cards only, then
   betting, then the dice; one pot and no named hands until the last); the Spike table seats the
   player wherever the device is, takes career games with stake and result screen, counts stats and
@@ -341,7 +356,7 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.7 | Phase 3, second half: suspicion per opponent, the sleeve with its steadiness test |
 | 1.8 | 7a: one device, several players (Kessel Sabacc) |
 | 1.9 | Phase 4, groundwork: the Spike table ready for the career |
-| 2.0 | Phase 4: act 2 with Corellian Spike |
+| 2.0 | Phase 4: act 2 with Corellian Spike, its learning path and the keys |
 | 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |
 
