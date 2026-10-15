@@ -8,9 +8,9 @@ export function scoreSelection(cards: ShiftCard[], target: ShiftTarget): ShiftSc
   return { total, distance: Math.abs(total - target.value), suited }
 }
 
-/** Negative if `a` is the better selection, positive if `b` is, 0 for a dead heat. */
-export function compareShift(a: ShiftScore, b: ShiftScore): number {
-  return a.distance - b.distance || b.suited - a.suited
+/** Negative if `a` is the better selection, positive if `b` is, 0 for a dead heat. Without `suits` only the number counts. */
+export function compareShift(a: ShiftScore, b: ShiftScore, suits = true): number {
+  return a.distance - b.distance || (suits ? b.suited - a.suited : 0)
 }
 
 /**

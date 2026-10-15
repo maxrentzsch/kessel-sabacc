@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { CHARACTERS } from '../ai/personalities'
 import { showsTell, strengthOf, TELLS, tellHeld } from '../ai/tells'
 import { sfx } from '../audio/sfx'
+import { suspicionCooldown } from '../career/ship'
 import { Rng, randomSeed } from '../engine/rng'
 import { tx } from '../i18n'
 import { applyShiftAction, createShiftGame, IllegalShiftAction, scoreSelection } from '../shift'
@@ -9,9 +10,10 @@ import type { ShiftAction, ShiftConfig, ShiftEvent, ShiftRecord, ShiftState } fr
 import { chooseShiftAction, shiftWinChance } from '../shift/ai'
 import { useCareer } from './career'
 import type { GameSummary, GameTally } from './career'
-import { isHotseat, tipsFor } from './game'
+import { bixCoverFor, isHotseat, tipsFor, wariness } from './game'
 import type { Session } from './game'
 import { tempo } from './settings'
+import { useToasts } from './toasts'
 
 /** Where the player sits when they play alone. */
 export const SHIFT_HUMAN = 0
@@ -43,10 +45,24 @@ interface ShiftStore {
   tutorialStep: number
   /** counts up when the player tries something the practice hand is not asking for */
   nudge: number
+  /** how closely the table is watching the player's hands, 0–100: the most watchful opponent */
+  suspicion: number
+  watch: number[]
+  /** ids of opponents' cards the player has sneaked a look at this hand */
+  peeked: string[]
+  peekUsed: boolean
+  sleeveUsed: boolean
+  caught: number
+  bixCover: number
 
   start(session: Session): void
-  /** The croupier's practice hand: a fixed deal that shows what the target is. */
-  startTutorial(): void
+  /** Sneak a look at one of an opponent's cards, in the player's own turn. */
+  peek(target: number): 'seen' | 'caught' | 'covered' | null
+  /** Swap a card in hand or selection for a sylop from the sleeve. */
+  sleeve(give: string, steadiness?: number): 'swapped' | 'caught' | 'covered' | null
+  /** The croupier's practice hand: a fixed deal that shows what the target is. `from` is where it goes back to. */
+  startTutorial(from?: 'career' | 'rules'): void
+  tutorialFrom: 'career' | 'rules'
   act(action: ShiftAction): void
   takeOver(): void
   takeTip(): boolean
@@ -58,6 +74,8 @@ interface ShiftStore {
 let generation = 0
 let feedId = 0
 let aiRng = new Rng(1)
+/** decides whether cheating is noticed; seeded from the deal */
+let peekRng = new Rng(1)
 let tally: GameTally = { handsLost: 0, minChips: 99, peeks: 0, caught: 0 }
 let record: ShiftRecord | null = null
 /** seats that made their gesture in the current hand */
@@ -166,6 +184,11 @@ function playSounds(events: ShiftEvent[], game: ShiftState, viewer: number): voi
   }
 }
 
+/** Each seat's watchfulness, and the table's as the most watchful of them. */
+function watching(watch: number[], rest: Partial<ShiftStore> = {}): Partial<ShiftStore> {
+  return { ...rest, watch, suspicion: Math.max(0, ...watch) }
+}
+
 function firstView(session: Session): Pick<ShiftStore, 'viewer' | 'handoff'> {
   const first = session.people?.[0]?.seat ?? SHIFT_HUMAN
   return { viewer: first, handoff: isHotseat(session) ? first : null }
@@ -175,6 +198,10 @@ export const useShift = create<ShiftStore>((set, get) => {
   function publish(state: ShiftState, events: ShiftEvent[]): void {
     playSounds(events, state, get().viewer)
     set((st) => ({ game: state, feed: [...st.feed, ...events.map((event) => ({ id: ++feedId, event }))].slice(-60) }))
+    // A new hand: fresh cards, and the table relaxes a little.
+    if (events.some((e) => e.type === 'handStart')) {
+      set((st) => watching(st.watch.map((w) => Math.max(0, w - suspicionCooldown(useCareer.getState().ship))), { peeked: [], peekUsed: false }))
+    }
     const { outcome, session } = get()
     if (outcome || !session) return
     if (isHotseat(session)) {
@@ -237,6 +264,35 @@ export const useShift = create<ShiftStore>((set, get) => {
     set({ gesture: { playerId, text: tell.gesture, id: ++gestureId } })
   }
 
+  /** Cheating is only on offer to a player alone at the table, in their own turn. */
+  function cheatable(): boolean {
+    const { game, session, busy } = get()
+    return !!game && !!session && !session.tutorial && !isHotseat(session) && !busy && ['select', 'improve', 'bet'].includes(game.phase) && game.current === SHIFT_HUMAN && !game.players[SHIFT_HUMAN].folded
+  }
+
+  /** Someone at the table saw it: Bix may still save the day, else a fine and a word with the house. */
+  function spotted(next: number[], seat: number, fine: number, calm: number): 'caught' | 'covered' {
+    const { session, caught } = get()
+    if (get().bixCover > 0) {
+      next[seat] = calm
+      set(watching(next, { bixCover: get().bixCover - 1 }))
+      sfx.blocked()
+      useToasts.getState().push({ kind: 'note', title: tx`Bix lenkt ab`, text: tx`Ein Glas kippt um, alle schauen hin. Niemand hat etwas gesehen.` })
+      return 'covered'
+    }
+    tally.caught++
+    const syndicate = session?.table?.syndicate
+    if (syndicate && tally.caught === 1) useCareer.getState().shiftStanding(syndicate, -1)
+    // in the core the law takes note as well
+    if (session?.table?.chapter === 'core') useCareer.getState().addHeat(15)
+    next[seat] = 50
+    set(watching(next, { caught: caught + 1 }))
+    useCareer.getState().bumpStats({ caught: 1 })
+    sfx.blocked()
+    step({ type: 'caught', fine })
+    return 'caught'
+  }
+
   async function pump(gen: number): Promise<void> {
     for (;;) {
       const { game, session, outcome } = get()
@@ -277,7 +333,7 @@ export const useShift = create<ShiftStore>((set, get) => {
     if (gen === generation) set({ busy: false, thinking: null })
   }
 
-  const fresh = { thinking: null, feed: [], outcome: null, summary: null, gesture: null }
+  const fresh = { thinking: null, feed: [], outcome: null, summary: null, gesture: null, peeked: [], peekUsed: false, sleeveUsed: false, caught: 0 }
 
   return {
     session: null,
@@ -289,6 +345,14 @@ export const useShift = create<ShiftStore>((set, get) => {
     tipsLeft: 0,
     tutorialStep: 0,
     nudge: 0,
+    tutorialFrom: 'rules',
+    suspicion: 0,
+    watch: [],
+    peeked: [],
+    peekUsed: false,
+    sleeveUsed: false,
+    caught: 0,
+    bixCover: 0,
 
     start(session) {
       const gen = ++generation
@@ -310,12 +374,13 @@ export const useShift = create<ShiftStore>((set, get) => {
       }
       record = { config, actions: [] }
       const { state, events } = createShiftGame(config)
-      set({ session, busy: true, ...fresh, ...firstView(session), tipsLeft: tipsFor(session), tutorialStep: 0, nudge: 0 })
+      set({ session, busy: true, ...fresh, ...firstView(session), ...watching(session.seats.map(() => 0)), bixCover: hotseat ? 0 : bixCoverFor(session), tipsLeft: tipsFor(session), tutorialStep: 0, nudge: 0 })
+      peekRng = new Rng(config.seed ^ 0x2545f491)
       publish(state, events)
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))
     },
 
-    startTutorial() {
+    startTutorial(from = 'rules') {
       const gen = ++generation
       const croupier = CHARACTERS.orrin
       const session: Session = { variant: 'shift', mode: 'free', table: null, title: tx`Übungshand`, venue: 'casino', tutorial: true, seats: [null, croupier], startingChips: 10 }
@@ -334,7 +399,7 @@ export const useShift = create<ShiftStore>((set, get) => {
       state.current = 0
       state.pending = [0, 1]
       const shown = events.map((e) => (e.type === 'handStart' ? { ...e, target: state.target } : e)).filter((e) => e.type !== 'turnStart')
-      set({ session, busy: true, ...fresh, ...firstView(session), tipsLeft: 0, tutorialStep: 0, nudge: 0 })
+      set({ session, busy: true, ...fresh, ...firstView(session), tipsLeft: 0, tutorialStep: 0, nudge: 0, tutorialFrom: from })
       publish(state, shown)
       void wait(pauseAfter(events, 2)).then(() => pump(gen))
     },
@@ -358,6 +423,48 @@ export const useShift = create<ShiftStore>((set, get) => {
         throw error
       }
       void wait(pauseAfter(events, game.players.length)).then(() => pump(gen))
+    },
+
+    peek(target) {
+      const { game, session, peekUsed, peeked, watch } = get()
+      const victim = game?.players[target]
+      if (!cheatable() || peekUsed || !game || !session || !victim || victim.isHuman || victim.folded) return null
+      const cards = [...victim.selection, ...victim.hand]
+      if (!cards.length) return null
+      // The one looked at notices most; the others catch a glimpse of it too.
+      const added = (20 + peekRng.next() * 18) * wariness(session)
+      const next = watch.map((w, seat) => (seat === SHIFT_HUMAN ? 0 : seat === target ? w + added : w + added * 0.35))
+      tally.peeks++
+      useCareer.getState().bumpStats({ peeks: 1 })
+      set({ peekUsed: true })
+      if (next[target] >= 100) return spotted(next, target, 2, 25)
+      // what they have set aside is what tells most
+      const unseen = cards.map((c) => c.id).filter((id) => !peeked.includes(id))
+      const preferred = unseen.filter((id) => victim.selection.some((c) => c.id === id))
+      const pool = preferred.length ? preferred : unseen
+      const card = pool[peekRng.int(pool.length)]
+      set(watching(next, { peeked: card ? [...peeked, card] : peeked }))
+      sfx.card()
+      return 'seen'
+    },
+
+    sleeve(give, steadiness = 1) {
+      const { game, session, watch, sleeveUsed } = get()
+      const career = useCareer.getState()
+      if (!cheatable() || !game || !session || session.mode !== 'career' || sleeveUsed || career.sleeves <= 0) return null
+      const me = game.players[SHIFT_HUMAN]
+      if (![...me.hand, ...me.selection].some((c) => c.id === give)) return null
+      const added = (32 + peekRng.next() * 22) * wariness(session) * steadiness
+      const next = watch.map((w, seat) => (seat === SHIFT_HUMAN ? 0 : w + added))
+      const seen = next.findIndex((w) => w >= 100)
+      career.spendSleeve()
+      tally.peeks++
+      set({ sleeveUsed: true })
+      if (seen >= 0) return spotted(next, seen, 3, 30)
+      set(watching(next))
+      sfx.card()
+      step({ type: 'sleeve', give })
+      return 'swapped'
     },
 
     takeOver() {

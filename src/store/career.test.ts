@@ -94,3 +94,48 @@ describe('the trade route', () => {
     expect(useCareer.getState().isUnlocked(table('banquet'))).toBe(true)
   })
 })
+
+describe('the core', () => {
+  const done = ['anchor', 'dune', 'haze', 'lodge', 'lump', 'mine', 'salon', 'hangar', 'crown', 'hallis1', 'hallis2', 'hallis3', 'convoy', 'swoop', 'barge', 'archive', 'casino']
+  const table = (id: string) => tableById(id)!
+  const core: Session = { variant: 'shift', mode: 'career', kind: 'table', table: tableById('penthouse')!, title: 'x', buyIn: 0, payout: 0, seats: [null, CHARACTERS.aldric], startingChips: 10 }
+  beforeEach(() => {
+    useCareer.getState().reset()
+    useCareer.setState({ hasShip: true, debt: { paid: 18000, extra: 0 }, tableWins: Object.fromEntries(done.map((id) => [id, 1])) })
+  })
+
+  it('opens once the banquet is won', () => {
+    expect(useCareer.getState().isUnlocked(table('level1'))).toBe(false)
+    useCareer.setState({ tableWins: { ...useCareer.getState().tableWins, banquet: 1 } })
+    expect(useCareer.getState().isUnlocked(table('level1'))).toBe(true)
+  })
+
+  it('keeps the residence shut until the debt is paid – or the ledger is gone', () => {
+    const route = ['banquet', 'level1', 'level2', 'level3', 'penthouse', 'yacht', 'customs', 'arena']
+    useCareer.setState({ tableWins: { ...useCareer.getState().tableWins, ...Object.fromEntries(route.map((id) => [id, 1])) } })
+    expect(useCareer.getState().isUnlocked(table('residence'))).toBe(false)
+    useCareer.setState({ storySeen: ['ledger-stolen'] })
+    expect(useCareer.getState().isUnlocked(table('residence'))).toBe(true)
+    useCareer.setState({ storySeen: [], debt: { paid: 40000, extra: 0 } })
+    expect(useCareer.getState().isUnlocked(table('residence'))).toBe(true)
+  })
+
+  it('cools the garrison with every game in the core, and clears it for a won customs hand', () => {
+    useCareer.setState({ heat: 60 })
+    useCareer.getState().finishGame(core, false, { handsLost: 1, minChips: 1, peeks: 0, caught: 0 })
+    expect(useCareer.getState().heat).toBe(50)
+    const customs: Session = { ...core, kind: 'customs', table: null }
+    useCareer.getState().finishGame(customs, true, { handsLost: 0, minChips: 1, peeks: 0, caught: 0 })
+    expect(useCareer.getState().heat).toBe(0)
+  })
+
+  it('makes the ledger job wipe out the debt and turn Oshi against the player', () => {
+    useCareer.setState({ standing: { oshi: 1 } })
+    const yacht: Session = { ...core, table: tableById('yacht')!, job: 'ledger' }
+    const summary = useCareer.getState().finishGame(yacht, true, { handsLost: 0, minChips: 5, peeks: 1, caught: 0, tokensPlayed: 0, startChips: 10, finalChips: 12 })
+    expect(summary.job).toEqual({ id: 'ledger', done: true })
+    expect(useCareer.getState().storySeen).toContain('ledger-stolen')
+    // the first win on her yacht counts for her, the theft twice against
+    expect(useCareer.getState().standing.oshi).toBe(1 + 1 - 2)
+  })
+})

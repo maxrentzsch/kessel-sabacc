@@ -364,10 +364,121 @@ export const VENUES: Record<string, Venue> = {
       rim: ['#f4ead2', '#dccba4'],
     }),
   },
+  // ── Act 3: the core ──
+  // a gambling hall a thousand levels down: neon through the smog
+  level: {
+    place: tx`Ebene 1313, Coruscant`,
+    sound: { crowd: 1.3, hum: 1.4 },
+    colors: paint({
+      wall: ['#0a0c14', '#1c2236', '#2e3858'],
+      niche: ['#12162a', '#3a4a8a'],
+      trim: '#06070c',
+      pane: ['#f0f4ff', '#8aa8ff', '#3a54c4'],
+      door: ['#d4e0ff', '#5a7ae8'],
+      lamp: '#e0e8ff',
+      floor: ['#161a28', '#050609'],
+      ceiling: '#05060a',
+      haze: '140 160 255',
+      felt: ['#6a4a3a', '#563c2f', '#422e24'],
+      rim: ['#d8d4cc', '#b6b0a6'],
+    }),
+  },
+  // above the clouds: white stone, gold trim, the evening sun
+  penthouse: {
+    place: tx`Senatsbezirk, Ebene 4000`,
+    sound: { crowd: 0.6, hum: 0.5 },
+    colors: paint({
+      wall: ['#1a1610', '#4a4030', '#8a7a5a'],
+      niche: ['#2e281e', '#b8a070'],
+      trim: '#14110c',
+      pane: ['#fffaf0', '#ffd9a0', '#d48a3a'],
+      door: ['#fff0d4', '#e8a85a'],
+      lamp: '#fff6e4',
+      floor: ['#3a3226', '#0e0c08'],
+      ceiling: '#100d09',
+      haze: '255 220 170',
+      felt: ['#3a5a7a', '#2f4a65', '#243a50'],
+      rim: ['#f4ecdc', '#dccfb2'],
+    }),
+  },
+  // an orbital yacht: violet night, the planet's lights below
+  yacht: {
+    place: tx`Orbitaljacht über Coruscant`,
+    sound: { crowd: 1.1, hum: 0.8 },
+    colors: paint({
+      wall: ['#120a18', '#30183e', '#4e2a64'],
+      niche: ['#1e1028', '#7a4a9a'],
+      trim: '#0a050e',
+      pane: ['#fbeaff', '#d08aff', '#7a2ab8'],
+      door: ['#f0d4ff', '#b05ae8'],
+      lamp: '#f6e4ff',
+      floor: ['#24142e', '#08040a'],
+      ceiling: '#09040c',
+      haze: '210 140 255',
+      felt: ['#2a5a5a', '#214a4a', '#183a3a'],
+      rim: ['#ece2f0', '#d0c2d8'],
+    }),
+  },
+  // the garrison's customs hangar: grey steel and white floodlight
+  customs: {
+    place: tx`Raumhafen Westportal`,
+    sound: { crowd: 0.4, hum: 1.9 },
+    colors: paint({
+      wall: ['#0e1012', '#2a2e32', '#4a5056'],
+      niche: ['#1a1d20', '#6a737c'],
+      trim: '#08090a',
+      pane: ['#ffffff', '#dfe8f0', '#8a9aa8'],
+      door: ['#f0f4f8', '#a8b8c6'],
+      lamp: '#f6faff',
+      floor: ['#202428', '#060708'],
+      ceiling: '#07080a',
+      haze: '210 225 240',
+      felt: ['#5a5a4a', '#4a4a3c', '#3a3a2e'],
+      rim: ['#dcdcd6', '#bcbcb4'],
+    }),
+  },
+  // an arena under spotlights, a thousand faces in the dark
+  arena: {
+    place: tx`Unterstadt, Sektor Null`,
+    sound: { crowd: 2, hum: 1 },
+    colors: paint({
+      wall: ['#120806', '#3a1a0e', '#6a2e14'],
+      niche: ['#24100a', '#a04a1e'],
+      trim: '#0c0504',
+      pane: ['#fff2e0', '#ffa860', '#c4501a'],
+      door: ['#ffdcc0', '#e8743a'],
+      lamp: '#fff0dc',
+      floor: ['#2e140a', '#0c0503'],
+      ceiling: '#0e0604',
+      haze: '255 160 100',
+      felt: ['#2e4a3a', '#253d30', '#1c3026'],
+      rim: ['#ecdccc', '#d2bea8'],
+    }),
+  },
+  // a crystal tower: pale blue glass and old silver
+  residence: {
+    place: tx`Kristallturm, oberste Ebene`,
+    sound: { crowd: 0.5, hum: 0.6 },
+    colors: paint({
+      wall: ['#0c1218', '#22323e', '#3e5868'],
+      niche: ['#16222c', '#5a8296'],
+      trim: '#070a0d',
+      pane: ['#f4fcff', '#b8e4f4', '#5aa0c0'],
+      door: ['#e4f6ff', '#86c4de'],
+      lamp: '#f0faff',
+      floor: ['#1c2a34', '#06090b'],
+      ceiling: '#060a0c',
+      haze: '190 230 250',
+      felt: ['#5a2a3a', '#4a2230', '#3a1a26'],
+      rim: ['#eef2f4', '#d2dadf'],
+    }),
+  },
 }
 
 // the three learning tables share the canteen
 VENUES.hallis1 = VENUES.hallis2 = VENUES.hallis3 = VENUES.hallis
+// and the three of the core the gambling hall
+VENUES.level1 = VENUES.level2 = VENUES.level3 = VENUES.level
 
 export function venueOf(id: string | undefined): Venue {
   return (id && VENUES[id]) || VENUES.anchor

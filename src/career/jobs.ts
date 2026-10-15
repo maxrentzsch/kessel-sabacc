@@ -23,7 +23,7 @@ export interface Job {
   text: string
   goal: JobGoal
   /** a key to the nav data: the job is gone once the player holds it */
-  reward: { credits: number; standing?: Syndicate; key?: Syndicate }
+  reward: { credits: number; standing?: Syndicate; key?: Syndicate; heat?: number }
   /** a story flag the job waits for */
   requires?: string
 }
@@ -183,6 +183,49 @@ export const JOBS: Job[] = [
     text: tx`Im Haus des Siegels wird nicht geschummelt. Gewinn, ohne in fremde Karten zu schauen.`,
     goal: { kind: 'win', noPeek: true },
     reward: { credits: 1500, standing: 'seal' },
+  },
+
+  // ── Act 3: the core ──
+  {
+    id: 'backroom-bet',
+    table: 'level3',
+    title: tx`Grells Wette`,
+    text: tx`Grell wettet, dass du im Hinterzimmer Chips verlierst. Gewinn und behalte mindestens so viele, wie du hattest.`,
+    goal: { kind: 'win', keepChips: true },
+    reward: { credits: 800 },
+  },
+  {
+    id: 'favour',
+    table: 'penthouse',
+    title: tx`Eine Gefälligkeit für Nessa`,
+    text: tx`Nessa braucht einen Sieg ohne Skandal. Gewinn, ohne in fremde Karten zu schauen.`,
+    goal: { kind: 'win', noPeek: true },
+    reward: { credits: 1500, standing: 'seal' },
+  },
+  {
+    id: 'ledger',
+    table: 'yacht',
+    title: tx`Das Schuldbuch`,
+    text: tx`K-7 trägt Oshis Schuldbuch im Speicherkristall. Lenk ihn ab – schau mindestens einmal in fremde Karten und gewinn –, und Bix holt sich den Kristall. Keine Schuld mehr, aber eine sehr wütende Oshi.`,
+    goal: { kind: 'win', minPeeks: 1 },
+    // what it does to the debt and to Oshi is the career's to settle
+    reward: { credits: 0 },
+  },
+  {
+    id: 'smuggle',
+    table: 'customs',
+    title: tx`Fracht am Zoll vorbei`,
+    text: tx`Sable hat eine Kiste der Glasfinger, die nicht durch den Zoll soll. Gewinn die Partie, während sie verladen wird. Die Garnison wird sich das merken.`,
+    goal: { kind: 'win' },
+    reward: { credits: 2500, heat: 30 },
+  },
+  {
+    id: 'crowd',
+    table: 'arena',
+    title: tx`Die Menge will mehr`,
+    text: tx`Gewinn vor tausend Zuschauern und verlier dabei höchstens zwei Hände.`,
+    goal: { kind: 'win', maxHandsLost: 2 },
+    reward: { credits: 2000, standing: 'scrap' },
   },
 ]
 

@@ -13,7 +13,7 @@ export interface ShiftStep {
 export class IllegalShiftAction extends Error {}
 
 /** What the printed rules leave open, as this table plays it (see ROADMAP, phase 5). */
-export const SHIFT_RULES: ShiftRules = { ante: 1, bets: [1, 2], maxRaises: 2, anteEvery: 4 }
+export const SHIFT_RULES: ShiftRules = { ante: 1, bets: [1, 2], maxRaises: 2, anteEvery: 4, betting: true, suits: true }
 
 /** Cards dealt to every player, and what the hand is filled up to in the shift. */
 export const HAND_SIZE = 5
@@ -58,7 +58,9 @@ export function shiftAnteOf(state: ShiftState, hand: number): number {
 function startHand(ctx: Ctx): void {
   const { s, rng } = ctx
   s.handNumber++
-  const all = [...s.deck, ...s.discard, ...s.players.flatMap((p) => [...p.hand, ...p.selection])]
+  // A card from a sleeve leaves the table again, and the card it replaced comes back.
+  const all = [...s.deck, ...s.discard, ...s.players.flatMap((p) => [...p.hand, ...p.selection]), ...(s.pocket ?? [])].filter((c) => !c.id.startsWith('sleeve'))
+  s.pocket = []
   s.deck = rng.shuffle(s.handNumber === 1 ? buildSpikeDeck() : all)
   s.discard = []
   s.result = null
@@ -102,7 +104,7 @@ function nextTurn(ctx: Ctx): void {
 
 function endPhase(ctx: Ctx): void {
   const { s } = ctx
-  if (s.phase === 'select' || s.phase === 'improve') return startPhase(ctx, 'bet')
+  if ((s.phase === 'select' || s.phase === 'improve') && s.rules.betting !== false) return startPhase(ctx, 'bet')
   for (const p of s.players) p.bet = 0
   s.toCall = 0
   if (s.round === 2) return showdown(ctx)
@@ -193,8 +195,8 @@ function showdown(ctx: Ctx): void {
   const live = shiftActive(s)
   const placing: ShiftPlacing[] = live
     .map((p) => ({ playerId: p.id, score: scoreSelection(p.selection, s.target), winner: false }))
-    .sort((a, b) => compareShift(a.score, b.score))
-  for (const x of placing) x.winner = compareShift(x.score, placing[0].score) === 0
+    .sort((a, b) => compareShift(a.score, b.score, s.rules.suits !== false))
+  for (const x of placing) x.winner = compareShift(x.score, placing[0].score, s.rules.suits !== false) === 0
   s.result = { placing, winners: placing.filter((x) => x.winner).map((x) => x.playerId), pot: s.pot, uncontested: live.length === 1 }
   s.phase = 'showdown'
   s.pending = []
@@ -261,6 +263,7 @@ export function createShiftGame(config: ShiftConfig): ShiftStep {
     result: null,
     handNumber: 0,
     winner: null,
+    pocket: [],
     rng: 0,
   }
   const ctx: Ctx = { s, rng, events: [] }
@@ -273,6 +276,29 @@ export function applyShiftAction(state: ShiftState, action: ShiftAction): ShiftS
   const s = structuredClone(state)
   const ctx: Ctx = { s, rng: new Rng(s.rng), events: [] }
   const p = s.players[s.current]
+  if (action.type === 'sleeve' || action.type === 'caught') {
+    if (!['select', 'improve', 'bet'].includes(s.phase) || !inShiftHand(p)) fail('only in a turn of the hand')
+    if (action.type === 'sleeve') {
+      const pile = p.hand.some((c) => c.id === action.give) ? p.hand : p.selection
+      const i = pile.findIndex((c) => c.id === action.give)
+      if (i < 0) fail('card is not in hand')
+      ;(s.pocket ??= []).push(pile[i])
+      pile[i] = { id: `sleeve-${s.handNumber}-${p.id}`, suit: null, value: 0 }
+      // a fresh card swapped keeps its right to join the selection
+      p.fresh = p.fresh.map((id) => (id === action.give ? pile[i].id : id))
+      ctx.events.push({ type: 'sleeved', playerId: p.id })
+    } else {
+      // Never the last chip: being thrown out is for the cards to decide.
+      const fine = Math.min(action.fine, Math.max(0, p.chips - 1))
+      if (fine > 0) {
+        p.chips -= fine
+        s.pot += fine
+        ctx.events.push({ type: 'chips', playerId: p.id, delta: -fine, reason: 'fine' })
+      }
+    }
+    s.rng = ctx.rng.state
+    return { state: s, events: ctx.events }
+  }
   switch (s.phase) {
     case 'select':
       if (!inShiftHand(p)) fail('not in the hand')

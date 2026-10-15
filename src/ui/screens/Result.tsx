@@ -8,6 +8,7 @@ import { tourPot } from '../../career/tour'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
+import { useShift } from '../../store/shift'
 import { useSpike } from '../../store/spike'
 import { useNav } from '../../store/nav'
 import { Icon } from '../art/Icons'
@@ -43,8 +44,9 @@ export function ResultScreen() {
   const go = useNav((n) => n.go)
   const kessel = useGame()
   const spike = useSpike()
+  const shift = useShift()
   // whichever table has just finished a game for the career
-  const from = spike.outcome && spike.summary ? spike : kessel
+  const from = spike.outcome && spike.summary ? spike : shift.outcome && shift.summary ? shift : kessel
   const { session, outcome, summary, game, clear } = from
   const credits = useCareer((c) => c.credits)
   const gameRep = useCareer((c) => c.gameRep)
@@ -88,11 +90,13 @@ export function ResultScreen() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.15 }}
         >
-          {champion ? (table?.id === 'banquet' ? tx`Das Bankett!` : tx`Kessel-Krone!`) : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
+          {champion ? (table?.id === 'residence' ? tx`Der Code der Krone!` : table?.id === 'banquet' ? tx`Das Bankett!` : tx`Kessel-Krone!`) : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
         </motion.h1>
         <motion.p className={s.resultText} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           {champion
-            ? table?.id === 'banquet'
+            ? table?.id === 'residence'
+              ? tx`Seraphine Aurel legt den Kristall auf den Tisch. Weit draußen antwortet der Peilsender der Leeren Krone – und jedes Syndikat hört mit.`
+              : table?.id === 'banquet'
               ? tx`Corvin Ashe applaudiert, langsam. Die drei Schlüssel klicken in den Navcomputer, und die Spur der Leeren Krone führt in den Kern.`
               : tx`Madame Oshi legt wortlos ihre Karten ab. Die Siegel am Hyperantrieb fallen – der Weg aus dem Sektor ist frei.`
             : tour

@@ -3,7 +3,7 @@
  * and add the step that turns the previous shape into the new one, so a save
  * from any earlier version still loads.
  */
-export const CAREER_VERSION = 6
+export const CAREER_VERSION = 7
 
 type Save = Record<string, unknown>
 
@@ -37,6 +37,8 @@ const STEPS: Record<number, (save: Save) => Save> = {
   4: (save) => ({ ...save, dossiers: {} }),
   // 6: cards for the sleeve
   5: (save) => ({ ...save, sleeves: 0 }),
+  // 7: act 3 brings the garrison, and how much attention the player draws from it
+  6: (save) => ({ ...save, heat: 0 }),
 }
 
 const record = (value: unknown): Record<string, unknown> | null =>

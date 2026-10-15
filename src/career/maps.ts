@@ -96,6 +96,7 @@ export const TRADE_ROUTE: MapDef = {
     { id: 'archive', name: tx`Archiv`, x: 252, y: 92, r: 11, kind: 'station', label: 'below' },
     { id: 'casino', name: tx`Casino`, x: 318, y: 150, r: 14, kind: 'station', label: 'below' },
     { id: 'banquet', name: tx`Bankett`, x: 310, y: 40, r: 16, kind: 'crown', label: 'below' },
+    { id: 'coregate', opens: 'core', name: tx`Kern`, x: 336, y: 250, r: 13, kind: 'ringed', label: 'below' },
   ],
   routes: [
     { from: 'kesselgate', to: 'hallis1' },
@@ -107,10 +108,38 @@ export const TRADE_ROUTE: MapDef = {
     { from: 'barge', to: 'archive' },
     { from: 'archive', to: 'casino' },
     { from: 'casino', to: 'banquet' },
+    { from: 'banquet', to: 'coregate' },
   ],
 }
 
-export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR, trade: TRADE_ROUTE }
+/** Act 3: Coruscant, from a gambling hall a thousand levels down to the crystal towers. */
+export const CORE: MapDef = {
+  id: 'core',
+  scale: 'sector',
+  places: [
+    { id: 'tradegate', opens: 'trade', name: tx`Route`, x: 30, y: 46, r: 13, kind: 'ringed', label: 'below' },
+    { id: 'level1', name: tx`1313 I`, x: 70, y: 236, r: 9, kind: 'station', label: 'below' },
+    { id: 'level2', name: tx`1313 II`, x: 128, y: 262, r: 9, kind: 'station', label: 'above' },
+    { id: 'level3', name: tx`1313 III`, x: 140, y: 196, r: 9, kind: 'station', label: 'above' },
+    { id: 'penthouse', name: tx`Penthouse`, x: 104, y: 112, r: 12, kind: 'station', label: 'above' },
+    { id: 'yacht', name: tx`Aurora`, x: 190, y: 60, r: 11, kind: 'station', label: 'below' },
+    { id: 'customs', name: tx`Zollhangar`, x: 214, y: 158, r: 13, kind: 'planet', label: 'below' },
+    { id: 'arena', name: tx`Arena`, x: 290, y: 226, r: 15, kind: 'planet', label: 'below' },
+    { id: 'residence', name: tx`Residenz`, x: 306, y: 86, r: 16, kind: 'crown', label: 'below' },
+  ],
+  routes: [
+    { from: 'tradegate', to: 'level1' },
+    { from: 'level1', to: 'level2' },
+    { from: 'level2', to: 'level3' },
+    { from: 'level3', to: 'penthouse' },
+    { from: 'penthouse', to: 'yacht' },
+    { from: 'yacht', to: 'customs' },
+    { from: 'customs', to: 'arena' },
+    { from: 'arena', to: 'residence' },
+  ],
+}
+
+export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR, trade: TRADE_ROUTE, core: CORE }
 
 export function placeOf(map: MapDef, id: string): Place {
   const place = map.places.find((p) => p.id === id)

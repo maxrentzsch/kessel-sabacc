@@ -9,7 +9,8 @@ import type { DebtState } from '../career/debt'
 import { jobById, jobDone } from '../career/jobs'
 import type { Job } from '../career/jobs'
 import { CAREER_VERSION, migrateCareer } from '../career/migrate'
-import { banquetMissing, keyFlag } from '../career/route'
+import { clampHeat, HEAT_COOLING } from '../career/heat'
+import { banquetMissing, keyFlag, residenceMissing } from '../career/route'
 import { clampStanding, SYNDICATE } from '../career/syndicates'
 import type { Syndicate } from '../career/syndicates'
 import { rankOf, REP } from '../career/reputation'
@@ -98,6 +99,8 @@ interface CareerState extends Progress {
   dossiers: Record<string, Dossier>
   /** cards for the sleeve, bought from the Glassfingers */
   sleeves: number
+  /** how closely the garrison of the core watches the player, 0–100 */
+  heat: number
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -124,6 +127,10 @@ interface CareerState extends Progress {
   shiftStanding(syndicate: Syndicate, delta: number): void
   /** One of the three keys to the nav data, with a word that it was found. */
   gainKey(syndicate: Syndicate): void
+  /** The garrison takes note (or, with a negative amount, looks away). */
+  addHeat(amount: number): void
+  /** Pay the fine at a customs check. */
+  payCustoms(fine: number): void
   /** Fuel for the trip from where the player is to a table. */
   tripCost(tableId: string): number
   /** Go to a table, paying the fuel; false if the credits do not stretch. */
@@ -180,6 +187,7 @@ const initial = () => ({
   location: 'anchor',
   dossiers: {} as Record<string, Dossier>,
   sleeves: 0,
+  heat: 0,
   gameRep: 0,
   recent: [] as string[],
 })
@@ -274,12 +282,14 @@ export const useCareer = create<CareerState>()(
           if (table.chapter !== 'tarsk' && !s.hasShip) return false
           // Oshi's table waits for her instalment.
           if (table.id === 'crown' && instalmentDue(s.debt) > 0 && !s.tableWins.crown) return false
-          // The banquet waits for the three keys and the second instalment.
+          // The banquet waits for the three keys and the second instalment, the residence for the third or the ledger.
           if (table.id === 'banquet' && !s.tableWins.banquet && banquetMissing(s).length > 0) return false
+          if (table.id === 'residence' && !s.tableWins.residence && residenceMissing(s).length > 0) return false
           const index = TABLES.indexOf(table)
           if (index <= 0 || (s.tableWins[TABLES[index - 1].id] ?? 0) > 0) return true
-          // Whoever already knows Corellian Spike may skip the canteen's learning tables.
-          return s.storySeen.includes('spike-known') && ['hallis2', 'hallis3', 'convoy'].includes(table.id)
+          // Whoever already knows a game may skip its learning tables.
+          if (s.storySeen.includes('spike-known') && ['hallis2', 'hallis3', 'convoy'].includes(table.id)) return true
+          return s.storySeen.includes('shift-known') && ['level2', 'level3', 'penthouse'].includes(table.id) && !!s.tableWins.banquet
         },
 
         setLoadout(tokens) {
@@ -357,6 +367,9 @@ export const useCareer = create<CareerState>()(
               patch.tour = { ...s.tour, wins }
               patch.tourBest = Math.max(s.tourBest, wins)
               rep += REP.tourStage(wins)
+            } else if (kind === 'customs') {
+              // Beaten at their own table, the customs officer waves the ship through and forgets it.
+              patch.heat = 0
             } else if (kind === 'daily') {
               patch.daily = { date: today(), won: true }
               summary.payout = dailyReward(s.dailyStreak)
@@ -366,6 +379,10 @@ export const useCareer = create<CareerState>()(
               rep += REP.freeWin
             }
             stats.biggestPayout = Math.max(stats.biggestPayout ?? 0, summary.payout)
+          } else if (kind === 'customs') {
+            // Lost the quick hand: the ship is let through, but not for nothing.
+            patch.credits = Math.max(0, s.credits - 500)
+            patch.heat = clampHeat(s.heat - 20)
           } else if (kind === 'tour') {
             patch.tour = null
           } else if (kind === 'table' && tally?.runnerUp && runnerUpRefund(session)) {
@@ -415,8 +432,16 @@ export const useCareer = create<CareerState>()(
             }
           }
 
-          set({ ...patch, stats, credits: s.credits + summary.payout + summary.refund })
+          // A quiet game in the core lets the garrison cool off.
+          if (table?.chapter === 'core' && kind !== 'customs') patch.heat = clampHeat((patch.heat ?? s.heat) - HEAT_COOLING)
+          set({ ...patch, stats, credits: (patch.credits ?? s.credits) + summary.payout + summary.refund })
           if (summary.job?.done && job?.reward.key) get().gainKey(job.reward.key)
+          if (summary.job?.done && job?.reward.heat) get().addHeat(job.reward.heat)
+          if (summary.job?.done && job?.id === 'ledger') {
+            // The crystal is gone and with it the note: no debt, and an enemy for life.
+            get().markStory('ledger-stolen')
+            get().shiftStanding('oshi', -2)
+          }
           get().gain(rep)
 
           // Progress lives in this browser only: keep it there, and now and then suggest a copy.
@@ -518,6 +543,14 @@ export const useCareer = create<CareerState>()(
           if (get().storySeen.includes(keyFlag(syndicate))) return
           get().markStory(keyFlag(syndicate))
           useToasts.getState().push({ kind: 'item', title: tx`Schlüssel: ${SYNDICATE[syndicate].name}`, text: tx`Ein Teil der Navdaten ist entsperrt` })
+        },
+
+        addHeat(amount) {
+          set((s) => ({ heat: clampHeat(s.heat + amount) }))
+        },
+
+        payCustoms(fine) {
+          set((s) => ({ credits: Math.max(0, s.credits - fine), heat: clampHeat(s.heat - 40) }))
         },
 
         shiftStanding(syndicate, delta) {

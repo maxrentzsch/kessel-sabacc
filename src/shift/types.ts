@@ -33,6 +33,13 @@ export interface ShiftRules {
   maxRaises: number
   /** the ante goes up by itself every so many hands; 0 = never */
   anteEvery: number
+  /**
+   * The learning tables leave parts of the game out: without betting the
+   * hand goes straight from selection to shift to reveal; without suits a
+   * tie on the number is not broken but shared.
+   */
+  betting?: boolean
+  suits?: boolean
 }
 
 /** What the dice set for a hand: the number to reach and the suit that breaks ties. */
@@ -89,6 +96,8 @@ export interface ShiftState {
   result: ShiftResult | null
   handNumber: number
   winner: number | null
+  /** cards swapped out for one from a sleeve; they go back into the deck with the next deal */
+  pocket?: ShiftCard[]
   rng: number
 }
 
@@ -104,10 +113,14 @@ export type ShiftAction =
   | { type: 'fold' }
   | { type: 'settle' }
   | { type: 'nextHand' }
+  /** cheating, decided outside the rules: a sylop from the sleeve for a card in hand or selection */
+  | { type: 'sleeve'; give: string }
+  /** the current player was caught cheating and pays a fine into the pot */
+  | { type: 'caught'; fine: number }
 
 export type ShiftEvent =
   | { type: 'handStart'; hand: number; dealer: number; ante: number; target: ShiftTarget }
-  | { type: 'chips'; playerId: number; delta: number; reason: 'ante' | 'bet' | 'pot' }
+  | { type: 'chips'; playerId: number; delta: number; reason: 'ante' | 'bet' | 'pot' | 'fine' }
   | { type: 'phaseStart'; phase: ShiftPhase; round: 1 | 2 }
   | { type: 'turnStart'; playerId: number }
   | { type: 'selected'; playerId: number; count: number }
@@ -122,6 +135,7 @@ export type ShiftEvent =
   | { type: 'settled'; result: ShiftResult }
   | { type: 'eliminated'; playerId: number }
   | { type: 'gameOver'; winner: number }
+  | { type: 'sleeved'; playerId: number }
 
 export interface ShiftSetup {
   name: string

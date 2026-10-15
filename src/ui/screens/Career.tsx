@@ -6,7 +6,8 @@ import { debtLeft, instalmentDue, INSTALMENTS, sectorPlace } from '../../career/
 import { JOBS } from '../../career/jobs'
 import type { Job } from '../../career/jobs'
 import { MAPS } from '../../career/maps'
-import { banquetMissing, KEY_HOLDERS, keysHeld, patronOf, secondInstalmentDue } from '../../career/route'
+import { CUSTOMS_CHIPS, customsFine, HEAT_CHECK } from '../../career/heat'
+import { banquetMissing, KEY_HOLDERS, keysHeld, patronOf, residenceMissing, secondInstalmentDue, thirdInstalmentDue } from '../../career/route'
 import { standingEffects, standingName, SYNDICATE, SYNDICATES } from '../../career/syndicates'
 import type { Syndicate } from '../../career/syndicates'
 import { SCENES } from '../../career/story'
@@ -17,6 +18,7 @@ import { TOKEN_TEXT } from '../../i18n/texts'
 import { runnerUpRefund, useCareer } from '../../store/career'
 import type { Session } from '../../store/game'
 import { useGame } from '../../store/game'
+import { useShift } from '../../store/shift'
 import { useSpike } from '../../store/spike'
 import { useNav } from '../../store/nav'
 import { unlockAudio } from '../../audio/sfx'
@@ -69,8 +71,26 @@ function tableSession(table: TableDef, legend: boolean, standing: Partial<Record
 const CREDITOR_TABLES = ['convoy', 'barge']
 
 /** What a table's variant adds to a session. */
-function variantOf(table: TableDef): Pick<Session, 'variant' | 'spikeRules'> {
-  return table.variant === 'spike' ? { variant: 'spike', spikeRules: table.spikeRules } : {}
+function variantOf(table: TableDef): Pick<Session, 'variant' | 'spikeRules' | 'shiftRules'> {
+  if (table.variant === 'spike') return { variant: 'spike', spikeRules: table.spikeRules }
+  if (table.variant === 'shift') return { variant: 'shift', shiftRules: table.shiftRules }
+  return {}
+}
+
+/** The quick hand at a customs check: a short game of Coruscant Shift against the officer on duty. */
+function customsSession(): Session {
+  return {
+    variant: 'shift',
+    mode: 'career',
+    kind: 'customs',
+    table: null,
+    title: tx`Zollkontrolle`,
+    venue: 'customs',
+    buyIn: 0,
+    payout: 0,
+    seats: [null, duelist(CHARACTERS.hask)],
+    startingChips: CUSTOMS_CHIPS,
+  }
 }
 
 function duelSession(table: TableDef): Session {
@@ -108,7 +128,7 @@ function stakeSession(): Session {
 /** The order the story leads through: Tarsk's tables, the stake game, then out into the sector. */
 const ROUTE: TableDef[] = [...TABLES.filter((t) => t.chapter === 'tarsk'), FIELD, ...TABLES.filter((t) => t.chapter !== 'tarsk')]
 
-type View = 'tarsk' | 'kessel' | 'trade'
+type View = 'tarsk' | 'kessel' | 'trade' | 'core'
 
 /** Which chart a table is on. */
 const viewOf = (table: TableDef): View => table.chapter
@@ -117,8 +137,10 @@ const viewOf = (table: TableDef): View => table.chapter
 function lockedBecause(table: TableDef, career: ReturnType<typeof useCareer.getState>): string {
   if (table.chapter !== 'tarsk' && !career.hasShip) return tx`Erst ein Schiff gewinnen`
   if (table.chapter === 'trade' && !career.tableWins.crown) return tx`Erst die Kessel-Krone gewinnen`
+  if (table.chapter === 'core' && !career.tableWins.banquet) return tx`Erst das Bankett gewinnen`
   const before = ROUTE[ROUTE.indexOf(table) - 1]
   if (table.id === 'banquet' && career.tableWins[before.id]) return tx`Es fehlt: ${banquetMissing(career).join(', ')}`
+  if (table.id === 'residence' && career.tableWins[before.id]) return tx`Es fehlt: ${residenceMissing(career).join(', ')}`
   return tx`Erst „${before.name}“ gewinnen`
 }
 
@@ -380,7 +402,8 @@ function TableCard({ table, onSit, onPay }: { table: TableDef; onSit(session: Se
 /** What is due now: the first instalment before the Crown, the second before the banquet. */
 function dueNow(career: ReturnType<typeof useCareer.getState>): number {
   if (!career.tableWins.crown) return instalmentDue(career.debt)
-  return career.tableWins.banquet ? 0 : secondInstalmentDue(career.debt, career.storySeen)
+  if (!career.tableWins.banquet) return secondInstalmentDue(career.debt, career.storySeen)
+  return career.tableWins.residence ? 0 : thirdInstalmentDue(career.debt, career.storySeen)
 }
 
 function Ledger({ onPay }: { onPay(): void }) {
@@ -388,6 +411,8 @@ function Ledger({ onPay }: { onPay(): void }) {
   if (!career.hasShip) return null
   const due = dueNow(career)
   const act2 = !!career.tableWins.crown
+  const act3 = !!career.tableWins.banquet
+  const stolen = career.storySeen.includes('ledger-stolen')
   const held = keysHeld(career.storySeen)
   const patron = patronOf(career.storySeen)
   // whoever holds the note now: Oshi, or the Red Seal she sold it to
@@ -397,9 +422,15 @@ function Ledger({ onPay }: { onPay(): void }) {
       <div className={s.ledgerDebt}>
         <div>
           <span className={s.fieldLabel}>{holder}</span>
-          <b className="num">{debtLeft(career.debt)}</b>
+          <b className="num">{stolen ? 0 : debtLeft(career.debt)}</b>
           <em>
-            {!act2
+            {stolen
+              ? tx`Das Schuldbuch liegt in deinem Frachtraum. Keine Schuld mehr – nur eine wütende Oshi.`
+              : act3
+                ? due > 0
+                  ? tx`Dritte Rate bis zur Residenz: noch ${due}`
+                  : tx`Die Schuld ist bezahlt. Bis auf den letzten Credit.`
+                : !act2
               ? due > 0
                 ? tx`Erste Rate bis zur Kessel-Krone: noch ${due} von ${INSTALMENTS[0] + career.debt.extra}`
                 : tx`Die erste Rate ist bezahlt.`
@@ -416,7 +447,16 @@ function Ledger({ onPay }: { onPay(): void }) {
           </button>
         )}
       </div>
-      {act2 && (
+      {act3 && (
+        <div className={s.ledgerHeat} aria-label={tx`Aufmerksamkeit der Garnison: ${career.heat} von 100`}>
+          <span className={s.fieldLabel}>{tx`Garnison`}</span>
+          <i className={cx(career.heat >= HEAT_CHECK && s.heatHot)}>
+            <b style={{ width: `${career.heat}%` }} />
+          </i>
+          <em>{career.heat >= HEAT_CHECK ? tx`Kontrollen an jedem Sprungpunkt` : career.heat > 0 ? tx`Man kennt dein Gesicht` : tx`Unauffällig`}</em>
+        </div>
+      )}
+      {act2 && !act3 && (
         <div className={s.ledgerKeys} aria-label={tx`Schlüssel zu den Navdaten`}>
           <span className={s.fieldLabel}>{tx`Schlüssel`}</span>
           {KEY_HOLDERS.map((id) => (
@@ -491,6 +531,9 @@ export function CareerScreen() {
   const prepare = useNav((n) => n.prepare)
   const startTutorial = useGame((g) => g.startTutorial)
   const startSpikeTutorial = useSpike((g) => g.startTutorial)
+  const startShiftTutorial = useShift((g) => g.startTutorial)
+  const startShift = useShift((g) => g.start)
+  const [customs, setCustoms] = useState<Session | null>(null)
   const career = useCareer()
   const [bailedOut, setBailedOut] = useState(0)
   const [telling, setTelling] = useState<Telling | null>(null)
@@ -498,9 +541,11 @@ export function CareerScreen() {
   const [paying, setPaying] = useState(false)
   const { legend, storySeen, tableWins, markStory, finishScene, hasShip, bix } = career
   // On Tarsk until there is a ship; then out in the sector, with Tarsk a tap away; after the Crown on the trade route.
-  const [view, setView] = useState<View>(!hasShip ? 'tarsk' : tableWins.crown && storySeen.includes('win-crown') ? 'trade' : 'kessel')
-  // which charts can be opened: Tarsk always, the sector with the ship, the route once the jump lock is gone
-  const canOpen = (id: string) => id === 'tarsk' || (id === 'kessel' && hasShip) || (id === 'trade' && !!tableWins.crown)
+  const [view, setView] = useState<View>(
+    !hasShip ? 'tarsk' : tableWins.banquet && storySeen.includes('win-banquet') ? 'core' : tableWins.crown && storySeen.includes('win-crown') ? 'trade' : 'kessel',
+  )
+  // which charts can be opened: Tarsk always, the sector with the ship, the route once the jump lock is gone, the core after the banquet
+  const canOpen = (id: string) => id === 'tarsk' || (id === 'kessel' && hasShip) || (id === 'trade' && !!tableWins.crown) || (id === 'core' && !!tableWins.banquet)
   const map = MAPS[view]
   const onMap = map.places.filter((p) => !p.opens).map((p) => tableById(p.id) ?? FIELD)
 
@@ -534,6 +579,13 @@ export function CareerScreen() {
     if (hasShip && storySeen.includes('launch') && !storySeen.includes('jump-lock') && !tableWins.crown) return setTelling({ scene: SCENES['jump-lock'] })
     // The first look at the trade route: the long jump, Oshi's answer, and Mira's confession.
     if (view === 'trade' && !storySeen.includes('mira-confession')) return setTelling({ scene: SCENES[storySeen.includes('oshi-courier') ? 'trade-arrival-courier' : 'trade-arrival-sold'] })
+    // Coruscant, the first time: the garrison, Orrin, and a word about the ledger.
+    if (view === 'core' && !storySeen.includes('core-arrival')) return setTelling({ scene: SCENES['core-arrival'] })
+    // The crystal Bix brought back from the gala.
+    if (storySeen.includes('ledger-stolen') && !storySeen.includes('ledger-scene')) {
+      markStory('ledger-scene')
+      return setTelling({ scene: SCENES['ledger-stolen'] })
+    }
     const untold = TABLES.filter((t) => tableWins[t.id] && !storySeen.includes(`win-${t.id}`))
     const latest = untold[untold.length - 1]
     if (!latest) return
@@ -564,6 +616,13 @@ export function CareerScreen() {
     go('table')
   }
 
+  // Orrin's practice hand of Coruscant Shift, before the first game in the gambling hall.
+  const practiseShift = () => {
+    unlockAudio()
+    startShiftTutorial('career')
+    go('shift')
+  }
+
   // Dessa's practice hand of Corellian Spike, before the first game in the canteen.
   const practiseSpike = () => {
     unlockAudio()
@@ -573,6 +632,8 @@ export function CareerScreen() {
 
   const sit = (session: Session) => {
     const at = session.table!
+    // In the core a warm ship is stopped at the jump point first.
+    if (at.chapter === 'core' && career.heat >= HEAT_CHECK && career.location !== at.id && !customs) return setCustoms(session)
     // Flying there costs fuel; on Tarsk the speeder is free.
     const start = () => {
       career.travel(at.id)
@@ -589,6 +650,8 @@ export function CareerScreen() {
       done: (choice) => {
         if (chose(choice, 'practice')) return practise()
         if (chose(choice, 'practice-spike')) return practiseSpike()
+        if (chose(choice, 'practice-shift')) return practiseShift()
+        if (useCareer.getState().storySeen.includes('shift-known') && at.id === 'level1') return setSelected('penthouse')
         // Whoever knows the game already goes straight on to the convoy.
         if (useCareer.getState().storySeen.includes('spike-known') && at.id === 'hallis1') return setSelected('convoy')
         start()
@@ -631,7 +694,12 @@ export function CareerScreen() {
                 </button>
                 {!!tableWins.crown && (
                   <button role="radio" aria-checked={view === 'trade'} className={cx(s.segment, view === 'trade' && s.segmentOn)} onClick={() => openMap('trade')}>
-                    {tx`Handelsroute`}
+                    {tableWins.banquet ? tx`Route` : tx`Handelsroute`}
+                  </button>
+                )}
+                {!!tableWins.banquet && (
+                  <button role="radio" aria-checked={view === 'core'} className={cx(s.segment, view === 'core' && s.segmentOn)} onClick={() => openMap('core')}>
+                    {tx`Kern`}
                   </button>
                 )}
               </div>
@@ -691,6 +759,38 @@ export function CareerScreen() {
       </AnimatePresence>
 
       <PaySheet open={paying} onClose={() => setPaying(false)} />
+
+      <Sheet open={customs !== null} onClose={() => setCustoms(null)} dialog>
+        <h2 className={common.sheetTitle}>{tx`Zollkontrolle`}</h2>
+        <p className={common.sheetText}>
+          {tx`Am Sprungpunkt wartet ein Kutter der Garnison. Hauptmann Hask kennt dein Gesicht. Zahl die Strafe – oder spiel eine schnelle Hand gegen ihn: gewinnst du, vergisst er dich; verlierst du, kostet es 500.`}
+        </p>
+        <div className={common.sheetActions}>
+          <button
+            className={common.btn}
+            disabled={career.credits < customsFine(career.heat)}
+            onClick={() => {
+              const next = customs!
+              career.payCustoms(customsFine(career.heat))
+              setCustoms(null)
+              sit(next)
+            }}
+          >
+            {tx`Zahlen · ${customsFine(career.heat)}`}
+          </button>
+          <button
+            className={cx(common.btn, common.btnPrimary)}
+            onClick={() => {
+              setCustoms(null)
+              unlockAudio()
+              startShift(customsSession())
+              go('shift')
+            }}
+          >
+            {tx`Schnelle Hand`}
+          </button>
+        </div>
+      </Sheet>
 
       <Sheet open={bailedOut > 0 && !telling} onClose={() => setBailedOut(0)} dialog>
         <h2 className={common.sheetTitle}>{hasShip ? tx`Oshi leiht nach` : tx`Aufs Haus`}</h2>

@@ -39,6 +39,14 @@ export const TELLS: Record<string, Tell> = {
   sable: { gesture: tx`blättert in einem leeren Notizbuch`, meaning: 'weak' },
   veyra: { gesture: tx`lächelt nur mit einem Mundwinkel`, meaning: 'strong' },
   corvin: { gesture: tx`schwenkt sein Glas`, meaning: 'weak' },
+  pix: { gesture: tx`wippt mit dem Fuß im Takt`, meaning: 'strong' },
+  grell: { gesture: tx`kratzt sich am Hauer`, meaning: 'weak' },
+  aldric: { gesture: tx`streicht sein Gewand glatt`, meaning: 'strong' },
+  nessa: { gesture: tx`tippt auf ihr Datapad`, meaning: 'weak' },
+  k7: { gesture: tx`lässt ein Relais klicken`, meaning: 'strong' },
+  hask: { gesture: tx`legt die Hand an den Gürtel`, meaning: 'weak' },
+  tarn: { gesture: tx`ballt die Faust`, meaning: 'strong' },
+  seraphine: { gesture: tx`dreht an ihrem Siegelring`, meaning: 'weak' },
   orrin: { gesture: tx`dreht einen Würfel zwischen den Fingern`, meaning: 'strong' },
 }
 

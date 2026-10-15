@@ -131,3 +131,52 @@ describe('a game', () => {
     expect(replayShift({ config, actions })).toEqual(state)
   })
 })
+
+describe('the learning tables and the sleeve', () => {
+  const two = [0, 1].map((i) => ({ name: `P${i}`, isHuman: false }))
+
+  it('play without betting: selection, shift, improvement, reveal', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const rng = new Rng(seed)
+      let { state } = createShiftGame({ seed, startingChips: 6, players: two, rules: { betting: false } })
+      for (let step = 0; state.phase !== 'gameOver'; step++) {
+        expect(step).toBeLessThan(5000)
+        expect(state.phase).not.toBe('bet')
+        state = applyShiftAction(state, randomMove(state, rng)).state
+      }
+    }
+  })
+
+  it('share a tie on the number when suits do not count', () => {
+    const tied = { distance: 0, total: 5, suited: 2 }
+    const plain = { distance: 0, total: 5, suited: 0 }
+    expect(compareShift(tied, plain)).toBeLessThan(0)
+    expect(compareShift(tied, plain, false)).toBe(0)
+  })
+
+  it('swaps a card for a sylop, and the card comes back with the next deal', () => {
+    let { state } = createShiftGame({ seed: 14, startingChips: 10, players: two })
+    const p = state.current
+    const given = state.players[p].hand[2]
+    state = applyShiftAction(state, { type: 'sleeve', give: given.id }).state
+    expect(state.current).toBe(p)
+    expect(state.players[p].hand.some((c) => c.id.startsWith('sleeve'))).toBe(true)
+    const rng = new Rng(4)
+    while (state.phase !== 'handEnd' && state.phase !== 'gameOver') state = applyShiftAction(state, randomMove(state, rng)).state
+    if (state.phase === 'gameOver') return
+    state = applyShiftAction(state, { type: 'nextHand' }).state
+    const ids = cardsInPlay(state)
+    expect(ids).toHaveLength(62)
+    expect(new Set(ids).size).toBe(62)
+    expect(ids).toContain(given.id)
+  })
+
+  it('puts a fine into the pot, never the last chip', () => {
+    let { state } = createShiftGame({ seed: 15, startingChips: 3, players: two })
+    const p = state.current
+    const pot = state.pot
+    state = applyShiftAction(state, { type: 'caught', fine: 3 }).state
+    expect(state.players[p].chips).toBe(1)
+    expect(state.pot).toBe(pot + 1)
+  })
+})

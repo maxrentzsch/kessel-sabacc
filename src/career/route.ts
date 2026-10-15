@@ -37,6 +37,19 @@ export interface RouteState {
   jobsDone: string[]
 }
 
+// ── Act 3 ──
+
+/** The third instalment, due before the residence: what is left of the whole note, unless the ledger is gone. */
+export function thirdInstalmentDue(debt: DebtState, flags: string[]): number {
+  return flags.includes('ledger-stolen') ? 0 : instalmentDue(debt, 2)
+}
+
+/** What still stands between the player and the residence. */
+export function residenceMissing(s: RouteState): string[] {
+  const due = thirdInstalmentDue(s.debt, s.storySeen)
+  return due > 0 ? [tx`die dritte Rate (fehlen ${due}) – oder das Schuldbuch`] : []
+}
+
 /** Everything still standing between the player and the banquet, in a few words each; empty once it may open. */
 export function banquetMissing(s: RouteState): string[] {
   const missing: string[] = []

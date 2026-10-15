@@ -125,6 +125,38 @@ const ARRIVAL: Record<string, { place: string; reply: Line }> = {
     place: tx`Das Bankett der Händler. Eine Tafel so lang wie ein Frachter, und am Kopfende Corvin Ashe.`,
     reply: { who: 'veyra', text: tx`Das Siegel spielt mit. Natürlich.` },
   },
+  level1: {
+    place: tx`Ebene 1313. Kein Tageslicht seit tausend Jahren, aber eine Spielhalle, die nie schließt.`,
+    reply: { who: 'pix', mood: 'happy', text: tx`Frisches Geld von oben! Setz dich, setz dich.` },
+  },
+  level2: {
+    place: tx`Der zweite Tisch der Spielhalle, unter einer flackernden Röhre.`,
+    reply: { who: 'grell', text: tx`Vierzig Jahre spiel ich hier. Die Farbe hat mich öfter gerettet als die Zahl.` },
+  },
+  level3: {
+    place: tx`Das Hinterzimmer. Rauch, ein runder Tisch und Orrins eigene Würfel.`,
+    reply: { who: 'pix', text: tx`Jetzt wird's ernst. Hier wird gesetzt.` },
+  },
+  penthouse: {
+    place: tx`Ebene 4000. Über den Wolken, hinter Glas, spielen die Berater des Senats.`,
+    reply: { who: 'nessa', mood: 'smug', text: tx`Lächeln Sie. Hier oben wird alles gesehen.` },
+  },
+  yacht: {
+    place: tx`Die „Aurora“ im Orbit. Unter den Fenstern leuchtet Coruscant, und an Oshis Seite surrt K-7.`,
+    reply: { who: 'k7', text: tx`Gast erfasst. Offener Schuldstand: vermerkt.` },
+  },
+  customs: {
+    place: tx`Der Zollhangar am Westportal. Weißes Licht, graue Kisten, und Zula in Garnisonsuniform.`,
+    reply: { who: 'sable', text: tx`Die Glasfinger wollen die Protokolle auch. Wir spielen darum, wer zuerst liest.` },
+  },
+  arena: {
+    place: tx`Die Arena der Spieler. Tausend Gesichter im Dunkeln, ein Tisch im Licht, jede Karte auf der Holowand.`,
+    reply: { who: 'dray', mood: 'smug', text: tx`Wir sehen uns wieder, Pilot. Diesmal vor Publikum.` },
+  },
+  residence: {
+    place: tx`Der Kristallturm des Hauses Aurel. Ganz oben, wo die Luft dünn und das Geld alt ist.`,
+    reply: { who: 'oshi', mood: 'smug', text: tx`Sieh an. Wir wollen beide dasselbe. Wie unangenehm.` },
+  },
 }
 
 /**
@@ -159,6 +191,43 @@ export function arrivalScene(table: TableDef): Line[] {
 }
 
 const VICTORY: Record<string, Line[]> = {
+  level1: [
+    { who: 'orrin', text: tx`Sie treffen die Zahl. Gut. Wissen Sie, warum ich Ihnen das beibringe?` },
+    { who: 'orrin', mood: 'thinking', text: tx`Ich war Croupier auf der Leeren Krone. Vor dreißig Jahren. Ich habe gesehen, wie sie verschwand.` },
+  ],
+  level2: [
+    { who: 'grell', text: tx`Die Farbe. Hab ich doch gesagt.` },
+    { who: 'orrin', text: tx`Im Hinterzimmer wird gesetzt. Und danach erzähle ich Ihnen, wer den Code der Krone hat.` },
+  ],
+  level3: [
+    { who: 'orrin', mood: 'happy', text: tx`Mehr kann ich Ihnen nicht beibringen.` },
+    { who: 'orrin', mood: 'thinking', text: tx`Die Krone gehörte dem Haus Aurel. Ihr Peilsender antwortet nur auf einen Code, und den hütet die Erbin, oben im Kristallturm.` },
+    { who: 'orrin', text: tx`Bis dahin führt der Weg durch die Berater, Oshis Gala, den Zoll und die Arena. Und passen Sie auf die Garnison auf.` },
+  ],
+  penthouse: [
+    { who: 'aldric', mood: 'angry', text: tx`Ich habe Sie unterschätzt.` },
+    { who: 'nessa', text: tx`Madame Oshi gibt morgen eine Gala auf der „Aurora“. Sie sind eingeladen. Ob Sie wollen oder nicht.` },
+  ],
+  yacht: [
+    { who: 'oshi', mood: 'angry', text: tx`Auf meiner eigenen Gala.` },
+    { who: 'k7', text: tx`Hinweis: Die Andockprotokolle der Krone lagern im Zollhangar der Garnison.` },
+    { who: 'oshi', text: tx`Halt den Mund, K-7.` },
+  ],
+  customs: [
+    { who: 'zula', mood: 'happy', text: tx`Ich hab dir doch gesagt, mach mir keine Schande.` },
+    { who: null, text: tx`Im Archivraum liegen die Andockprotokolle. Die letzte Eintragung der Krone: ein Treffen in der Arena der Spieler, mit dem Haus Aurel.` },
+  ],
+  arena: [
+    { who: 'tarn', mood: 'angry', text: tx`Die Menge liebt dich. Ich nicht.` },
+    { who: 'dray', text: tx`Seraphine Aurel hat zugesehen. Sie lädt dich in ihren Turm. Mich nicht. Ärgerlich.` },
+  ],
+  residence: [
+    { who: null, text: tx`Die letzte Karte fällt. Seraphine Aurel legt einen Kristall auf den Tisch: den Code der Krone.` },
+    { who: null, text: tx`Der Navcomputer der Sandläufer sendet ihn. Weit draußen, am Rand der Galaxis, antwortet etwas.` },
+    { who: 'seraphine', mood: 'thinking', text: tx`Sie lebt. Die Leere Krone. Und jetzt weiß es jeder, der ein Funkgerät hat.` },
+    { who: 'oshi', mood: 'thinking', text: tx`Alle Syndikate machen sich auf den Weg. Allein komme ich nicht hin. Du auch nicht.` },
+    { who: 'oshi', text: tx`Ein Vorschlag: Partner. Du fliegst, ich öffne dir die Türen. Was in der Krone liegt, teilen wir.` },
+  ],
   hallis1: [
     { who: 'dessa', mood: 'happy', text: tx`Siehst du? Null ist nicht schwer. Nur selten.` },
     { who: 'dessa', text: tx`Am nächsten Tisch wird gesetzt. Dann lernst du, wann man aussteigt.` },
@@ -425,6 +494,42 @@ const TRADE_SCENES: Scene[] = [
   { id: 'spike-known', title: tx`Werft Hallis`, venue: 'hallis', lines: SPIKE_KNOWN },
 ]
 
+// ── Act 3: the core ─────────────────────────────────────────────────────────
+
+const CORE_ARRIVAL: Line[] = [
+  { who: null, text: tx`Der Sprung endet über Coruscant. Ein Planet aus Stadt, tausend Ebenen tief.` },
+  { who: 'zula', text: tx`Garnison Westportal. Sie sind angemeldet. Und beobachtet: Wer hier schmuggelt oder beim Schummeln erwischt wird, wird an den Sprungpunkten kontrolliert.` },
+  { who: null, text: tx`Eine zweite Nachricht, aus Ebene 1313. Eine alte, ruhige Stimme.` },
+  { who: 'orrin', text: tx`Man sagt mir, Sie suchen die Leere Krone. Dann lernen Sie erst Coruscant Shift. Ich warte in der Spielhalle.` },
+  { who: 'kessk', mood: 'thinking', text: tx`Und noch was, Kind: Oshis Droide K-7 trägt dein Schuldbuch im Speicher. Nur so als Gedanke.` },
+]
+const ORRIN_CHOICES: Choice[] = [
+  { text: tx`Zeig mir erst eine Übungshand`, effects: [{ flag: 'practice-shift' }] },
+  { text: tx`Fangen wir einfach an` },
+  { text: tx`Ich kenne Coruscant Shift schon`, effects: [{ flag: 'shift-known' }], next: 'shift-known' },
+]
+const SHIFT_KNOWN: Line[] = [
+  { who: 'orrin', mood: 'happy', text: tx`Dann reden wir über die Krone statt über Würfel. Die Lerntische bleiben offen, falls Sie üben wollen.` },
+  { who: 'orrin', mood: 'thinking', text: tx`Die Krone gehörte dem Haus Aurel. Ihr Peilsender antwortet nur auf einen Code, und den hütet die Erbin, oben im Kristallturm.` },
+]
+const LEDGER: Line[] = [
+  { who: null, text: tx`Während K-7 die Karten nachzählt, huscht Bix über den Tisch. Ein Klicken, ein Funkeln – und weg ist es.` },
+  { who: 'bix', text: tx`…!` },
+  { who: null, text: tx`Im Frachtraum der Sandläufer liegt ein Speicherkristall. Darauf: Oshis Schuldbuch. Jede Rate, jede Unterschrift. Und keine Kopie.` },
+  { who: 'oshi', mood: 'angry', text: tx`Du hast mir etwas gestohlen. Das vergesse ich nicht. Nie.` },
+  { who: YOU, text: tx`Dann sind wir quitt, Madame. Auf den Credit genau.` },
+]
+const PARTNER: Choice[] = [
+  { text: tx`Partner. Aber zu meinen Bedingungen.`, effects: [{ flag: 'oshi-partner' }, { standing: 'oshi', delta: 1 }] },
+  { text: tx`Nein. Die Krone hole ich mir allein.`, effects: [{ flag: 'oshi-rival' }, { standing: 'oshi', delta: -1 }] },
+]
+
+const CORE_SCENES: Scene[] = [
+  { id: 'core-arrival', title: tx`Coruscant`, venue: 'level', lines: CORE_ARRIVAL },
+  { id: 'shift-known', title: tx`Ebene 1313`, venue: 'level', lines: SHIFT_KNOWN },
+  { id: 'ledger-stolen', title: tx`Das Schuldbuch`, venue: 'yacht', lines: LEDGER },
+]
+
 /** The table the player chose to practise at first: the anchor asks before the first game. */
 const PRACTICE_CHOICES: Choice[] = [
   { text: tx`Zeig mir erst, wie es geht`, effects: [{ flag: 'practice' }] },
@@ -439,20 +544,21 @@ export const SCENES: Record<string, Scene> = Object.fromEntries(
   [
     ...TARSK_SCENES,
     ...TRADE_SCENES,
+    ...CORE_SCENES,
     ...TABLES.flatMap((table): Scene[] => [
       {
         id: `intro-${table.id}`,
         title: table.name,
         venue: table.id,
         lines: arrivalScene(table),
-        ...(table.id === 'anchor' ? { choices: PRACTICE_CHOICES } : table.id === 'hallis1' ? { choices: DESSA_CHOICES } : {}),
+        ...(table.id === 'anchor' ? { choices: PRACTICE_CHOICES } : table.id === 'hallis1' ? { choices: DESSA_CHOICES } : table.id === 'level1' ? { choices: ORRIN_CHOICES } : {}),
       },
       {
         id: `win-${table.id}`,
         title: table.name,
         venue: table.id,
         lines: victoryScene(table),
-        ...(table.id === 'crown' ? { choices: OSHI_OFFER } : table.id === 'convoy' ? { choices: PATRON } : {}),
+        ...(table.id === 'crown' ? { choices: OSHI_OFFER } : table.id === 'convoy' ? { choices: PATRON } : table.id === 'residence' ? { choices: PARTNER } : {}),
       },
     ]),
   ].map((scene) => [scene.id, scene]),
@@ -467,6 +573,8 @@ export const TRIGGERS: string[] = [
   'repaid',
   'trade-arrival-courier',
   'trade-arrival-sold',
+  'core-arrival',
+  'ledger-stolen',
   ...ANIMALS.map((animal) => `win-${FIELD.id}-${animal}`),
   ...TABLES.flatMap((table) => [`intro-${table.id}`, `win-${table.id}`]),
 ]

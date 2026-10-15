@@ -39,7 +39,7 @@ describe('saved careers', () => {
   })
 
   it('survive storage that holds nothing usable', () => {
-    const empty = { backupAt: 0, hasShip: false, bix: null, storySeen: [], debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor', dossiers: {}, sleeves: 0 }
+    const empty = { backupAt: 0, hasShip: false, bix: null, storySeen: [], debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor', dossiers: {}, sleeves: 0, heat: 0 }
     expect(migrateCareer(null, 1)).toEqual(empty)
     expect(migrateCareer([1, 2], 1)).toEqual(empty)
   })
@@ -71,5 +71,10 @@ describe('saved careers', () => {
     const migrated = migrateCareer({ ...SAVE_1_2, tableWins: {}, storySeen: ['prologue'] }, 2)
     expect(migrated.storySeen).toEqual(['prologue'])
     expect(migrated.hasShip).toBe(false)
+  })
+
+  it('start the garrison cold for every save from before act 3', () => {
+    expect(migrateCareer({ ...SAVE_1_2 }, 6).heat).toBe(0)
+    expect(migrateCareer({ ...SAVE_1_2 }, 1).heat).toBe(0)
   })
 })

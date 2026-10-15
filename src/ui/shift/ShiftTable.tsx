@@ -28,7 +28,7 @@ import { SuitMark } from '../spike/SpikeCardArt'
 import sp from '../spike/Spike.module.css'
 import { cardsText, chipsText, signed } from '../spike/texts'
 import { Backdrop } from '../table/Backdrop'
-import { Curtain } from '../table/Overlays'
+import { Curtain, SteadyHand, Suspicion } from '../table/Overlays'
 import { SLOTS } from '../table/Seat'
 import { Hub, Surface } from '../table/Surface'
 import t from '../table/Table.module.css'
@@ -95,6 +95,7 @@ function useSeatLife(player: ShiftPlayer, character: Character | null) {
 function Seat({ player, character, slot, opponents }: { player: ShiftPlayer; character: Character | null; slot: number; opponents: number }) {
   const game = useShift((g) => g.game)!
   const thinking = useShift((g) => g.thinking === player.id)
+  const peeked = useShift((g) => g.peeked)
   const life = useSeatLife(player, character)
   const shown = game.phase === 'showdown' || game.phase === 'handEnd' || game.phase === 'gameOver'
   const placing = shown ? game.result?.placing.find((x) => x.playerId === player.id) : undefined
@@ -150,16 +151,20 @@ function Seat({ player, character, slot, opponents }: { player: ShiftPlayer; cha
           )}
         </div>
         <div className={cx(sp.minis, open && sp.open)} data-count={cards.length}>
-          {cards.map((card) => (
-            <Card
-              key={card.id}
-              card={card}
-              hand={game.handNumber}
-              faceUp={open}
-              lean={open ? 14 : 42}
-              className={cx(sp.mini, !open && player.selection.includes(card) && s.setAside)}
-            />
-          ))}
+          {cards.map((card) => {
+            // a card the player sneaked a look at stays open for them alone
+            const seen = !open && peeked.includes(card.id)
+            return (
+              <Card
+                key={card.id}
+                card={card}
+                hand={game.handNumber}
+                faceUp={open || seen}
+                lean={open || seen ? 14 : 42}
+                className={cx(sp.mini, !open && player.selection.includes(card) && s.setAside, seen && t.miniSeen)}
+              />
+            )
+          })}
           {player.eliminated ? (
             <span className={cx(sp.tag, sp.tagOut)}>{tx`ausgeschieden`}</span>
           ) : player.folded ? (
@@ -182,11 +187,121 @@ function Dice({ game }: { game: ShiftState }) {
       <motion.span key={`gold-${game.handNumber}`} className={cx(s.die, s.gold, 'num')} initial={{ rotate: -200, scale: 0.4 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 14 }}>
         {signed(game.target.value)}
       </motion.span>
-      <motion.span key={`silver-${game.handNumber}`} className={cx(s.die, s.silver)} initial={{ rotate: 200, scale: 0.4 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 14, delay: 0.12 }}>
-        <SuitMark suit={game.target.suit} size={20} />
-      </motion.span>
+      {/* at the first learning table only the number counts */}
+      {game.rules.suits !== false && (
+        <motion.span key={`silver-${game.handNumber}`} className={cx(s.die, s.silver)} initial={{ rotate: 200, scale: 0.4 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 14, delay: 0.12 }}>
+          <SuitMark suit={game.target.suit} size={20} />
+        </motion.span>
+      )}
       <span className={sp.potLabel}>{tx`Ziel`}</span>
     </div>
+  )
+}
+
+/** Cheating at the Shift table: a look at one card of an opponent, and a sylop up the sleeve. */
+function ShiftPeekSheet({ open, onClose, canCheat }: { open: boolean; onClose(): void; canCheat: boolean }) {
+  const game = useShift((g) => g.game)!
+  const session = useShift((g) => g.session)!
+  const viewer = useShift((g) => g.viewer)
+  const used = useShift((g) => g.peekUsed)
+  const watch = useShift((g) => g.watch)
+  const suspicion = useShift((g) => g.suspicion)
+  const cover = useShift((g) => g.bixCover)
+  const sleeveUsed = useShift((g) => g.sleeveUsed)
+  const peek = useShift((g) => g.peek)
+  const sleeve = useShift((g) => g.sleeve)
+  const bix = useCareer((c) => c.bix)
+  const sleeves = useCareer((c) => c.sleeves)
+  const steadyHand = useSettings((st) => st.steadyHand)
+  const [steady, setSteady] = useState<string | null>(null)
+  useEffect(() => {
+    if (!open) setSteady(null)
+  }, [open])
+
+  const me = game.players[viewer]
+  const ready = canCheat && !used
+  const canSleeve = canCheat && session.mode === 'career' && !sleeveUsed && sleeves > 0
+  const targets = game.players.filter((p) => !p.isHuman && !p.eliminated && !p.folded)
+  const heat = (id: number) => watch[id] ?? 0
+
+  if (steady)
+    return (
+      <Sheet open={open} onClose={onClose}>
+        <SteadyHand
+          onDone={(steadiness) => {
+            onClose()
+            sleeve(steady, steadiness)
+          }}
+        />
+      </Sheet>
+    )
+
+  return (
+    <Sheet open={open} onClose={onClose}>
+      <h2 className={common.sheetTitle}>{tx`Spähen`}</h2>
+      <p className={common.sheetText}>
+        {tx`Wirf einen Blick auf eine Karte eines Gegners – am liebsten eine aus seiner Auswahl. Einmal pro Hand, in deinem Zug. Ist einer ganz misstrauisch, wirst du erwischt und zahlst 2 Chips in den Topf.`}
+      </p>
+      <div className={t.heatRow}>
+        <span>{tx`Verdacht`}</span>
+        <Suspicion value={suspicion} />
+      </div>
+      {bix === 'lothcat' && suspicion >= 60 && <p className={t.tokenNote}>{tx`Bix legt die Ohren an. Der Tisch wird misstrauisch.`}</p>}
+      {cover > 0 && <p className={t.tokenNote}>{cover === 1 ? tx`Fliegt ein Blick auf, lenkt Bix ein Mal ab.` : tx`Fliegt ein Blick auf, lenkt Bix noch ${cover} Mal ab.`}</p>}
+      {!ready && <p className={t.tokenNote}>{used ? tx`In dieser Hand hast du schon gespäht.` : tx`Spähen kannst du nur in deinem Zug.`}</p>}
+      <div className={t.targets}>
+        {targets.map((p) => (
+          <button
+            key={p.id}
+            className={t.targetBtn}
+            disabled={!ready}
+            onClick={() => {
+              onClose()
+              peek(p.id)
+            }}
+          >
+            <Portrait character={session.seats[p.id]} size={44} frame />
+            <span>
+              <b>{p.name}</b>
+              <em>{tx`eine Karte ansehen`}</em>
+            </span>
+            <span className={cx(t.heat, heat(p.id) >= 70 ? t.heatHigh : heat(p.id) >= 40 ? t.heatMid : undefined)} aria-label={tx`Verdacht ${Math.round(heat(p.id))} %`}>
+              <i>
+                <b style={{ width: `${Math.min(100, heat(p.id))}%` }} />
+              </i>
+            </span>
+          </button>
+        ))}
+      </div>
+      {canSleeve && (
+        <div className={t.sleeve}>
+          <h3 className={t.fieldLabel}>{tx`Ärmel`}</h3>
+          <p className={t.tokenNote}>
+            {tx`Tausch eine deiner Karten gegen einen Sylop aus dem Ärmel – einmal pro Partie. Alle am Tisch werden misstrauisch; bemerkt es einer, kostet es 3 Chips und Ansehen. Im Ärmel: ${sleeves}.`}
+          </p>
+          <div className={sp.sleeveCards}>
+            {[...me.selection, ...me.hand].map((card) => (
+              <button
+                key={card.id}
+                className={common.btn}
+                onClick={() => {
+                  if (steadyHand) return setSteady(card.id)
+                  onClose()
+                  sleeve(card.id)
+                }}
+              >
+                {tx`${signed(card.value)} tauschen`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className={common.sheetActions}>
+        <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
+          {tx`Schließen`}
+        </button>
+      </div>
+    </Sheet>
   )
 }
 
@@ -242,6 +357,9 @@ export function ShiftTableScreen() {
   const [chosen, setChosen] = useState<string[]>([])
   const [quitting, setQuitting] = useState(false)
   const [folding, setFolding] = useState(false)
+  const [peeking, setPeeking] = useState(false)
+  const suspicion = useShift((g) => g.suspicion)
+  const peekUsed = useShift((g) => g.peekUsed)
   const [line, setLine] = useState('')
   const [tip, setTip] = useState<{ game: ShiftState; text: string } | null>(null)
 
@@ -271,6 +389,7 @@ export function ShiftTableScreen() {
   const selecting = myTurn && game.phase === 'select'
   const improving = myTurn && game.phase === 'improve'
   const betting = myTurn && game.phase === 'bet'
+  const canCheat = myTurn && !hotseat && !session.tutorial
   const due = shiftOwed(game, me)
   const size = shiftBetSize(game)
   const result = game.result
@@ -335,9 +454,10 @@ export function ShiftTableScreen() {
   const suitDecided = !!result && !result.uncontested && result.placing.some((x) => !x.winner && x.score.distance === result.placing[0].score.distance)
   const sheetOpen = !busy && (game.phase === 'handEnd' || game.phase === 'gameOver' || outcome !== null) && result !== null
 
+  const back = useShift.getState().tutorialFrom
   const leave = () => {
-    if (session.tutorial) {
-      go('rules')
+    if (session.tutorial || session.kind === 'customs') {
+      go(session.tutorial ? back : 'career')
       return clear()
     }
     if (career && outcome) return go('result')
@@ -345,7 +465,7 @@ export function ShiftTableScreen() {
     clear()
   }
   const quit = () => {
-    go(session.tutorial ? 'rules' : career ? 'career' : 'free')
+    go(session.tutorial ? back : career ? 'career' : 'free')
     forfeit()
   }
 
@@ -363,6 +483,7 @@ export function ShiftTableScreen() {
             </span>
           </div>
           <div className={t.rounds} aria-label={tx`Setzrunde ${game.round} von ${2}`}>
+            <Suspicion compact value={suspicion} />
             {[1, 2].map((r) => (
               <i key={r} className={cx(t.roundPip, r < game.round && t.roundDone, r === game.round && t.roundNow)} />
             ))}
@@ -442,7 +563,7 @@ export function ShiftTableScreen() {
 
           <p className={cx(t.myLabel, previewScore?.distance === 0 && t.scoreSabacc, 'num')}>
             {mine ? scoreText(mine.score) : previewScore ? scoreText(previewScore) : targetText(game.target)}
-            {previewScore && (
+            {previewScore && game.rules.suits !== false && (
               <span className={s.suited} title={SUIT_LABEL[game.target.suit]}>
                 <SuitMark suit={game.target.suit} size={12} /> {previewScore.suited}
               </span>
@@ -473,6 +594,11 @@ export function ShiftTableScreen() {
           </div>
 
           <div className={sp.bar}>
+            {!hotseat && !session.tutorial && session.kind !== 'customs' && (
+              <button className={cx(t.peekBtn, sp.peek, canCheat && !peekUsed && t.peekBtnReady)} onClick={() => setPeeking(true)} aria-label={tx`Spähen`}>
+                <Icon name="eye" size={20} />
+              </button>
+            )}
             {selecting || improving ? (
               <>
                 <button className={common.btn} onClick={() => setFolding(true)}>
@@ -567,7 +693,7 @@ export function ShiftTableScreen() {
           <div className={common.sheetActions}>
             {session.tutorial ? (
               <button className={cx(common.btn, common.btnPrimary)} onClick={leave}>
-                {tx`Zurück zu den Regeln`}
+                {back === 'career' ? tx`Zurück zu Orrin` : tx`Zurück zu den Regeln`}
               </button>
             ) : outcome && !career && !hotseat ? (
               <>
@@ -589,6 +715,8 @@ export function ShiftTableScreen() {
             )}
           </div>
         </Sheet>
+
+        <ShiftPeekSheet open={peeking} onClose={() => setPeeking(false)} canCheat={canCheat} />
 
         <Sheet open={folding} onClose={() => setFolding(false)} dialog>
           <h2 className={common.sheetTitle}>{tx`Aussteigen?`}</h2>

@@ -7,12 +7,13 @@ Where Kessel Sabacc could go after 1.2. Smaller ideas that do not belong to a ph
 
 - Three variants with pure, seeded rules engines and AI: Kessel Sabacc (`src/engine`), Corellian
   Spike (`src/spike`), both in the career since 2.0, and Coruscant Shift (`src/shift`), in free
-  play since 2.1.
-- A career over three charts: Tarsk, the Kessel sector (act 1) and the trade route (act 2), with
-  duels, legend mode, stakes, jobs, syndicates, the tour, the daily hand, the Sandrunner with five
-  modules, a collection, achievements and story scenes. Acts 3 and 4 are still to come.
-- Peeking with suspicion per opponent and the sleeve, in both variants; one device for several
-  players, in both variants.
+  play since 2.1 and in the career since 2.2.
+- A career over four charts: Tarsk, the Kessel sector (act 1), the trade route (act 2) and
+  Coruscant (act 3), with duels, legend mode, stakes, jobs, syndicates, the garrison, the tour, the
+  daily hand, the Sandrunner with five modules, a collection, achievements and story scenes. Act 4
+  is still to come.
+- Peeking with suspicion per opponent and the sleeve in all three games; one device for several
+  players in all three.
 - German and English, enforced by a catalogue test.
 - A static web app on GitHub Pages: no server, saves in `localStorage`, backup codes to move a save.
 - All art is drawn in code (SVG and CSS); all sound is synthesised (`src/audio/sfx.ts`).
@@ -270,6 +271,19 @@ and every new line exists in both languages.
   furious Oshi.
 - **The turn.** With the last key the coordinates open. The Empty Crown exists, and every syndicate
   learns it at the same moment. Oshi offers a partnership, because she cannot get there alone.
+- *As built in 2.2:* act 2 already ends with the keys and a coordinate in the core, so act 3 hunts
+  the Crown's beacon instead of a last key. A chart of Coruscant with eight tables of Coruscant
+  Shift: three learning tables in the gambling hall of Level 1313 with Orrin Vale (the number
+  only; then the suit; then betting), a practice hand and the choice to skip them; then the
+  advisers' penthouse (Red Seal), Oshi's gala aboard the Aurora, the garrison's customs hangar
+  with Zula and Captain Hask, the gamblers' arena (Scrap Crown) and the Aurel residence, whose heir
+  keeps the beacon's code. Heat: getting caught at a table of the core and smuggling for Sable raise
+  it, every quiet game there cools it; from 50 on every jump in the core meets a check, paid with a
+  fine or a quick hand of Shift against Hask. The residence waits for the third instalment, or for
+  the ledger: a job on the yacht where Bix takes K-7's crystal, which ends the debt and costs two
+  steps of standing with Oshi. The residence's win plays the turn and asks whether to become
+  Oshi's partner. Peeking and the sleeve work at the Shift table as at the others.
+  The crew and the galaxy map are left for act 4.
 - **Act 4.** The station wakes. The syndicates agree on the one thing they all trust here: a
   tournament, each round in another variant. A champion of each syndicate, Dray Venn if he was
   never beaten for good, Madame Oshi at the final table. Your standing, your crew and the state
@@ -368,6 +382,7 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.9 | Phase 4, groundwork: the Spike table ready for the career |
 | 2.0 | Phase 4: act 2 with Corellian Spike, its learning path and the keys |
 | 2.1 | Phase 5, first step: Coruscant Shift in free play |
+| 2.2 | Phase 5: act 3, the core, with heat and the ledger |
 | 2.x | Phase 5: acts 3 and 4, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |
 
@@ -418,7 +433,8 @@ the landing field, so they are offered the same ride once when they open the new
 
 ## Still open
 
-1. Heat and the garrison: only in act 3, or from act 1 on?
+1. Heat and the garrison: only in act 3, or from act 1 on? *Built for act 3 only in 2.2, as
+   recommended; it can still be carried back if wanted.*
 2. The *Outlaw* ending with bounty hunters in legend mode afterwards?
 3. A server for phase 7: a free account in your name when the time comes?
 4. Music: generated in the browser (free, more synthetic) or recorded (needs licences)?

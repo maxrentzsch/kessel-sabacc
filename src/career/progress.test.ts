@@ -93,7 +93,7 @@ describe('tour and daily hand', () => {
 describe('table money', () => {
   it('pays every table well above its buy-in, and more the further up within an act', () => {
     // Tarsk and the Kessel sector are one climb; the trade route starts small again with its learning tables.
-    const climbs = [TABLES.filter((t) => t.chapter !== 'trade'), TABLES.filter((t) => t.chapter === 'trade')]
+    const climbs = [TABLES.filter((t) => t.chapter === 'tarsk' || t.chapter === 'kessel'), TABLES.filter((t) => t.chapter === 'trade'), TABLES.filter((t) => t.chapter === 'core')]
     for (const climb of climbs) {
       climb.forEach((table, i) => {
         expect(payoutFor(table)).toBeGreaterThan(table.buyIn * 2)

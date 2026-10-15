@@ -26,7 +26,7 @@ export interface Session {
   variant?: 'kessel' | 'spike' | 'shift'
   mode: 'career' | 'free'
   /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables; the stake game wins a ship */
-  kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake' | 'job'
+  kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake' | 'job' | 'customs'
   /** how many times the normal stake the player put up */
   stake?: number
   /** the second, merciless run through the career */

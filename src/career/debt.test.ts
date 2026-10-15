@@ -26,6 +26,14 @@ describe('the debt', () => {
     expect(net).toBeGreaterThanOrEqual(INSTALMENTS[1] + banquet.buyIn)
   })
 
+  it('lets act 3 pay its instalment and the residence from its own tables', () => {
+    const tables = TABLES.filter((t) => t.chapter === 'core' && !t.finale)
+    const net = tables.reduce((sum, t) => sum + t.payout - t.buyIn, 0)
+    const residence = TABLES.find((t) => t.id === 'residence')!
+    // a courier owes Oshi's relief on top, but saved it on the second instalment
+    expect(net).toBeGreaterThanOrEqual(INSTALMENTS[2] + residence.buyIn)
+  })
+
   it('can be met from the act’s own tables', () => {
     // net winnings of a first win at each table in the sector before the Crown
     const net = TABLES.filter((t) => t.chapter === 'kessel' && t.id !== 'crown').reduce((sum, t) => sum + t.payout - t.buyIn, 0)

@@ -2356,3 +2356,40 @@
   letter-spacing: 0.04em;
   color: var(--ink);
 }
+
+/* how closely the garrison of the core is watching */
+.ledgerHeat {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ledgerHeat > .fieldLabel {
+  margin: 0;
+}
+
+.ledgerHeat i {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.ledgerHeat i b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+}
+
+.ledgerHeat .heatHot b {
+  background: var(--bad);
+}
+
+.ledgerHeat em {
+  grid-column: 1 / -1;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-dim);
+}

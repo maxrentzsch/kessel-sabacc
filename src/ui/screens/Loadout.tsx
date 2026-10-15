@@ -7,6 +7,7 @@ import { TOKEN_TEXT } from '../../i18n/texts'
 import { unlockAudio } from '../../audio/sfx'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
+import { useShift } from '../../store/shift'
 import { useSpike } from '../../store/spike'
 import { useNav } from '../../store/nav'
 import { Icon } from '../art/Icons'
@@ -24,6 +25,7 @@ export function LoadoutScreen() {
   const career = useCareer()
   const start = useGame((g) => g.start)
   const startSpike = useSpike((g) => g.start)
+  const startShift = useShift((g) => g.start)
 
   const pool = pending?.pool ?? []
   const [picked, setPicked] = useState<TokenId[]>(() => career.loadout.filter((t) => pool.includes(t)).slice(0, SLOTS))
@@ -36,8 +38,8 @@ export function LoadoutScreen() {
   if (!pending) return null
 
   const { session } = pending
-  // Corellian Spike knows no shift tokens: only the stake is chosen here.
-  const spike = session.variant === 'spike'
+  // Corellian Spike and Coruscant Shift know no shift tokens: only the stake is chosen here.
+  const spike = session.variant === 'spike' || session.variant === 'shift'
   // Only career tables and duels are played for a stake.
   const paid = session.kind === 'table' || session.kind === 'duel'
   const cost = (session.buyIn ?? 0) * stake.multiplier
@@ -62,9 +64,13 @@ export function LoadoutScreen() {
       stake: stake.multiplier,
       playerChips: (session.playerChips ?? session.startingChips) - handicap,
     }
-    if (spike) {
+    if (session.variant === 'spike') {
       startSpike(staked)
       return go('spike')
+    }
+    if (session.variant === 'shift') {
+      startShift(staked)
+      return go('shift')
     }
     career.setLoadout(picked)
     start(staked, picked)
@@ -87,7 +93,9 @@ export function LoadoutScreen() {
       <div className={common.screenBody}>
         <div className={cx(common.column, s.loadout)}>
           {spike ? (
-            <p className={s.lead}>{tx`Corellian Spike kennt keine Shift-Tokens. Wähl deinen Einsatz und nimm Platz.`}</p>
+            <p className={s.lead}>
+              {session.variant === 'shift' ? tx`Coruscant Shift kennt keine Shift-Tokens. Wähl deinen Einsatz und nimm Platz.` : tx`Corellian Spike kennt keine Shift-Tokens. Wähl deinen Einsatz und nimm Platz.`}
+            </p>
           ) : (
             <>
               <p className={s.lead}>
