@@ -146,6 +146,8 @@ interface Props {
   tables: TableDef[]
   /** a place that is a map of its own was tapped */
   onOpen?(mapId: string): void
+  /** where the player is; the marker stands there, or at the selected place when that is elsewhere */
+  here?: string
   standing(table: TableDef): Standing
   selected: string
   onSelect(table: TableDef): void
@@ -157,9 +159,9 @@ interface Props {
  * The career as a chart of the sector: six places along a route. Whoever
  * plays travels it – on the liner at first, in their own ship at the end.
  */
-export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpen }: Props) {
+export function StarMap({ map, tables, standing, selected, onSelect, ship, onOpen, here }: Props) {
   const planet = map.scale === 'planet'
-  const at = placeOf(map, selected)
+  const at = placeOf(map, here && map.places.some((p) => p.id === here) ? here : selected)
   // The marker points the way it last travelled.
   const last = useRef({ x: at.x, y: at.y, angle: -30 })
   if (last.current.x !== at.x || last.current.y !== at.y) {

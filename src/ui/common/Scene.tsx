@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import { sfx } from '../../audio/sfx'
-import { ANIMALS, YOU } from '../../career/story'
+import { ANIMALS, BIX, YOU } from '../../career/story'
 import type { Animal, Choice, Scene as SceneDef } from '../../career/story'
 import { venueOf } from '../../career/venues'
 import { ANIMAL_NAME, ANIMAL_VOICE, Critter } from '../art/Critter'
@@ -13,6 +13,8 @@ import { tx } from '../../i18n'
 
 interface Props {
   scene: SceneDef
+  /** the animal that came along, for lines spoken by Bix */
+  bix?: Animal | null
   /** the scene is over; `choice` is the answer the player gave, if it asked for one */
   onDone(choice?: Choice): void
 }
@@ -25,12 +27,12 @@ const TICK = 22
  * A tap finishes the line, the next tap moves on. A scene that asks
  * something waits on its last line for one of the answers.
  */
-export function Scene({ scene, onDone }: Props) {
+export function Scene({ scene, bix, onDone }: Props) {
   const { lines, venue, title, choices } = scene
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const line = lines[index]
-  const animal = (ANIMALS as readonly (string | null)[]).includes(line.who) ? (line.who as Animal) : null
+  const animal = line.who === BIX ? (bix ?? 'vulptex') : (ANIMALS as readonly (string | null)[]).includes(line.who) ? (line.who as Animal) : null
   const speaker = line.who && line.who !== YOU && !animal ? CHARACTERS[line.who] : null
   const typing = shown < line.text.length
 
@@ -108,7 +110,7 @@ export function Scene({ scene, onDone }: Props) {
           >
             {line.who && (
               <div className={s.sceneWho}>
-                <b>{speaker ? speaker.name : animal ? ANIMAL_NAME[animal] : tx`Du`}</b>
+                <b>{speaker ? speaker.name : line.who === BIX ? 'Bix' : animal ? ANIMAL_NAME[animal] : tx`Du`}</b>
                 {speaker && <em>{speaker.title}</em>}
               </div>
             )}

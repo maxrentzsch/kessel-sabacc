@@ -2,6 +2,7 @@ import { animate, motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { CHARACTERS } from '../../ai/personalities'
 import { achievement } from '../../career/achievements'
+import { jobById } from '../../career/jobs'
 import { FIELD, TABLES } from '../../career/tables'
 import { tourPot } from '../../career/tour'
 import { TOKEN_TEXT } from '../../i18n/texts'
@@ -168,6 +169,13 @@ export function ResultScreen() {
               {summary.firstDuelWin ? tx`„Das war das letzte Mal. Wirklich.“` : tx`„${table.outro}“`}
             </p>
           </motion.div>
+        )}
+
+        {summary.job && (
+          <motion.p className={cx(s.resultNext, summary.job.done ? s.jobDone : s.jobMissed)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
+            {summary.job.done ? tx`Auftrag erfüllt: ` : tx`Auftrag verfehlt: `}
+            <b>{jobById(summary.job.id)?.title}</b>
+          </motion.p>
         )}
 
         {won && summary.firstWin && nextTable && (

@@ -61,7 +61,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'tables3', name: tx`Halbzeit`, text: tx`Gewinne an drei verschiedenen Tischen.`, credits: 200, rep: 40, progress: (p) => [count(p.tableWins), 3] },
   { id: 'crown', name: tx`Die Sandläufer fliegt wieder`, text: tx`Gewinne die Kessel-Krone.`, credits: 1000, rep: 200, progress: (p) => [p.tableWins.crown ? 1 : 0, 1] },
   { id: 'duel', name: tx`Revanche`, text: tx`Gewinne ein Duell gegen einen Rivalen.`, credits: 100, rep: 25, progress: (p) => [Math.min(1, count(p.duelWins)), 1] },
-  { id: 'duelAll', name: tx`Keine Rivalen mehr`, text: tx`Gewinne alle sechs Duelle.`, credits: 1500, rep: 200, progress: (p) => [count(p.duelWins), TABLES.length] },
+  { id: 'duelAll', name: tx`Keine Rivalen mehr`, text: tx`Gewinne jedes Duell gegen die Rivalen der Karriere.`, credits: 1500, rep: 200, progress: (p) => [count(p.duelWins), TABLES.length] },
   { id: 'legend', name: tx`Legende`, text: tx`Gewinne die Kessel-Krone im Legendenmodus.`, credits: 3000, rep: 400, progress: (p) => [p.legendWins.crown ? 1 : 0, 1] },
 
   { id: 'tour3', name: tx`Auf Tour`, text: tx`Gewinne drei Tische am Stück auf Tour.`, credits: 300, rep: 60, progress: (p) => [p.tourBest, 3] },

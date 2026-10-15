@@ -3,7 +3,7 @@
  * and add the step that turns the previous shape into the new one, so a save
  * from any earlier version still loads.
  */
-export const CAREER_VERSION = 3
+export const CAREER_VERSION = 4
 
 type Save = Record<string, unknown>
 
@@ -24,6 +24,15 @@ const STEPS: Record<number, (save: Save) => Save> = {
       storySeen: Object.keys(wins).some(won) && !seen.includes('prologue-tarsk') ? [...seen, 'prologue-tarsk'] : seen,
     }
   },
+  // 4: act 1 brings Oshi's instalment, standing with the syndicates, jobs and travel. Whoever has
+  // already won the Kessel Crown has, in the story's terms, paid the first instalment.
+  3: (save) => ({
+    ...save,
+    debt: { paid: (Number(record(save.tableWins)?.crown) || 0) > 0 ? 6000 : 0, extra: 0 },
+    standing: {},
+    jobsDone: [],
+    location: save.hasShip ? 'lodge' : 'anchor',
+  }),
 }
 
 const record = (value: unknown): Record<string, unknown> | null =>

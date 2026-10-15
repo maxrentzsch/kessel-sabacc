@@ -4,7 +4,13 @@ import { ACHIEVEMENTS, isDone } from '../career/achievements'
 import type { Progress } from '../career/achievements'
 import { cosmetic, COSMETICS, DEFAULT_LOOK } from '../career/cosmetics'
 import type { CosmeticKind } from '../career/cosmetics'
+import { fuelCost, instalmentDue } from '../career/debt'
+import type { DebtState } from '../career/debt'
+import { jobById, jobDone } from '../career/jobs'
+import type { Job } from '../career/jobs'
 import { CAREER_VERSION, migrateCareer } from '../career/migrate'
+import { clampStanding } from '../career/syndicates'
+import type { Syndicate } from '../career/syndicates'
 import { rankOf, REP } from '../career/reputation'
 import { effectsOf } from '../career/story'
 import type { Animal, Choice, Scene } from '../career/story'
@@ -30,6 +36,15 @@ export interface GameTally {
   caught: number
   /** the player went out last, with only the winner still at the table */
   runnerUp?: boolean
+  /** shift tokens the player played */
+  tokensPlayed?: number
+  /** hands the player won with a sabacc */
+  sabaccWins?: number
+  /** chips at the start and at the end */
+  startChips?: number
+  finalChips?: number
+  /** character id of whoever won the game, `you` for the player */
+  winner?: string
 }
 
 export interface GameSummary {
@@ -43,6 +58,8 @@ export interface GameSummary {
   firstDuelWin: boolean
   /** buy-in handed back for finishing second */
   refund: number
+  /** the job taken on for this game, and whether it was done */
+  job?: { id: string; done: boolean }
 }
 
 interface CareerState extends Progress {
@@ -68,6 +85,14 @@ interface CareerState extends Progress {
   hasShip: boolean
   /** which animal came along on the ride to the landing field */
   bix: Animal | null
+  /** what has been paid towards Oshi's note */
+  debt: DebtState
+  /** how each syndicate regards the player, −2 … 3 */
+  standing: Partial<Record<Syndicate, number>>
+  /** jobs from the boards that are done */
+  jobsDone: string[]
+  /** the table the player was last at; trips from there cost fuel */
+  location: string
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -87,6 +112,17 @@ interface CareerState extends Progress {
   markStory(id: string): void
   /** A scene was played to its end, with the answer the player gave if it asked for one. */
   finishScene(scene: Scene, choice?: Choice): void
+  /** Pay credits towards Oshi's note. */
+  payDebt(amount: number): void
+  /** Do a job that asks for credits only. */
+  payJob(job: Job): boolean
+  shiftStanding(syndicate: Syndicate, delta: number): void
+  /** Fuel for the trip from where the player is to a table. */
+  tripCost(tableId: string): number
+  /** Go to a table, paying the fuel; false if the credits do not stretch. */
+  travel(tableId: string): boolean
+  /** The price of a module's next level, after any discount. */
+  modulePrice(moduleId: string): number | undefined
   buy(id: string): boolean
   equip(id: string): void
   owns(id: string): boolean
@@ -125,6 +161,10 @@ const initial = () => ({
   backupAt: 0,
   hasShip: false,
   bix: null as Animal | null,
+  debt: { paid: 0, extra: 0 } as DebtState,
+  standing: {} as Partial<Record<Syndicate, number>>,
+  jobsDone: [] as string[],
+  location: 'anchor',
   gameRep: 0,
   recent: [] as string[],
 })
@@ -197,6 +237,8 @@ export const useCareer = create<CareerState>()(
           // The stake game waits for the last table on Tarsk; out in the sector there is no table without the ship.
           if (table.id === FIELD.id) return (s.tableWins[TABLES.filter((t) => t.chapter === 'tarsk').at(-1)!.id] ?? 0) > 0
           if (table.chapter === 'kessel' && !s.hasShip) return false
+          // Oshi's table waits for her instalment.
+          if (table.id === 'crown' && instalmentDue(s.debt) > 0 && !s.tableWins.crown) return false
           const index = TABLES.indexOf(table)
           return index <= 0 || (s.tableWins[TABLES[index - 1].id] ?? 0) > 0
         },
@@ -293,6 +335,35 @@ export const useCareer = create<CareerState>()(
             bump('runnerUps')
           }
 
+          // A syndicate takes note of whoever wins at its table for the first time.
+          if (summary.firstWin && table?.syndicate) {
+            patch.standing = { ...s.standing, [table.syndicate]: clampStanding((s.standing[table.syndicate] ?? 0) + 1) }
+          }
+
+          // A job taken on for the game: done or not, it is reported.
+          const job = jobById(session.job)
+          if (job && tally && !s.jobsDone.includes(job.id)) {
+            const done = jobDone(job.goal, {
+              won,
+              tokensPlayed: tally.tokensPlayed ?? 0,
+              peeks: tally.peeks,
+              handsLost: tally.handsLost,
+              sabaccWins: tally.sabaccWins ?? 0,
+              startChips: tally.startChips ?? 0,
+              finalChips: tally.finalChips ?? 0,
+              winner: tally.winner,
+            })
+            summary.job = { id: job.id, done }
+            if (done) {
+              summary.payout += job.reward.credits
+              patch.jobsDone = [...s.jobsDone, job.id]
+              if (job.reward.standing) {
+                const base = patch.standing ?? s.standing
+                patch.standing = { ...base, [job.reward.standing]: clampStanding((base[job.reward.standing] ?? 0) + 1) }
+              }
+            }
+          }
+
           set({ ...patch, stats, credits: s.credits + summary.payout + summary.refund })
           get().gain(rep)
 
@@ -343,9 +414,50 @@ export const useCareer = create<CareerState>()(
           for (const effect of effectsOf(scene, choice)) {
             if ('flag' in effect) get().markStory(effect.flag)
             else if ('bix' in effect) set({ bix: effect.bix })
+            else if ('standing' in effect) get().shiftStanding(effect.standing, effect.delta)
             else set((s) => ({ credits: s.credits + effect.credits }))
           }
           settle()
+        },
+
+        payDebt(amount) {
+          const s = get()
+          const sum = Math.max(0, Math.min(amount, s.credits))
+          if (sum === 0) return
+          set({ credits: s.credits - sum, debt: { ...s.debt, paid: s.debt.paid + sum } })
+        },
+
+        payJob(job) {
+          const s = get()
+          if (job.goal.kind !== 'pay' || s.jobsDone.includes(job.id) || s.credits < job.goal.amount) return false
+          set({ credits: s.credits - job.goal.amount, jobsDone: [...s.jobsDone, job.id] })
+          if (job.reward.standing) get().shiftStanding(job.reward.standing, 1)
+          settle()
+          return true
+        },
+
+        shiftStanding(syndicate, delta) {
+          set((s) => ({ standing: { ...s.standing, [syndicate]: clampStanding((s.standing[syndicate] ?? 0) + delta) } }))
+        },
+
+        tripCost(tableId) {
+          const s = get()
+          return s.hasShip ? fuelCost(s.location, tableId, s.ship.engine ?? 0) : 0
+        },
+
+        travel(tableId) {
+          const cost = get().tripCost(tableId)
+          if (get().credits < cost) return false
+          set((s) => ({ credits: s.credits - cost, location: tableId }))
+          return true
+        },
+
+        modulePrice(moduleId) {
+          const s = get()
+          const module = SHIP_MODULES.find((m) => m.id === moduleId)
+          const price = module?.levels[s.ship[moduleId] ?? 0]
+          // Pim fits modules at a friend's price once he has his stake back.
+          return price === undefined ? undefined : Math.round(price * (s.jobsDone.includes('repay') ? 0.85 : 1))
         },
 
         owns(id) {
@@ -369,9 +481,8 @@ export const useCareer = create<CareerState>()(
 
         upgrade(moduleId) {
           const s = get()
-          const module = SHIP_MODULES.find((m) => m.id === moduleId)
           const level = s.ship[moduleId] ?? 0
-          const price = module?.levels[level]
+          const price = get().modulePrice(moduleId)
           if (price === undefined || s.credits < price) return false
           set({ credits: s.credits - price, ship: { ...s.ship, [moduleId]: level + 1 } })
           settle()
@@ -404,7 +515,7 @@ export const useCareer = create<CareerState>()(
           // Somebody on tour still has a pot to play for.
           if (s.credits >= min || s.tour) return 0
           const amount = bailoutAmount(s.ship, min)
-          set({ credits: amount, bailouts: s.bailouts + 1 })
+          set({ credits: amount, bailouts: s.bailouts + 1, ...(s.hasShip ? { debt: { ...s.debt, extra: s.debt.extra + amount } } : {}) })
           settle()
           return amount
         },

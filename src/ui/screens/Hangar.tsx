@@ -157,7 +157,7 @@ export function HangarScreen() {
           <div className={s.modules} hidden={!career.hasShip}>
             {SHIP_MODULES.map((module, i) => {
               const level = career.ship[module.id] ?? 0
-              const price = module.levels[level]
+              const price = career.modulePrice(module.id)
               return (
                 <motion.div key={module.id} className={s.module} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 * i }}>
                   <div className={s.moduleInfo}>

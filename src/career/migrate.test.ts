@@ -34,13 +34,14 @@ describe('saved careers', () => {
   })
 
   it('pass through unchanged when they are already current', () => {
-    const current = { ...SAVE_1_2, backupAt: 12, hasShip: false, bix: 'convor' }
+    const current = { ...SAVE_1_2, backupAt: 12, hasShip: false, bix: 'convor', debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor' }
     expect(migrateCareer(current, CAREER_VERSION)).toEqual(current)
   })
 
   it('survive storage that holds nothing usable', () => {
-    expect(migrateCareer(null, 1)).toEqual({ backupAt: 0, hasShip: false, bix: null, storySeen: [] })
-    expect(migrateCareer([1, 2], 1)).toEqual({ backupAt: 0, hasShip: false, bix: null, storySeen: [] })
+    const empty = { backupAt: 0, hasShip: false, bix: null, storySeen: [], debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor' }
+    expect(migrateCareer(null, 1)).toEqual(empty)
+    expect(migrateCareer([1, 2], 1)).toEqual(empty)
   })
 
   it('keep a player still on Tarsk on Tarsk, without the ship', () => {
@@ -57,6 +58,13 @@ describe('saved careers', () => {
       expect(migrated.hasShip).toBe(true)
       expect(migrated.bix).toBeNull()
     }
+  })
+
+  it('count the first instalment as paid for a player who has won the Kessel Crown', () => {
+    const champion = migrateCareer({ ...SAVE_1_2, tableWins: { ...SAVE_1_2.tableWins, lodge: 1, salon: 1, crown: 1 } }, 1)
+    expect(champion.debt).toEqual({ paid: 6000, extra: 0 })
+    expect(champion.location).toBe('lodge')
+    expect(migrateCareer(SAVE_1_2, 1).debt).toEqual({ paid: 0, extra: 0 })
   })
 
   it('tell a new player the new opening', () => {

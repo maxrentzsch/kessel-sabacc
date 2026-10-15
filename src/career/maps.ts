@@ -61,15 +61,21 @@ export const KESSEL_SECTOR: MapDef = {
   id: 'kessel',
   scale: 'sector',
   places: [
-    { id: 'tarsk', opens: 'tarsk', name: tx`Tarsk`, x: 72, y: 214, r: 17, kind: 'ringed', label: 'below' },
-    { id: 'lodge', x: 166, y: 132, r: 12, kind: 'moon', label: 'below' },
-    { id: 'salon', x: 290, y: 176, r: 15, kind: 'station', label: 'below' },
-    { id: 'crown', x: 270, y: 60, r: 17, kind: 'crown', label: 'above' },
+    { id: 'tarsk', opens: 'tarsk', name: tx`Tarsk`, x: 54, y: 226, r: 17, kind: 'ringed', label: 'below' },
+    { id: 'lodge', x: 108, y: 144, r: 12, kind: 'moon', label: 'above' },
+    { id: 'lump', x: 172, y: 92, r: 11, kind: 'moon', label: 'above' },
+    { id: 'mine', x: 196, y: 206, r: 16, kind: 'planet', label: 'below' },
+    { id: 'salon', x: 306, y: 200, r: 15, kind: 'station', label: 'below' },
+    { id: 'hangar', x: 302, y: 112, r: 13, kind: 'station', label: 'below' },
+    { id: 'crown', x: 250, y: 42, r: 17, kind: 'crown', label: 'above' },
   ],
   routes: [
     { from: 'tarsk', to: 'lodge' },
-    { from: 'lodge', to: 'salon' },
-    { from: 'salon', to: 'crown' },
+    { from: 'lodge', to: 'lump' },
+    { from: 'lump', to: 'mine' },
+    { from: 'mine', to: 'salon' },
+    { from: 'salon', to: 'hangar' },
+    { from: 'hangar', to: 'crown' },
   ],
 }
 

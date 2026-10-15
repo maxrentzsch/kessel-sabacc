@@ -21,7 +21,7 @@ export interface Session {
   variant?: 'kessel' | 'spike'
   mode: 'career' | 'free'
   /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables; the stake game wins a ship */
-  kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake'
+  kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake' | 'job'
   /** how many times the normal stake the player put up */
   stake?: number
   /** the second, merciless run through the career */
@@ -36,6 +36,8 @@ export interface Session {
   playerChips?: number
   /** the scripted practice hand, see career/tutorial */
   tutorial?: boolean
+  /** a job from the board taken on for this game, see career/jobs */
+  job?: string
   table: TableDef | null
   title: string
   /** which room the table stands in, see career/venues */
@@ -306,13 +308,17 @@ export const useGame = create<GameStore>((set, get) => {
     for (const e of events) {
       if (e.type === 'handStart') drewThisHand = false
       if (e.type === 'drew' && e.playerId === HUMAN) drewThisHand = true
-      if (e.type === 'tokenPlayed' && e.playerId === HUMAN) career.noteToken(e.token)
+      if (e.type === 'tokenPlayed' && e.playerId === HUMAN) {
+        career.noteToken(e.token)
+        tally.tokensPlayed = (tally.tokensPlayed ?? 0) + 1
+      }
       if (e.type === 'settled') {
         const me = e.result.ranking.find((r) => r.playerId === HUMAN)
         if (!me) continue
         const hand = game.players[HUMAN].hand
         const sabacc = me.score.category !== 'none'
         if (!me.winner) tally.handsLost++
+        if (me.winner && sabacc) tally.sabaccWins = (tally.sabaccWins ?? 0) + 1
         career.bumpStats({
           hands: 1,
           handsWon: me.winner ? 1 : 0,
@@ -335,6 +341,8 @@ export const useGame = create<GameStore>((set, get) => {
     const won = state.phase === 'gameOver' && state.winner === HUMAN
     if (!won && !human.eliminated) return
     tally.runnerUp = !won && state.players.filter((p) => !p.eliminated).length === 1
+    tally.finalChips = human.chips
+    tally.winner = state.winner === null || state.winner === undefined ? undefined : state.winner === HUMAN ? 'you' : session.seats[state.winner]?.id
     set({ outcome: won ? 'won' : 'lost', summary: useCareer.getState().finishGame(session, won, tally) })
   }
 
@@ -418,6 +426,9 @@ export const useGame = create<GameStore>((set, get) => {
       useCareer.getState().bumpStats({ peeks: 1 })
       if (heat >= 100) {
         tally.caught++
+        // Getting caught at a syndicate's table costs standing with it, once a game.
+        const syndicate = session.table?.syndicate
+        if (syndicate && tally.caught === 1) useCareer.getState().shiftStanding(syndicate, -1)
         set({ suspicion: 45, peekUsed: true, caught: caught + 1 })
         useCareer.getState().bumpStats({ caught: 1 })
         sfx.blocked()
@@ -452,7 +463,7 @@ export const useGame = create<GameStore>((set, get) => {
     start(session, humanTokens) {
       const gen = ++generation
       aiRng = new Rng(session.seed !== undefined ? session.seed ^ 0x5bd1e995 : randomSeed())
-      tally = { handsLost: 0, minChips: session.playerChips ?? session.startingChips, peeks: 0, caught: 0 }
+      tally = { handsLost: 0, minChips: session.playerChips ?? session.startingChips, peeks: 0, caught: 0, startChips: session.playerChips ?? session.startingChips }
       useCareer.getState().beginGame(session)
       const config: GameConfig = {
         seed: session.seed ?? randomSeed(),

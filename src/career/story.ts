@@ -1,3 +1,4 @@
+import type { Syndicate } from './syndicates'
 import { FIELD, TABLES } from './tables'
 import type { TableDef } from './tables'
 import { tx } from '../i18n'
@@ -15,12 +16,15 @@ export interface Line {
 
 export const YOU = 'you'
 
+/** Bix speaks as whichever animal came along. */
+export const BIX = 'bix'
+
 /** The animals of Tarsk; one of them comes along as Bix. */
 export const ANIMALS = ['vulptex', 'lothcat', 'convor'] as const
 export type Animal = (typeof ANIMALS)[number]
 
 /** Something the story changes: a fact to remember, credits handed over, or which animal comes along. */
-export type Effect = { flag: string } | { credits: number } | { bix: Animal }
+export type Effect = { flag: string } | { credits: number } | { bix: Animal } | { standing: Syndicate; delta: number }
 
 /** An answer the player can give at the end of a scene. */
 export interface Choice {
@@ -64,6 +68,18 @@ const ARRIVAL: Record<string, { place: string; reply: Line }> = {
   lodge: {
     place: tx`Schmugglermond Varr. Das Hinterzimmer der „Lange Nacht“. Die Tür hat innen keinen Griff.`,
     reply: { who: 'ilsa', mood: 'smug', text: tx`Er meint das als Kompliment.` },
+  },
+  lump: {
+    place: tx`Der Brocken. Ein Asteroid, ausgehöhlt bis auf die Haut. Die Luft riecht nach Ozon und Wetteinsätzen.`,
+    reply: { who: 'lio', mood: 'happy', text: tx`Lass dich nicht von Sesk einschüchtern. Er verliert nur ungern im eigenen Fels.` },
+  },
+  mine: {
+    place: tx`Schacht 4, tief unter Kessel. Gewürzstaub in jeder Ritze, und die Lampen flackern im Takt der Pumpen.`,
+    reply: { who: 'tok', text: tx`Ich spiel um meine Lohnmarken. Du um was?` },
+  },
+  hangar: {
+    place: tx`Oshis Hangar. Zwischen gepfändeten Schiffen steht ein Tisch, und darüber hängt eine einzelne Lampe.`,
+    reply: { who: 'unit7', text: tx`Ihr Schuldstand wurde vermerkt. Viel Glück.` },
   },
   salon: {
     place: tx`Orbitalstation Vael. Samt, Messing, und jeder Schritt wird protokolliert.`,
@@ -125,12 +141,32 @@ const VICTORY: Record<string, Line[]> = {
     { who: null, text: tx`Mitternacht. Landefeld. Ein Frachter gegen 2.000 geliehene Credits.` },
   ],
   lodge: [
-    { who: 'tevin', mood: 'smug', text: tx`Du spielst fast so unsauber wie ich. Das Syndikat mag so was.` },
-    { who: 'ilsa', text: tx`Vael, oberer Ring. Sag, K-7 erwartet dich. Tut er nicht – aber es öffnet Türen.` },
+    { who: 'tevin', mood: 'smug', text: tx`Du spielst fast so unsauber wie ich. Die Glasfinger mögen so was.` },
+    { who: 'ilsa', text: tx`Im Brocken findest du größere Tische. Und an jedem Brett hängen Aufträge – wenn du Geld brauchst.` },
+  ],
+  lump: [
+    { who: 'sesk', mood: 'angry', text: tx`Gewinner sind schlecht fürs Geschäft. Aber gut fürs Gerede.` },
+    { who: 'lio', mood: 'happy', text: tx`In der Gewürzmine auf Kessel spielen sie um Lohn. Hart, aber ehrlich. Meistens.` },
+  ],
+  mine: [
+    { who: 'varra', mood: 'thinking', text: tx`Du hältst durch. Das gefällt mir.` },
+    { who: 'varra', text: tx`Hör zu: Auf Vael sitzt das Rote Siegel. Die zahlen gut – und sie merken sich jeden, der gewinnt.` },
   ],
   salon: [
     { who: 'unit7', mood: 'worried', text: tx`Ergebnis archiviert. Wahrscheinlichkeit Ihres Erfolgs an der Kessel-Krone: wird neu berechnet.` },
-    { who: 'oshi', mood: 'smug', text: tx`Du hast es also wirklich bis hierher geschafft. Komm an meinen Tisch. Dann reden wir über deine Sperre.` },
+    { who: 'oshi', mood: 'smug', text: tx`Du hast es also wirklich bis hierher geschafft. Komm in meinen Hangar. Ich will sehen, wie du dort spielst.` },
+  ],
+  hangar: [
+    { who: 'grex', mood: 'angry', text: tx`Das war Glück. Nichts weiter.` },
+    { who: null, text: tx`Während Grex die Chips einsammelt, verschwindet Bix zwischen den Kisten der gepfändeten Schiffe. Dann kommt es zurück, etwas Glänzendes im Maul.` },
+    { who: 'bix', text: tx`…!` },
+    { who: null, text: tx`Ein Siegel mit Oshis Wappen. Darunter ein Pfändungsbescheid – auf Mira Sol. Datiert eine Woche vor der Partie, in der sie angeblich alles verlor.` },
+    { who: YOU, text: tx`Oshi hat das Schiff gepfändet, bevor Mira es verspielt hat?` },
+    { who: null, text: tx`Über dem Tisch flackert Kessks Gesicht als Holo auf.` },
+    { who: 'kessk', mood: 'thinking', text: tx`Dann war die Partie gezinkt. Ich hab's geahnt. Oshi wollte nie das Geld. Sie wollte die Sandläufer.` },
+    { who: YOU, text: tx`Warum ausgerechnet diesen Schrotthaufen?` },
+    { who: 'kessk', text: tx`Vor dreißig Jahren verschwand eine Casino-Station samt Tresor: die Leere Krone. Ihre Koordinaten stecken angeblich in einem alten Navcomputer. Rate mal, in welchem.` },
+    { who: 'mira', mood: 'worried', text: tx`… Ich hab's nicht gewusst. Ich schwöre es.` },
   ],
   crown: [
     { who: null, text: tx`Die letzte Karte fällt. Im Saal ist es still.` },
@@ -139,8 +175,22 @@ const VICTORY: Record<string, Line[]> = {
     { who: YOU, text: tx`Danke für das Spiel.` },
     { who: 'oshi', mood: 'smug', text: tx`Bedank dich nicht. Komm wieder. Als Legende – oder gar nicht.` },
     { who: null, text: tx`Die Siegel fallen vom Hyperantrieb. Zum ersten Mal ist der Weg aus dem Sektor frei.` },
+    { who: 'oshi', mood: 'thinking', text: tx`Ein Vorschlag, ehe du gehst: Fliege für mich. Kurierdienste, keine Fragen. Dafür werden deine Raten kleiner.` },
   ],
 }
+
+/** After the Kessel Crown: Oshi's offer, accepted or refused. */
+const OSHI_OFFER: Choice[] = [
+  { text: tx`Abgemacht. Ich fliege für dich.`, effects: [{ flag: 'oshi-courier' }, { standing: 'oshi', delta: 1 }] },
+  { text: tx`Nein. Ich zahle meine Schuld – und fliege, für wen ich will.`, effects: [{ flag: 'oshi-refused' }, { standing: 'oshi', delta: -1 }] },
+]
+
+/** Pim and Kessk have their stake back. */
+const REPAID: Line[] = [
+  { who: 'pim', mood: 'happy', text: tx`Zweitausend, auf den Credit genau. Weißt du, wie selten das hier ist?` },
+  { who: 'pim', text: tx`Ab jetzt bau ich dir alles zum Freundschaftspreis ein. Komm einfach in die Werft.` },
+  { who: 'kessk', mood: 'thinking', text: tx`Und ich hab nie daran gezweifelt. Fast nie.` },
+]
 
 /** After the first win at a table, back on the map. */
 export function victoryScene(table: TableDef): Line[] {
@@ -221,7 +271,7 @@ const STAKE_WON = (animal: Animal): Line[] => [
 const JUMP_LOCK: Line[] = [
   { who: 'oshi', mood: 'smug', text: tx`Nicht so schnell.` },
   { who: 'oshi', text: tx`Meine Mechaniker haben deinen Hyperantrieb versiegelt. Er springt nur im Kessel-Sektor.` },
-  { who: 'oshi', mood: 'smug', text: tx`Die Siegel fallen, wenn du an meinem Tisch bestehst: der Kessel-Krone. Viel Glück an den großen Tischen.` },
+  { who: 'oshi', mood: 'smug', text: tx`Die Siegel fallen, wenn du an meinem Tisch bestehst: der Kessel-Krone. Und setz dich erst hin, wenn die erste Rate bezahlt ist – sechstausend.` },
   { who: null, text: tx`Die Sternkarte leuchtet auf. Drei Ziele. Ein Schiff. Eine Schuld.` },
 ]
 
@@ -240,6 +290,7 @@ const TARSK_SCENES: Scene[] = [
   ...ANIMALS.map((animal): Scene => ({ id: `win-${FIELD.id}-${animal}`, title: FIELD.name, venue: 'field', lines: STAKE_WON(animal), cinematic: 'launch' })),
   { id: 'flashback', title: tx`Rückblick`, venue: 'field', lines: FLASHBACK, choices: RIDE_CHOICES((animal) => `win-${FIELD.id}-${animal}`) },
   { id: 'jump-lock', title: tx`Die Sperre`, venue: 'crown', lines: JUMP_LOCK },
+  { id: 'repaid', title: tx`Zum Rostigen Anker`, venue: 'anchor', lines: REPAID },
 ]
 
 /** The table the player chose to practise at first: the anchor asks before the first game. */
@@ -263,7 +314,7 @@ export const SCENES: Record<string, Scene> = Object.fromEntries(
         lines: arrivalScene(table),
         ...(table.id === 'anchor' ? { choices: PRACTICE_CHOICES } : {}),
       },
-      { id: `win-${table.id}`, title: table.name, venue: table.id, lines: victoryScene(table) },
+      { id: `win-${table.id}`, title: table.name, venue: table.id, lines: victoryScene(table), ...(table.id === 'crown' ? { choices: OSHI_OFFER } : {}) },
     ]),
   ].map((scene) => [scene.id, scene]),
 )
@@ -274,6 +325,7 @@ export const TRIGGERS: string[] = [
   'ride',
   'flashback',
   'jump-lock',
+  'repaid',
   ...ANIMALS.map((animal) => `win-${FIELD.id}-${animal}`),
   ...TABLES.flatMap((table) => [`intro-${table.id}`, `win-${table.id}`]),
 ]

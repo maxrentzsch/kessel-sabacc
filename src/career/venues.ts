@@ -147,6 +147,60 @@ export const VENUES: Record<string, Venue> = {
       rim: ['#e8e6e0', '#c7c4bb'],
     }),
   },
+  // spice dust and work lamps, deep underground
+  mine: {
+    place: tx`Schacht 4, Kessel`,
+    sound: { crowd: 0.9, hum: 1.8 },
+    colors: paint({
+      wall: ['#14100c', '#3a2a1c', '#5a3e26'],
+      niche: ['#2a1e14', '#7a5430'],
+      trim: '#0c0906',
+      pane: ['#fff1c8', '#f2a24a', '#9a4e1a'],
+      door: ['#ffd99a', '#c96f22'],
+      lamp: '#ffd38a',
+      floor: ['#2a1c10', '#080503'],
+      ceiling: '#0a0705',
+      haze: '230 150 80',
+      felt: ['#7a6a5a', '#62554a', '#4a3f36'],
+      rim: ['#d6c8b0', '#b5a68c'],
+    }),
+  },
+  // a casino hollowed out of rock, violet lamps on bare stone
+  lump: {
+    place: tx`Der Brocken, Ring 3`,
+    sound: { crowd: 1.3, hum: 0.9 },
+    colors: paint({
+      wall: ['#120c18', '#2e2238', '#4a3a56'],
+      niche: ['#20182a', '#6a4a7a'],
+      trim: '#0a070e',
+      pane: ['#f6e0ff', '#c58ae0', '#6a3a8a'],
+      door: ['#ecd0ff', '#a463c8'],
+      lamp: '#f0d8ff',
+      floor: ['#241a2c', '#07050a'],
+      ceiling: '#08060b',
+      haze: '200 160 230',
+      felt: ['#5a7a8a', '#476270', '#344a56'],
+      rim: ['#e2dce6', '#c2b9c8'],
+    }),
+  },
+  // a hangar of seized ships: steel, warning lights, oil
+  hangar: {
+    place: tx`Dockring von Kessel`,
+    sound: { crowd: 0.4, hum: 2 },
+    colors: paint({
+      wall: ['#0e1114', '#262c32', '#3e464e'],
+      niche: ['#181d22', '#55606a'],
+      trim: '#07090b',
+      pane: ['#fff0e0', '#ff8a5a', '#a8341e'],
+      door: ['#ffd2b8', '#d8562c'],
+      lamp: '#ffe0c8',
+      floor: ['#1c2024', '#050607'],
+      ceiling: '#060708',
+      haze: '255 150 120',
+      felt: ['#6a6e72', '#55595d', '#404448'],
+      rim: ['#d8d8d4', '#b6b6b0'],
+    }),
+  },
   // the landing field of Tarsk at midnight: sand, floodlights, a storm coming
   field: {
     place: tx`Landefeld von Tarsk`,

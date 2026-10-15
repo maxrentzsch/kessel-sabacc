@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CHARACTERS } from '../ai/personalities'
-import { ANIMALS, SCENES, TRIGGERS, YOU } from './story'
+import { ANIMALS, BIX, SCENES, TRIGGERS, YOU } from './story'
 import type { Scene } from './story'
 import { VENUES } from './venues'
 
@@ -42,7 +42,7 @@ describe('the story', () => {
       expect(scene.lines.length, scene.id).toBeGreaterThan(0)
       for (const line of scene.lines) {
         expect(line.text.trim(), scene.id).not.toBe('')
-        if (line.who !== null && line.who !== YOU && !(ANIMALS as readonly string[]).includes(line.who)) expect(CHARACTERS[line.who], `${scene.id}: ${line.who}`).toBeDefined()
+        if (line.who !== null && line.who !== YOU && line.who !== BIX && !(ANIMALS as readonly string[]).includes(line.who)) expect(CHARACTERS[line.who], `${scene.id}: ${line.who}`).toBeDefined()
       }
     }
   })
