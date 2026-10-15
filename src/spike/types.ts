@@ -34,6 +34,15 @@ export interface SpikeRules {
   handLimit: number
   /** the ante goes up by itself every so many hands; 0 = never */
   anteEvery: number
+  /**
+   * The learning tables leave parts of the game out (see ROADMAP, learning a
+   * new variant). Without betting the card phase is followed straight by the
+   * dice; without dice by the next round.
+   */
+  betting?: boolean
+  dice?: boolean
+  /** one pot and no named hands: whoever ends nearest to zero takes it all */
+  simple?: boolean
 }
 
 export type SpikePhase = 'card' | 'bet' | 'dice' | 'showdown' | 'handEnd' | 'gameOver'
@@ -104,6 +113,8 @@ export interface SpikeState {
   result: SpikeResult | null
   handNumber: number
   winner: number | null
+  /** cards swapped out for one from a sleeve; they go back into the deck with the next deal */
+  pocket?: SpikeCard[]
   rng: number
 }
 
@@ -122,10 +133,14 @@ export type SpikeAction =
   | { type: 'roll' }
   | { type: 'settle' }
   | { type: 'nextHand' }
+  /** cheating, decided outside the rules: a sylop from the sleeve for a card in hand */
+  | { type: 'sleeve'; give: string }
+  /** the current player was caught cheating and pays a fine into the sabacc pot */
+  | { type: 'caught'; fine: number }
 
 export type SpikeEvent =
   | { type: 'handStart'; hand: number; dealer: number; ante: number }
-  | { type: 'chips'; playerId: number; delta: number; reason: 'ante' | 'bet' | 'pot' | 'sabaccPot' }
+  | { type: 'chips'; playerId: number; delta: number; reason: 'ante' | 'bet' | 'pot' | 'sabaccPot' | 'fine' }
   | { type: 'roundStart'; round: number }
   | { type: 'phaseStart'; phase: SpikePhase }
   | { type: 'turnStart'; playerId: number }
@@ -142,10 +157,13 @@ export type SpikeEvent =
   | { type: 'settled'; result: SpikeResult }
   | { type: 'eliminated'; playerId: number }
   | { type: 'gameOver'; winner: number }
+  | { type: 'sleeved'; playerId: number }
 
 export interface SpikeSetup {
   name: string
   isHuman: boolean
+  /** starting chips when they differ from the table's */
+  chips?: number
 }
 
 export interface SpikeConfig {

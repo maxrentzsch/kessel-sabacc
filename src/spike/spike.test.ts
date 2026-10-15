@@ -205,3 +205,72 @@ describe('a game', () => {
     expect(state.players.map((p) => p.chips)).toEqual([16, 16, 16])
   })
 })
+
+describe('the learning tables', () => {
+  const players = [0, 1, 2].map((i) => ({ name: `P${i}`, isHuman: false }))
+
+  it('play cards only: no betting, no dice, one pot', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const rng = new Rng(seed)
+      let { state } = createSpikeGame({ seed, startingChips: 10, players, rules: { betting: false, dice: false, simple: true } })
+      expect(state.sabaccPot).toBe(0)
+      for (let step = 0; state.phase !== 'gameOver'; step++) {
+        expect(step).toBeLessThan(20000)
+        expect(['bet', 'dice']).not.toContain(state.phase)
+        expect(state.sabaccPot).toBe(0)
+        expect(state.players.reduce((sum, p) => sum + p.chips, 0) + state.handPot).toBe(30)
+        state = applySpikeAction(state, rng.pick(spikeActions(state))).state
+      }
+    }
+  })
+
+  it('add betting without the dice', () => {
+    let { state } = createSpikeGame({ seed: 4, startingChips: 10, players, rules: { dice: false, simple: true } })
+    for (let i = 0; i < 3; i++) state = applySpikeAction(state, { type: 'stand' }).state
+    expect(state.phase).toBe('bet')
+    for (let i = 0; i < 3; i++) state = applySpikeAction(state, { type: 'check' }).state
+    expect(state.phase).toBe('card')
+    expect(state.round).toBe(2)
+  })
+
+  it('know no named hands: only the distance from zero counts', () => {
+    expect(scoreSpikeHand(hand(0, 0), false).kind).toBe('zero')
+    // two sylops are nothing special: the higher positive card decides between plain zeros
+    expect(compareSpike(scoreSpikeHand(hand(5, -5), false), scoreSpikeHand(hand(0, 0), false))).toBeLessThan(0)
+    expect(compareSpike(scoreSpikeHand(hand(1, 2, -3), false), scoreSpikeHand(hand(0, 0), false))).toBeLessThan(0)
+    expect(compareSpike(scoreSpikeHand(hand(0, 0), false), scoreSpikeHand(hand(1, 2), false))).toBeLessThan(0)
+  })
+})
+
+describe('cheating at the spike table', () => {
+  const players = [0, 1].map((i) => ({ name: `P${i}`, isHuman: i === 0 }))
+
+  it('swaps a card for a sylop from the sleeve, and the card comes back with the next deal', () => {
+    let { state } = createSpikeGame({ seed: 11, startingChips: 20, players })
+    const p = state.current
+    const given = state.players[p].hand[0]
+    state = applySpikeAction(state, { type: 'sleeve', give: given.id }).state
+    expect(state.current).toBe(p)
+    expect(state.players[p].hand.map((c) => c.value)).toContain(0)
+    expect(state.players[p].hand.some((c) => c.id === given.id)).toBe(false)
+    const rng = new Rng(3)
+    while (state.phase !== 'handEnd' && state.phase !== 'gameOver') state = applySpikeAction(state, rng.pick(spikeActions(state))).state
+    if (state.phase === 'gameOver') return
+    state = applySpikeAction(state, { type: 'nextHand' }).state
+    const cards = [...state.deck, ...state.discard, ...state.players.flatMap((x) => x.hand)].map((c) => c.id)
+    expect(cards).toHaveLength(62)
+    expect(new Set(cards).size).toBe(62)
+    expect(cards).toContain(given.id)
+    expect(cards.some((id) => id.startsWith('sleeve'))).toBe(false)
+  })
+
+  it('puts a fine into the sabacc pot, never the last chip', () => {
+    let { state } = createSpikeGame({ seed: 12, startingChips: 4, players })
+    const p = state.current
+    const pot = state.sabaccPot
+    state = applySpikeAction(state, { type: 'caught', fine: 3 }).state
+    // 4 chips, 2 anted, so 1 fine at most
+    expect(state.players[p].chips).toBe(1)
+    expect(state.sabaccPot).toBe(pot + 1)
+  })
+})

@@ -51,7 +51,9 @@ export function anteOf(state: SpikeState, hand: number): number {
 function startHand(ctx: Ctx): void {
   const { s } = ctx
   s.handNumber++
-  const all = [...s.deck, ...s.discard, ...s.players.flatMap((p) => p.hand)]
+  // A card from a sleeve leaves the table again, and the card it replaced comes back.
+  const all = [...s.deck, ...s.discard, ...s.players.flatMap((p) => p.hand), ...(s.pocket ?? [])].filter((c) => !c.id.startsWith('sleeve'))
+  s.pocket = []
   s.deck = s.handNumber === 1 ? shuffledSpikeDeck(ctx.rng) : ctx.rng.shuffle(all)
   s.discard = []
   s.dice = null
@@ -66,7 +68,7 @@ function startHand(ctx: Ctx): void {
     if (p.eliminated) continue
     // Whoever is short antes what they have, the hand pot first.
     s.handPot += pay(ctx, p, ante, 'ante')
-    s.sabaccPot += pay(ctx, p, ante, 'ante')
+    if (!s.rules.simple) s.sabaccPot += pay(ctx, p, ante, 'ante')
   }
   for (let i = 0; i < 2; i++) for (const id of seatsAfter(s, s.dealer)) s.players[id].hand.push(drawCard(ctx))
   s.discard.push(drawCard(ctx))
@@ -97,10 +99,11 @@ function nextTurn(ctx: Ctx): void {
 
 function endPhase(ctx: Ctx): void {
   const { s } = ctx
-  if (s.phase === 'card') return startPhase(ctx, 'bet')
+  if (s.phase === 'card' && s.rules.betting !== false) return startPhase(ctx, 'bet')
   // The bets are in the pot now.
   for (const p of s.players) p.bet = 0
   s.toCall = 0
+  if (s.rules.dice === false) return nextRound(ctx)
   s.phase = 'dice'
   s.current = s.dealer
   ctx.events.push({ type: 'phaseStart', phase: 'dice' })
@@ -208,6 +211,11 @@ function roll(ctx: Ctx): void {
     for (const [p] of sizes) s.discard.push(...p.hand.splice(0))
     for (const [p, size] of sizes) for (let i = 0; i < size; i++) p.hand.push(drawCard(ctx))
   }
+  nextRound(ctx)
+}
+
+function nextRound(ctx: Ctx): void {
+  const { s } = ctx
   if (s.round >= 3) return showdown(ctx)
   s.round++
   startPhase(ctx, 'card')
@@ -218,7 +226,7 @@ function showdown(ctx: Ctx): void {
   const { s } = ctx
   const live = activePlayers(s)
   const placing: SpikePlacing[] = live
-    .map((p) => ({ playerId: p.id, score: scoreSpikeHand(p.hand), winner: false, drawn: [] as SpikeCard[] }))
+    .map((p) => ({ playerId: p.id, score: scoreSpikeHand(p.hand, !s.rules.simple), winner: false, drawn: [] as SpikeCard[] }))
     .sort((a, b) => compareSpike(a.score, b.score))
   const uncontested = live.length === 1
   let tied = placing.filter((x) => compareSpike(x.score, placing[0].score) === 0)
@@ -233,7 +241,7 @@ function showdown(ctx: Ctx): void {
     tied = tied.filter((x) => rank(x) === best)
   }
   for (const x of tied) x.winner = true
-  const sabacc = !uncontested && isSabacc(placing[0].score)
+  const sabacc = !uncontested && !s.rules.simple && isSabacc(placing[0].score)
   s.result = { placing, winners: tied.map((x) => x.playerId), handPot: s.handPot, sabaccPot: sabacc ? s.sabaccPot : 0, uncontested }
   s.phase = 'showdown'
   s.pending = []
@@ -288,7 +296,7 @@ export function createSpikeGame(config: SpikeConfig): SpikeStep {
     id,
     name: setup.name,
     isHuman: setup.isHuman,
-    chips: config.startingChips,
+    chips: setup.chips ?? config.startingChips,
     hand: [],
     folded: false,
     eliminated: false,
@@ -312,6 +320,7 @@ export function createSpikeGame(config: SpikeConfig): SpikeStep {
     result: null,
     handNumber: 0,
     winner: null,
+    pocket: [],
     rng: 0,
   }
   const ctx: Ctx = { s, rng, events: [] }
@@ -324,6 +333,27 @@ export function applySpikeAction(state: SpikeState, action: SpikeAction): SpikeS
   const s = structuredClone(state)
   const ctx: Ctx = { s, rng: new Rng(s.rng), events: [] }
   const p = s.players[s.current]
+  if (action.type === 'sleeve' || action.type === 'caught') {
+    if (s.phase !== 'card' || !inHand(p)) fail('only in a turn of the card phase')
+    if (action.type === 'sleeve') {
+      const i = p.hand.findIndex((c) => c.id === action.give)
+      if (i < 0) fail('card is not in hand')
+      ;(s.pocket ??= []).push(p.hand[i])
+      p.hand[i] = { id: `sleeve-${s.handNumber}-${p.id}`, suit: null, value: 0 }
+      ctx.events.push({ type: 'sleeved', playerId: p.id })
+    } else {
+      // Never the last chip: being thrown out is for the cards to decide.
+      const fine = Math.min(action.fine, Math.max(0, p.chips - 1))
+      if (fine > 0) {
+        p.chips -= fine
+        if (s.rules.simple) s.handPot += fine
+        else s.sabaccPot += fine
+        ctx.events.push({ type: 'chips', playerId: p.id, delta: -fine, reason: 'fine' })
+      }
+    }
+    s.rng = ctx.rng.state
+    return { state: s, events: ctx.events }
+  }
   switch (s.phase) {
     case 'card':
       if (!inHand(p)) fail('not in the hand')

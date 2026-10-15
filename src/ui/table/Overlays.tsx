@@ -330,8 +330,10 @@ export function RevealCallout() {
 // ── Cheating ─────────────────────────────────────────────────────────────────
 
 /** How closely the table is watching, as a small meter. */
-export function Suspicion({ compact }: { compact?: boolean }) {
-  const suspicion = useGame((g) => g.suspicion)
+export function Suspicion({ compact, value }: { compact?: boolean; value?: number }) {
+  const kessel = useGame((g) => g.suspicion)
+  // the Spike table passes its own
+  const suspicion = value ?? kessel
   if (compact && suspicion < 1) return null
   const level = suspicion >= 70 ? s.heatHigh : suspicion >= 40 ? s.heatMid : undefined
   return (
@@ -461,7 +463,7 @@ const STEADY_ZONE = 0.2
  * lets go while it is in the calm middle. A clean swap draws half the
  * suspicion, a clumsy one more; waiting too long counts as clumsy.
  */
-function SteadyHand({ onDone }: { onDone(steadiness: number): void }) {
+export function SteadyHand({ onDone }: { onDone(steadiness: number): void }) {
   const marker = useRef<HTMLElement>(null)
   const pos = useRef(0)
   const done = useRef(false)
@@ -667,22 +669,29 @@ export function Handoff() {
   const game = useGame((g) => g.game)!
   const takeOver = useGame((g) => g.takeOver)
   return (
+    <Curtain
+      name={handoff === null ? null : game.players[handoff].name}
+      onReady={() => {
+        // Whatever the last person held lands face down at their seat, without turning over in view.
+        const others = game.players.filter((p) => p.id !== handoff)
+        coverCards(game.handNumber, others.flatMap((p) => (p.hand ? [p.hand.sand.id, p.hand.blood.id] : [])))
+        takeOver()
+      }}
+    />
+  )
+}
+
+/** The cover itself, for either variant: shown while `name` is set. */
+export function Curtain({ name, onReady }: { name: string | null; onReady(): void }) {
+  return (
     <AnimatePresence>
-      {handoff !== null && (
+      {name !== null && (
         <motion.div className={s.handoff} initial={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}>
           <span className={s.handoffKicker}>{tx`Gerät weitergeben an`}</span>
           <Portrait character={null} size={88} frame />
-          <h2 className={cx(s.handoffName, 'display')}>{game.players[handoff].name}</h2>
+          <h2 className={cx(s.handoffName, 'display')}>{name}</h2>
           <p className={s.handoffText}>{tx`Die anderen schauen weg. Deine Karten erscheinen erst, wenn du tippst.`}</p>
-          <button
-            className={cx(common.btn, common.btnPrimary)}
-            onClick={() => {
-              // Whatever the last person held lands face down at their seat, without turning over in view.
-              const others = game.players.filter((p) => p.id !== handoff)
-              coverCards(game.handNumber, others.flatMap((p) => (p.hand ? [p.hand.sand.id, p.hand.blood.id] : [])))
-              takeOver()
-            }}
-          >
+          <button className={cx(common.btn, common.btnPrimary)} onClick={onReady}>
             {tx`Ich bin bereit`}
           </button>
         </motion.div>

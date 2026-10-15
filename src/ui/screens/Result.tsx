@@ -8,6 +8,7 @@ import { tourPot } from '../../career/tour'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
+import { useSpike } from '../../store/spike'
 import { useNav } from '../../store/nav'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
@@ -40,11 +41,11 @@ function CountUp({ to }: { to: number }) {
 
 export function ResultScreen() {
   const go = useNav((n) => n.go)
-  const session = useGame((g) => g.session)
-  const outcome = useGame((g) => g.outcome)
-  const summary = useGame((g) => g.summary)
-  const game = useGame((g) => g.game)
-  const clear = useGame((g) => g.clear)
+  const kessel = useGame()
+  const spike = useSpike()
+  // whichever table has just finished a game for the career
+  const from = spike.outcome && spike.summary ? spike : kessel
+  const { session, outcome, summary, game, clear } = from
   const credits = useCareer((c) => c.credits)
   const gameRep = useCareer((c) => c.gameRep)
   const recent = useCareer((c) => c.recent)

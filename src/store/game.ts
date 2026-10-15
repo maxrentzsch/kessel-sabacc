@@ -11,6 +11,7 @@ import { TABLES } from '../career/tables'
 import { TUTORIAL_OPPONENT, TUTORIAL_STEPS, tutorialGame, tutorialScript } from '../career/tutorial'
 import { applyAction, createGame, randomSeed, Rng, STANDARD_RULES, SUITS } from '../engine'
 import type { Action, GameConfig, GameEvent, GameRecord, GameState, Player, Rules, TokenId } from '../engine'
+import type { SpikePlayer, SpikeRules } from '../spike'
 import { useCareer } from './career'
 import { useToasts } from './toasts'
 import type { GameSummary, GameTally } from './career'
@@ -45,6 +46,8 @@ export interface Session {
   title: string
   /** which room the table stands in, see career/venues */
   venue?: string
+  /** Corellian Spike: what the table changes about the rules, e.g. at the learning tables */
+  spikeRules?: Partial<SpikeRules>
   /** one entry per seat: a character for the AI, `null` for a person at this device */
   seats: (Character | null)[]
   /**
@@ -61,12 +64,12 @@ export function isHotseat(session: Session | null | undefined): boolean {
 }
 
 /** Seat `id` is the one person at the table, so the texts address them as "you". */
-export function isYou(game: GameState, id: number): boolean {
+export function isYou(game: { players: { isHuman: boolean }[] }, id: number): boolean {
   return game.players[id].isHuman && game.players.filter((p) => p.isHuman).length === 1
 }
 
 /** Everybody but the viewer, clockwise from the viewer's left: the order they sit along the far rim. */
-export function seatsAround(game: GameState, viewer: number): Player[] {
+export function seatsAround<P extends Player | SpikePlayer>(game: { players: P[] }, viewer: number): P[] {
   const n = game.players.length
   return Array.from({ length: n - 1 }, (_, i) => game.players[(viewer + 1 + i) % n])
 }
@@ -192,7 +195,7 @@ interface GameStore {
 
 /** Advice is free where nothing is at stake; a game for credits allows a few looks at it. */
 export const TIPS_PER_GAME = 3
-const tipsFor = (session: Session) => (session.mode === 'free' ? Infinity : TIPS_PER_GAME)
+export const tipsFor = (session: Session) => (session.mode === 'free' ? Infinity : TIPS_PER_GAME)
 
 /**
  * Who sees the table first: the player, or in a game passed round the person
@@ -209,13 +212,13 @@ function watching(watch: number[], rest: Partial<GameStore> = {}): Partial<GameS
 }
 
 /** Better tables keep a closer eye on their guests. */
-function wariness(session: Session): number {
+export function wariness(session: Session): number {
   const rank = session.table ? TABLES.indexOf(session.table) : 2
   return 1 + Math.max(0, rank) * 0.1
 }
 
 /** Bix covers for a peek gone wrong once a game; the vulptex, a born thief, twice. Not before it has come along. */
-function bixCoverFor(session: Session): number {
+export function bixCoverFor(session: Session): number {
   const { hasShip, bix } = useCareer.getState()
   if (!hasShip || !bix || session.tutorial) return 0
   return bix === 'vulptex' ? 2 : 1

@@ -7,6 +7,7 @@ import { TOKEN_TEXT } from '../../i18n/texts'
 import { unlockAudio } from '../../audio/sfx'
 import { useCareer } from '../../store/career'
 import { useGame } from '../../store/game'
+import { useSpike } from '../../store/spike'
 import { useNav } from '../../store/nav'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
@@ -22,6 +23,7 @@ export function LoadoutScreen() {
   const pending = useNav((n) => n.pending)
   const career = useCareer()
   const start = useGame((g) => g.start)
+  const startSpike = useSpike((g) => g.start)
 
   const pool = pending?.pool ?? []
   const [picked, setPicked] = useState<TokenId[]>(() => career.loadout.filter((t) => pool.includes(t)).slice(0, SLOTS))
@@ -34,12 +36,14 @@ export function LoadoutScreen() {
   if (!pending) return null
 
   const { session } = pending
+  // Corellian Spike knows no shift tokens: only the stake is chosen here.
+  const spike = session.variant === 'spike'
   // Only career tables and duels are played for a stake.
   const paid = session.kind === 'table' || session.kind === 'duel'
   const cost = (session.buyIn ?? 0) * stake.multiplier
   const handicap = paid ? stakeHandicap(stake, session.startingChips) : 0
   const back = () => go(session.kind === 'tour' ? 'tour' : paid ? 'career' : 'free')
-  const ready = picked.length === Math.min(SLOTS, pool.length)
+  const ready = spike || picked.length === Math.min(SLOTS, pool.length)
   const affordable = !paid || career.credits >= cost
 
   const toggle = (token: TokenId) => {
@@ -50,18 +54,20 @@ export function LoadoutScreen() {
 
   const begin = () => {
     unlockAudio()
-    career.setLoadout(picked)
     if (paid) career.spend(cost)
-    start(
-      {
-        ...session,
-        buyIn: cost,
-        payout: (session.payout ?? 0) * stake.payout,
-        stake: stake.multiplier,
-        playerChips: (session.playerChips ?? session.startingChips) - handicap,
-      },
-      picked,
-    )
+    const staked = {
+      ...session,
+      buyIn: cost,
+      payout: (session.payout ?? 0) * stake.payout,
+      stake: stake.multiplier,
+      playerChips: (session.playerChips ?? session.startingChips) - handicap,
+    }
+    if (spike) {
+      startSpike(staked)
+      return go('spike')
+    }
+    career.setLoadout(picked)
+    start(staked, picked)
     go('table')
   }
 
@@ -74,41 +80,47 @@ export function LoadoutScreen() {
         <button className={common.iconBtn} onClick={back} aria-label={tx`Zurück`}>
           <Icon name="back" />
         </button>
-        <h1 className={common.screenTitle}>{tx`Shift-Tokens`}</h1>
+        <h1 className={common.screenTitle}>{spike ? session.title : tx`Shift-Tokens`}</h1>
         {paid && <span className={common.credits}>{career.credits}</span>}
       </header>
 
       <div className={common.screenBody}>
         <div className={cx(common.column, s.loadout)}>
-          <p className={s.lead}>
-            {tx`Wähle `}{SLOTS}{tx` Tokens für `}<b>{session.title}</b>{tx`. Jedes kannst du einmal pro Partie spielen.`}
-          </p>
+          {spike ? (
+            <p className={s.lead}>{tx`Corellian Spike kennt keine Shift-Tokens. Wähl deinen Einsatz und nimm Platz.`}</p>
+          ) : (
+            <>
+              <p className={s.lead}>
+                {tx`Wähle `}{SLOTS}{tx` Tokens für `}<b>{session.title}</b>{tx`. Jedes kannst du einmal pro Partie spielen.`}
+              </p>
 
-          <div className={s.slots}>
-            {Array.from({ length: SLOTS }, (_, i) => {
-              const token = picked[i]
-              return (
-                <button key={i} className={cx(s.slot, token && s.slotFilled)} onClick={() => token && toggle(token)} aria-label={token ? tx`${TOKEN_TEXT[token].name} entfernen` : tx`Leerer Platz`}>
-                  {token ? (
-                    <motion.span key={token} initial={{ scale: 0.3, rotate: -60 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-                      <TokenIcon token={token} size={30} />
-                    </motion.span>
-                  ) : (
-                    <span className="num">{i + 1}</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+              <div className={s.slots}>
+                {Array.from({ length: SLOTS }, (_, i) => {
+                  const token = picked[i]
+                  return (
+                    <button key={i} className={cx(s.slot, token && s.slotFilled)} onClick={() => token && toggle(token)} aria-label={token ? tx`${TOKEN_TEXT[token].name} entfernen` : tx`Leerer Platz`}>
+                      {token ? (
+                        <motion.span key={token} initial={{ scale: 0.3, rotate: -60 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                          <TokenIcon token={token} size={30} />
+                        </motion.span>
+                      ) : (
+                        <span className="num">{i + 1}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
 
-          <div className={s.focus} aria-live="polite">
-            <h2 className={s.focusName}>
-              {TOKEN_TEXT[focus].name}
-              {focusLocked && <Icon name="lock" size={15} />}
-            </h2>
-            <p>{TOKEN_TEXT[focus].long}</p>
-            {unlockAt && <p className={s.focusLock}>{tx`Freischalten: erster Sieg bei „${unlockAt.name}“`}</p>}
-          </div>
+              <div className={s.focus} aria-live="polite">
+                <h2 className={s.focusName}>
+                  {TOKEN_TEXT[focus].name}
+                  {focusLocked && <Icon name="lock" size={15} />}
+                </h2>
+                <p>{TOKEN_TEXT[focus].long}</p>
+                {unlockAt && <p className={s.focusLock}>{tx`Freischalten: erster Sieg bei „${unlockAt.name}“`}</p>}
+              </div>
+            </>
+          )}
 
           {paid && (
             <section className={s.field}>
@@ -147,30 +159,32 @@ export function LoadoutScreen() {
             </section>
           )}
 
-          <div className={s.tokenGrid}>
-            {TOKEN_IDS.map((token) => {
-              const locked = !pool.includes(token)
-              const on = picked.includes(token)
-              return (
-                <button
-                  key={token}
-                  className={cx(s.tokenTile, on && s.tokenTileOn, locked && s.tokenTileLocked, focus === token && s.tokenTileFocus)}
-                  onClick={() => toggle(token)}
-                  aria-pressed={on}
-                >
-                  <span className={s.tokenTileIcon}>
-                    <TokenIcon token={token} size={24} />
-                  </span>
-                  <span className={s.tokenTileName}>{TOKEN_TEXT[token].name}</span>
-                  {on && (
-                    <span className={s.tokenTileCheck}>
-                      <Icon name="check" size={13} />
+          {!spike && (
+            <div className={s.tokenGrid}>
+              {TOKEN_IDS.map((token) => {
+                const locked = !pool.includes(token)
+                const on = picked.includes(token)
+                return (
+                  <button
+                    key={token}
+                    className={cx(s.tokenTile, on && s.tokenTileOn, locked && s.tokenTileLocked, focus === token && s.tokenTileFocus)}
+                    onClick={() => toggle(token)}
+                    aria-pressed={on}
+                  >
+                    <span className={s.tokenTileIcon}>
+                      <TokenIcon token={token} size={24} />
                     </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                    <span className={s.tokenTileName}>{TOKEN_TEXT[token].name}</span>
+                    {on && (
+                      <span className={s.tokenTileCheck}>
+                        <Icon name="check" size={13} />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

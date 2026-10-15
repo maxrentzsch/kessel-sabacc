@@ -11,10 +11,11 @@ import { tx } from '../../i18n'
 import { activePlayers, anteOf, betSize, canRaise, owed, scoreSpikeHand } from '../../spike'
 import type { SpikeCard, SpikeEvent, SpikePlayer, SpikeState } from '../../spike'
 import { chooseSpikeAction, spikeWinChance } from '../../spike/ai'
+import { isHotseat, seatsAround } from '../../store/game'
 import { useNav } from '../../store/nav'
 import { tempo, useSettings } from '../../store/settings'
 import { useCareer } from '../../store/career'
-import { SPIKE_HUMAN, useSpike } from '../../store/spike'
+import { useSpike } from '../../store/spike'
 import { Critter } from '../art/Critter'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
@@ -24,10 +25,12 @@ import { Sheet } from '../common/Sheet'
 import { cx } from '../cx'
 import { Backdrop } from '../table/Backdrop'
 import { SLOTS } from '../table/Seat'
+import { Curtain, SteadyHand, Suspicion } from '../table/Overlays'
 import { Hub, Surface } from '../table/Surface'
 import t from '../table/Table.module.css'
 import s from './Spike.module.css'
 import { SpikeBack, SpikeFace } from './SpikeCardArt'
+import { SpikeRules } from './SpikeRules'
 import { cardsText, chipsText, describeSpike, handName, seatNote, signed } from './texts'
 
 /** Run `handler` once for every event published after the component mounted. */
@@ -89,7 +92,7 @@ function Card({ card, hand, faceUp, lean = 0, className, onClick, label }: CardP
 }
 
 /** What an opponent says and shows: a note for every move, a line now and then. */
-function useSeatLife(player: SpikePlayer, character: Character) {
+function useSeatLife(player: SpikePlayer, character: Character | null) {
   const [bubble, setBubble] = useState<{ id: number; text: string; speech: boolean; gesture?: boolean } | null>(null)
   const [mood, setMood] = useState<Mood | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -98,7 +101,7 @@ function useSeatLife(player: SpikePlayer, character: Character) {
     timers.current.push(setTimeout(run, ms))
   }
   const say = (id: number, occasion: Parameters<typeof banter>[1], chance: number) => {
-    if (Math.random() > chance) return
+    if (!character || Math.random() > chance) return
     const text = banter(character.id, occasion)
     if (!text) return
     setBubble({ id, text, speech: true })
@@ -135,8 +138,10 @@ function useSeatLife(player: SpikePlayer, character: Character) {
   return { bubble, mood }
 }
 
-function Seat({ player, character, slot, opponents }: { player: SpikePlayer; character: Character; slot: number; opponents: number }) {
+function Seat({ player, character, slot, opponents }: { player: SpikePlayer; character: Character | null; slot: number; opponents: number }) {
   const game = useSpike((g) => g.game)!
+  const peeked = useSpike((g) => g.peeked)
+  const simple = !!game.rules.simple
   const thinking = useSpike((g) => g.thinking === player.id)
   const life = useSeatLife(player, character)
   const shown = game.phase === 'showdown' || game.phase === 'handEnd' || game.phase === 'gameOver'
@@ -192,15 +197,17 @@ function Seat({ player, character, slot, opponents }: { player: SpikePlayer; cha
           )}
         </div>
         <div className={cx(s.minis, open && s.open)} data-count={player.hand.length}>
-          {player.hand.map((card) => (
-            <Card key={card.id} card={card} hand={game.handNumber} faceUp={open} lean={open ? 14 : 42} className={s.mini} />
-          ))}
+          {player.hand.map((card) => {
+            // a card the player sneaked a look at stays open for them alone
+            const seen = !open && peeked.includes(card.id)
+            return <Card key={card.id} card={card} hand={game.handNumber} faceUp={open || seen} lean={open || seen ? 14 : 42} className={cx(s.mini, seen && t.miniSeen)} />
+          })}
           {player.eliminated ? (
             <span className={cx(s.tag, s.tagOut)}>{tx`ausgeschieden`}</span>
           ) : player.folded ? (
             <span className={cx(s.tag, s.tagOut)}>{tx`ausgestiegen`}</span>
           ) : open ? (
-            <span className={cx(s.tag, placing.winner && s.tagWin)}>{handName(placing.score)}</span>
+            <span className={cx(s.tag, placing.winner && s.tagWin)}>{handName(placing.score, simple)}</span>
           ) : null}
         </div>
       </div>
@@ -257,8 +264,8 @@ function Dice() {
 }
 
 /** What a strong player would do in the player's place. */
-function advise(game: SpikeState): string {
-  const me = game.players[SPIKE_HUMAN]
+function advise(game: SpikeState, viewer: number): string {
+  const me = game.players[viewer]
   const rng = new Rng(game.handNumber * 131 + game.round * 17 + me.chips * 7 + me.hand.length)
   const action = chooseSpikeAction(game, DEFAULT_PROFILES.hard, rng)
   const card = (id?: string) => signed(me.hand.find((c) => c.id === id)?.value ?? 0)
@@ -284,6 +291,116 @@ function advise(game: SpikeState): string {
   return tx`${move} Mit diesem Blatt gewinnst du etwa ${chance} von 100 Händen.`
 }
 
+/**
+ * Cheating at the Spike table: a look at one card of an opponent, and the
+ * sylop up the sleeve. Only for a player alone at the table, in the card phase.
+ */
+function SpikePeekSheet({ open, onClose, canCheat }: { open: boolean; onClose(): void; canCheat: boolean }) {
+  const game = useSpike((g) => g.game)!
+  const session = useSpike((g) => g.session)!
+  const viewer = useSpike((g) => g.viewer)
+  const used = useSpike((g) => g.peekUsed)
+  const watch = useSpike((g) => g.watch)
+  const suspicion = useSpike((g) => g.suspicion)
+  const cover = useSpike((g) => g.bixCover)
+  const sleeveUsed = useSpike((g) => g.sleeveUsed)
+  const peek = useSpike((g) => g.peek)
+  const sleeve = useSpike((g) => g.sleeve)
+  const bix = useCareer((c) => c.bix)
+  const sleeves = useCareer((c) => c.sleeves)
+  const steadyHand = useSettings((st) => st.steadyHand)
+  const [steady, setSteady] = useState<string | null>(null)
+  useEffect(() => {
+    if (!open) setSteady(null)
+  }, [open])
+
+  const me = game.players[viewer]
+  const ready = canCheat && !used
+  const canSleeve = canCheat && session.mode === 'career' && !sleeveUsed && sleeves > 0
+  const targets = game.players.filter((p) => !p.isHuman && !p.eliminated && !p.folded && p.hand.length > 0)
+  const heat = (id: number) => watch[id] ?? 0
+
+  if (steady)
+    return (
+      <Sheet open={open} onClose={onClose}>
+        <SteadyHand
+          onDone={(steadiness) => {
+            onClose()
+            sleeve(steady, steadiness)
+          }}
+        />
+      </Sheet>
+    )
+
+  return (
+    <Sheet open={open} onClose={onClose}>
+      <h2 className={common.sheetTitle}>{tx`Spähen`}</h2>
+      <p className={common.sheetText}>
+        {tx`Wirf einen Blick auf eine Karte eines Gegners – einmal pro Hand, in deinem Zug der Kartenphase. Wer ausgespäht wird, wird misstrauisch, die anderen ein wenig. Ist einer ganz misstrauisch, wirst du erwischt und zahlst 2 Chips in den Sabacc-Topf.`}
+      </p>
+      <div className={t.heatRow}>
+        <span>{tx`Verdacht`}</span>
+        <Suspicion value={suspicion} />
+      </div>
+      {bix === 'lothcat' && suspicion >= 60 && <p className={t.tokenNote}>{tx`Bix legt die Ohren an. Der Tisch wird misstrauisch.`}</p>}
+      {cover > 0 && <p className={t.tokenNote}>{cover === 1 ? tx`Fliegt ein Blick auf, lenkt Bix ein Mal ab.` : tx`Fliegt ein Blick auf, lenkt Bix noch ${cover} Mal ab.`}</p>}
+      {!ready && <p className={t.tokenNote}>{used ? tx`In dieser Hand hast du schon gespäht.` : tx`Spähen kannst du nur in deinem Zug der Kartenphase.`}</p>}
+      <div className={t.targets}>
+        {targets.map((p) => (
+          <button
+            key={p.id}
+            className={t.targetBtn}
+            disabled={!ready}
+            onClick={() => {
+              onClose()
+              peek(p.id)
+            }}
+          >
+            <Portrait character={session.seats[p.id]} size={44} frame />
+            <span>
+              <b>{p.name}</b>
+              <em>{tx`eine Karte ansehen`}</em>
+            </span>
+            <span className={cx(t.heat, heat(p.id) >= 70 ? t.heatHigh : heat(p.id) >= 40 ? t.heatMid : undefined)} aria-label={tx`Verdacht ${Math.round(heat(p.id))} %`}>
+              <i>
+                <b style={{ width: `${Math.min(100, heat(p.id))}%` }} />
+              </i>
+            </span>
+          </button>
+        ))}
+      </div>
+      {canSleeve && (
+        <div className={t.sleeve}>
+          <h3 className={t.fieldLabel}>{tx`Ärmel`}</h3>
+          <p className={t.tokenNote}>
+            {tx`Tausch eine deiner Karten gegen einen Sylop aus dem Ärmel – einmal pro Partie. Alle am Tisch werden misstrauisch; bemerkt es einer, kostet es 3 Chips und Ansehen. Im Ärmel: ${sleeves}.`}
+          </p>
+          <div className={s.sleeveCards}>
+            {me.hand.map((card) => (
+              <button
+                key={card.id}
+                className={common.btn}
+                onClick={() => {
+                  if (steadyHand) return setSteady(card.id)
+                  onClose()
+                  sleeve(card.id)
+                }}
+              >
+                {tx`${signed(card.value)} tauschen`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className={common.sheetActions}>
+        <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
+          {tx`Schließen`}
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
 export function SpikeTableScreen() {
   const game = useSpike((g) => g.game)
   const session = useSpike((g) => g.session)
@@ -292,14 +409,25 @@ export function SpikeTableScreen() {
   const outcome = useSpike((g) => g.outcome)
   const act = useSpike((g) => g.act)
   const clear = useSpike((g) => g.clear)
+  const forfeit = useSpike((g) => g.forfeit)
   const start = useSpike((g) => g.start)
+  const viewer = useSpike((g) => g.viewer)
+  const handoff = useSpike((g) => g.handoff)
+  const takeOver = useSpike((g) => g.takeOver)
+  const tipsLeft = useSpike((g) => g.tipsLeft)
+  const takeTip = useSpike((g) => g.takeTip)
+  const suspicion = useSpike((g) => g.suspicion)
+  const peekUsed = useSpike((g) => g.peekUsed)
   const go = useNav((n) => n.go)
   const hints = useSettings((st) => st.hints)
+  const bix = useCareer((c) => (c.hasShip ? c.bix : null))
 
   /** what the player is in the middle of choosing a card for */
   const [mode, setMode] = useState<'gain' | 'swap' | null>(null)
   const [quitting, setQuitting] = useState(false)
   const [junking, setJunking] = useState(false)
+  const [peeking, setPeeking] = useState(false)
+  const [crib, setCrib] = useState(false)
   const [line, setLine] = useState('')
   const [tip, setTip] = useState<{ game: SpikeState; text: string } | null>(null)
 
@@ -312,25 +440,35 @@ export function SpikeTableScreen() {
   const venue = venueOf(session?.venue)
   useEffect(() => setAmbienceMix(venue.sound), [venue])
   useEffect(() => {
-    if (!game || !session) go('free')
+    // only while this is the screen: on its way out the table has let go of its game already
+    if ((!game || !session) && useNav.getState().screen === 'spike') go('free')
   }, [game, session, go])
+  // Nothing is left open from the last game.
+  useEffect(() => {
+    setCrib(false)
+    setPeeking(false)
+  }, [session])
   // A choice only stands for the turn it was started in.
   const turnKey = game ? `${game.handNumber}-${game.round}-${game.phase}-${game.current}` : ''
   useEffect(() => setMode(null), [turnKey])
   if (!game || !session) return null
 
-  const me = game.players[SPIKE_HUMAN]
-  const opponents = game.players.filter((p) => !p.isHuman)
+  const hotseat = isHotseat(session)
+  const career = session.mode === 'career'
+  const simple = !!game.rules.simple
+  const me = game.players[viewer]
+  const opponents = seatsAround(game, viewer)
   const shown = game.phase === 'showdown' || game.phase === 'handEnd' || game.phase === 'gameOver'
-  const myTurn = !busy && game.current === SPIKE_HUMAN && (game.phase === 'card' || game.phase === 'bet') && !me.folded && !me.eliminated
+  const myTurn = !busy && handoff === null && game.current === viewer && (game.phase === 'card' || game.phase === 'bet') && !me.folded && !me.eliminated
   const cardTurn = myTurn && game.phase === 'card'
   const betTurn = myTurn && game.phase === 'bet'
+  const canCheat = cardTurn && !hotseat && !session.tutorial
   const top = game.discard[game.discard.length - 1]
   const due = owed(game, me)
   const size = betSize(game)
-  const score = me.hand.length ? scoreSpikeHand(me.hand) : null
+  const score = me.hand.length ? scoreSpikeHand(me.hand, !simple) : null
   const result = game.result
-  const mine = shown ? result?.placing.find((x) => x.playerId === SPIKE_HUMAN) : undefined
+  const mine = shown ? result?.placing.find((x) => x.playerId === viewer) : undefined
 
   const pickCard = (card: SpikeCard) => {
     if (mode === 'gain') act({ type: 'gain', discard: card.id })
@@ -358,11 +496,10 @@ export function SpikeTableScreen() {
         ? tx`Ziel: Deine Karten sollen zusammen null ergeben – oder so nah dran wie möglich. Grün zählt plus, Rot minus.`
         : betTurn && game.round === 1
           ? tx`Nach den Karten wird gesetzt. Wer nicht mitgeht, steigt aus und verliert, was er im Topf hat.`
-          : cardTurn && game.round === 2
-            ? tx`Nach jeder Setzrunde rollen die Spike-Würfel. Bei einem Pasch bekommen alle neue Karten.`
+          : cardTurn && game.round === 2 && game.rules.dice !== false
+            ? tx`Nach jeder Runde rollen die Spike-Würfel. Bei einem Pasch bekommen alle neue Karten.`
             : null
   const advice = tip && tip.game === game ? tip.text : null
-  const bix = useCareer((c) => (c.hasShip ? c.bix : null))
   const hintText = advice ?? (hints ? coaching : null)
   const hint: ReactNode = hintText ? (
     <p className={cx(t.hint, advice !== null && t.tip)}>
@@ -373,24 +510,35 @@ export function SpikeTableScreen() {
 
   const waiting = thinking !== null ? tx`${game.players[thinking].name} überlegt …` : line
   const winners = result?.winners ?? []
-  const iWon = winners.includes(SPIKE_HUMAN)
+  const iWon = winners.includes(viewer)
+  const champion = game.winner !== null ? game.players[game.winner] : null
   const endTitle =
-    outcome === 'won'
-      ? tx`Der Tisch gehört dir!`
-      : outcome === 'lost'
-        ? tx`Du bist pleite`
-        : winners.length > 1
-          ? iWon
-            ? tx`Geteilter Sieg`
-            : tx`Unentschieden am Tisch`
-          : iWon
-            ? tx`Hand gewonnen`
-            : tx`${game.players[winners[0] ?? 0].name} gewinnt die Hand`
+    hotseat && outcome
+      ? champion
+        ? tx`${champion.name} gewinnt die Partie`
+        : tx`Alle am Gerät sind pleite`
+      : outcome === 'won'
+        ? tx`Der Tisch gehört dir!`
+        : outcome === 'lost'
+          ? tx`Du bist pleite`
+          : winners.length > 1
+            ? iWon
+              ? tx`Geteilter Sieg`
+              : tx`Unentschieden am Tisch`
+            : iWon
+              ? tx`Hand gewonnen`
+              : tx`${game.players[winners[0] ?? 0].name} gewinnt die Hand`
   const sheetOpen = !busy && (game.phase === 'handEnd' || game.phase === 'gameOver' || outcome !== null) && result !== null
 
+  // Where the table leads once it is done with: the career's result screen, or back to setting up.
   const leave = () => {
+    if (career && outcome) return go('result')
+    go(career ? 'career' : 'free')
     clear()
-    go('free')
+  }
+  const quit = () => {
+    go(career ? 'career' : 'free')
+    forfeit()
   }
   const again = () => start(session)
 
@@ -402,13 +550,16 @@ export function SpikeTableScreen() {
             <Icon name="close" />
           </button>
           <div className={t.topTitle}>
-            <b>Corellian Spike</b>
+            <b>{session.title}</b>
             <span>
               {tx`Hand`} {game.handNumber} · {tx`Grundeinsatz`} {anteOf(game, game.handNumber)}
             </span>
           </div>
           <div className={t.rounds} aria-label={tx`Runde ${game.round} von ${3}`}>
-            <span className={t.roundLabel}>{tx`Runde`}</span>
+            <Suspicion compact value={suspicion} />
+            <button className={s.cribBtn} onClick={() => setCrib(true)} aria-label={tx`Spielregeln`}>
+              ?
+            </button>
             {[1, 2, 3].map((r) => (
               <i key={r} className={cx(t.roundPip, r < game.round && t.roundDone, r === game.round && t.roundNow)} />
             ))}
@@ -428,15 +579,17 @@ export function SpikeTableScreen() {
           <Hub />
 
           {opponents.map((p, i) => (
-            <Seat key={p.id} player={p} character={session.seats[p.id]!} slot={i} opponents={opponents.length} />
+            <Seat key={p.id} player={p} character={session.seats[p.id]} slot={i} opponents={opponents.length} />
           ))}
 
           <section className={t.center}>
             <div className={s.row}>
-              <div className={cx(s.pot, s.potSabacc)}>
-                <span className={cx(s.potChips, 'num')}>{game.sabaccPot}</span>
-                <span className={s.potLabel}>{tx`Sabacc-Topf`}</span>
-              </div>
+              {!simple && (
+                <div className={cx(s.pot, s.potSabacc)}>
+                  <span className={cx(s.potChips, 'num')}>{game.sabaccPot}</span>
+                  <span className={s.potLabel}>{tx`Sabacc-Topf`}</span>
+                </div>
+              )}
               <button className={cx(s.pileBtn, cardTurn && mode === null && s.pileOn)} disabled={!cardTurn || mode !== null} onClick={() => setMode('gain')} aria-label={tx`Karte vom Stapel nehmen`}>
                 <span className={cx(s.slot, t.pileStack)}>{game.deck.length > 0 && <Card card={game.deck[game.deck.length - 1]} hand={game.handNumber} faceUp={false} lean={42} />}</span>
                 <span className={t.pileLabel}>
@@ -450,7 +603,7 @@ export function SpikeTableScreen() {
               </button>
               <div className={s.pot}>
                 <span className={cx(s.potChips, 'num')}>{game.handPot}</span>
-                <span className={s.potLabel}>{tx`Hand-Topf`}</span>
+                <span className={s.potLabel}>{simple ? tx`Topf` : tx`Hand-Topf`}</span>
               </div>
             </div>
           </section>
@@ -479,15 +632,18 @@ export function SpikeTableScreen() {
 
           {score && (
             <p className={cx(t.myLabel, score.total === 0 && t.scoreSabacc, 'num')}>
-              {handName(mine?.score ?? score)}
-              <button
-                className={t.tipBtn}
-                disabled={!myTurn || advice !== null}
-                onClick={() => setTip({ game, text: advise(game) })}
-                aria-label={tx`Tipp`}
-              >
-                {bix ? <Critter animal={bix} size={22} perch={false} /> : <Icon name="bulb" size={15} />}
-              </button>
+              {handName(mine?.score ?? score, simple)}
+              {!session.tutorial && (
+                <button
+                  className={t.tipBtn}
+                  disabled={!myTurn || advice !== null || tipsLeft <= 0}
+                  onClick={() => takeTip() && setTip({ game, text: advise(game, viewer) })}
+                  aria-label={tx`Tipp – noch ${Number.isFinite(tipsLeft) ? tipsLeft : tx`beliebig viele`}`}
+                >
+                  {bix ? <Critter animal={bix} size={22} perch={false} /> : <Icon name="bulb" size={15} />}
+                  {Number.isFinite(tipsLeft) && <b className="num">{tipsLeft}</b>}
+                </button>
+              )}
             </p>
           )}
 
@@ -544,6 +700,11 @@ export function SpikeTableScreen() {
               )
             ) : (
               <>
+                {!hotseat && !session.tutorial && (
+                  <button className={cx(t.peekBtn, s.peek, canCheat && !peekUsed && t.peekBtnReady)} onClick={() => setPeeking(true)} aria-label={tx`Spähen`}>
+                    <Icon name="eye" size={20} />
+                  </button>
+                )}
                 <button className={common.btn} disabled={!cardTurn} onClick={() => setJunking(true)}>
                   {tx`Aussteigen`}
                 </button>
@@ -564,9 +725,11 @@ export function SpikeTableScreen() {
               <p className={common.sheetText}>
                 {result.uncontested
                   ? tx`Alle anderen sind ausgestiegen. Der Hand-Topf (${result.handPot}) geht ohne Aufdecken an den Letzten.`
-                  : result.sabaccPot > 0
-                    ? tx`Eine Null! Hand-Topf (${result.handPot}) und Sabacc-Topf (${result.sabaccPot}) wechseln den Besitzer.`
-                    : tx`Der Hand-Topf (${result.handPot}) ist vergeben. Niemand hat null – der Sabacc-Topf (${game.sabaccPot}) bleibt liegen.`}
+                  : simple
+                    ? tx`Am nächsten an null – der Topf (${result.handPot}) ist vergeben.`
+                    : result.sabaccPot > 0
+                      ? tx`Eine Null! Hand-Topf (${result.handPot}) und Sabacc-Topf (${result.sabaccPot}) wechseln den Besitzer.`
+                      : tx`Der Hand-Topf (${result.handPot}) ist vergeben. Niemand hat null – der Sabacc-Topf (${game.sabaccPot}) bleibt liegen.`}
               </p>
               <ul className={t.resultList}>
                 {result.placing.map((x, i) => {
@@ -582,7 +745,7 @@ export function SpikeTableScreen() {
                       <Portrait character={session.seats[x.playerId]} size={40} frame />
                       <div className={t.resultWho}>
                         <b>{player.name}</b>
-                        <span className="num">{result.uncontested ? tx`nicht aufgedeckt` : handName(x.score)}</span>
+                        <span className="num">{result.uncontested ? tx`nicht aufgedeckt` : handName(x.score, simple)}</span>
                       </div>
                       <span className={cx(s.values, 'num')}>{result.uncontested ? '' : cardsText(player.hand)}</span>
                       <div className={cx(s.gain, 'num')}>
@@ -596,7 +759,7 @@ export function SpikeTableScreen() {
             </>
           )}
           <div className={common.sheetActions}>
-            {outcome ? (
+            {outcome && !career && !hotseat ? (
               <>
                 <button className={cx(common.btn, common.btnGhost)} onClick={leave}>
                   {tx`Hauptmenü`}
@@ -605,11 +768,28 @@ export function SpikeTableScreen() {
                   {tx`Nochmal spielen`}
                 </button>
               </>
+            ) : outcome ? (
+              <button className={cx(common.btn, common.btnPrimary)} onClick={leave}>
+                {tx`Weiter`}
+              </button>
             ) : (
               <button className={cx(common.btn, common.btnPrimary)} onClick={() => act({ type: 'nextHand' })}>
                 {tx`Nächste Hand`}
               </button>
             )}
+          </div>
+        </Sheet>
+
+        <SpikePeekSheet open={peeking} onClose={() => setPeeking(false)} canCheat={canCheat} />
+
+        <Sheet open={crib} onClose={() => setCrib(false)}>
+          <div className={s.crib}>
+            <SpikeRules />
+          </div>
+          <div className={common.sheetActions}>
+            <button className={cx(common.btn, common.btnGhost)} onClick={() => setCrib(false)}>
+              {tx`Schließen`}
+            </button>
           </div>
         </Sheet>
 
@@ -634,16 +814,18 @@ export function SpikeTableScreen() {
 
         <Sheet open={quitting} onClose={() => setQuitting(false)} dialog>
           <h2 className={common.sheetTitle}>{tx`Tisch verlassen?`}</h2>
-          <p className={common.sheetText}>{tx`Die laufende Partie wird abgebrochen.`}</p>
+          <p className={common.sheetText}>{career ? tx`Die Partie zählt als verloren und dein Buy-in bleibt am Tisch.` : tx`Die laufende Partie wird abgebrochen.`}</p>
           <div className={common.sheetActions}>
             <button className={cx(common.btn, common.btnGhost)} onClick={() => setQuitting(false)}>
               {tx`Bleiben`}
             </button>
-            <button className={cx(common.btn, common.btnDanger)} onClick={leave}>
+            <button className={cx(common.btn, common.btnDanger)} onClick={quit}>
               {tx`Verlassen`}
             </button>
           </div>
         </Sheet>
+
+        {hotseat && <Curtain name={handoff === null ? null : game.players[handoff].name} onReady={takeOver} />}
       </div>
     </LayoutGroup>
   )

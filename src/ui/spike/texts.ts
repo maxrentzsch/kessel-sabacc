@@ -1,5 +1,6 @@
 import { tx } from '../../i18n'
 import type { HandKind, SpikeCard, SpikeEvent, SpikeScore, SpikeState } from '../../spike'
+import { isYou } from '../../store/game'
 
 /** The hands keep their names in every language. */
 const HAND_NAME: Record<Exclude<HandKind, 'nulrhek'>, string> = {
@@ -19,7 +20,9 @@ const HAND_NAME: Record<Exclude<HandKind, 'nulrhek'>, string> = {
 
 export const signed = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${-value}` : '0')
 
-export function handName(score: SpikeScore): string {
+/** `simple`: the learning tables know no named hands, so a zero is just that. */
+export function handName(score: SpikeScore, simple = false): string {
+  if (simple) return score.kind === 'zero' ? tx`Null` : tx`Summe ${signed(score.total)}`
   return score.kind === 'nulrhek' ? `Nulrhek ${signed(score.total)}` : HAND_NAME[score.kind]
 }
 
@@ -32,10 +35,11 @@ export const chipsText = (n: number) => (n === 1 ? tx`1 Chip` : tx`${n} Chips`)
 /** One line describing an event for the status line under the table. */
 export function describeSpike(event: SpikeEvent, game: SpikeState): string | null {
   const name = (id: number) => game.players[id].name
-  const you = (id: number) => game.players[id].isHuman
+  const you = (id: number) => isYou(game, id)
   switch (event.type) {
     case 'handStart':
-      return event.ante > game.rules.ante ? tx`Hand ${event.hand} – Grundeinsatz jetzt ${event.ante} je Topf` : tx`Hand ${event.hand}`
+      if (event.ante <= game.rules.ante) return tx`Hand ${event.hand}`
+      return game.rules.simple ? tx`Hand ${event.hand} – Grundeinsatz jetzt ${event.ante}` : tx`Hand ${event.hand} – Grundeinsatz jetzt ${event.ante} je Topf`
     case 'gained':
       if (you(event.playerId)) return event.discarded ? tx`Du wirfst ab und nimmst eine Karte` : tx`Du nimmst eine Karte`
       return event.discarded ? tx`${name(event.playerId)} wirft ab und nimmt eine Karte` : tx`${name(event.playerId)} nimmt eine Karte`

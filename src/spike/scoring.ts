@@ -58,9 +58,18 @@ function classify(values: number[]): [HandKind, ...number[]] {
   return ['zero', ...rest]
 }
 
-export function scoreSpikeHand(hand: SpikeCard[]): SpikeScore {
+/** `named` off: every hand that adds up to zero is as good as any other of the same size and spread. */
+/** Only the distance from zero counts, then the same tie-breakers as ever. */
+function plain(values: number[]): [HandKind, ...number[]] {
+  const total = sum(values)
+  const positives = values.filter((v) => v > 0)
+  const rest = [-values.length, -sum(positives), -Math.max(0, ...positives)]
+  return total === 0 ? ['zero', ...rest] : ['nulrhek', Math.abs(total), total > 0 ? 0 : 1, ...rest]
+}
+
+export function scoreSpikeHand(hand: SpikeCard[], named = true): SpikeScore {
   const values = hand.map((c) => c.value)
-  const [kind, ...ties] = classify(values)
+  const [kind, ...ties] = named ? classify(values) : plain(values)
   return { kind, total: sum(values), key: [HAND_KINDS.indexOf(kind), ...ties] }
 }
 

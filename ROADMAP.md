@@ -211,6 +211,11 @@ and every new line exists in both languages.
 - **Cheating at the Spike table**: peeking with suspicion per opponent and the sleeve, as in
   Kessel Sabacc since 1.7, so that tells, dossier and sleeve finally work in both variants.
 - **Passing the device at the Spike table**, as in Kessel Sabacc since 1.8.
+- *Built in 1.9, ahead of the act:* the engine plays the learning tables' rules (cards only, then
+  betting, then the dice; one pot and no named hands until the last); the Spike table seats the
+  player wherever the device is, takes career games with stake and result screen, counts stats and
+  achievements, and opens the rules at a tap. At the Spike table the sleeve holds a sylop, and a
+  fine goes into the sabacc pot.
 - **Places** (all new): the Hallis shipyard canteen (learning tables), a convoy freighter whose
   table travels with it, the bar above a swoop track, a casino barge in a gas giant, the
   Glassfingers' archive, the Red Seal's grand casino, and the merchants' banquet as the finale.
@@ -335,6 +340,7 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.6 | Phase 3, first half: tells, dossiers, Bix at the table (tips, covering a peek gone wrong) |
 | 1.7 | Phase 3, second half: suspicion per opponent, the sleeve with its steadiness test |
 | 1.8 | 7a: one device, several players (Kessel Sabacc) |
+| 1.9 | Phase 4, groundwork: the Spike table ready for the career |
 | 2.0 | Phase 4: act 2 with Corellian Spike |
 | 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |

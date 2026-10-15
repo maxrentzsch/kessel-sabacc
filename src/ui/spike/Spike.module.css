@@ -271,3 +271,37 @@
     grid-area: 2 / 2;
   }
 }
+
+/* spying sits at the start of the bar as a round button of its own */
+.bar > .peek {
+  flex: 0 0 44px;
+  padding: 0;
+  margin: 0;
+}
+
+/* the cards that could go for the sylop up the sleeve */
+.sleeveCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+/* the rules, a tap away at the table */
+.cribBtn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 1px solid var(--frame-line);
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.crib {
+  max-height: 62dvh;
+  overflow-y: auto;
+  text-align: left;
+}

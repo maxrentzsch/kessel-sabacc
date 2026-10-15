@@ -3,7 +3,7 @@ import type { SpikeCard, SpikeRules, SpikeSuit } from './types'
 
 export const SPIKE_SUITS: SpikeSuit[] = ['circle', 'triangle', 'square']
 
-export const SPIKE_RULES: SpikeRules = { ante: 1, bets: [1, 1, 2], maxRaises: 2, handLimit: 5, anteEvery: 4 }
+export const SPIKE_RULES: SpikeRules = { ante: 1, bets: [1, 1, 2], maxRaises: 2, handLimit: 5, anteEvery: 4, betting: true, dice: true, simple: false }
 
 /** 62 cards: three staves of +1 … +10 and −1 … −10, and two sylops. */
 export function buildSpikeDeck(): SpikeCard[] {

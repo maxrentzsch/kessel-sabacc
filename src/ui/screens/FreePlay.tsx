@@ -70,7 +70,7 @@ export function FreePlayScreen() {
   const [people, setPeople] = useState(1)
   const [names, setNames] = useState<string[]>(['', '', '', ''])
   const startGame = useGame((g) => g.start)
-  const together = variant === 'kessel' && people > 1
+  const together = people > 1
   const fewest = together ? 0 : 1
   const most = MAX_SEATS - (together ? people : 1)
   const opponents = Math.min(most, Math.max(fewest, count))
@@ -78,13 +78,15 @@ export function FreePlayScreen() {
 
   const playSpike = () => {
     unlockAudio()
+    const seated = together ? people : 1
     startSpike({
       variant: 'spike',
       mode: 'free',
       table: null,
-      title: 'Corellian Spike',
+      title: together ? tx`Runde am Gerät` : 'Corellian Spike',
       venue: randomVenueId(),
-      seats: [null, ...pickOpponents(opponents, difficulty)],
+      seats: [...Array.from({ length: seated }, () => null), ...pickOpponents(opponents, difficulty)],
+      people: together ? Array.from({ length: people }, (_, seat) => ({ seat, name: nameOf(seat), tokens: [] })) : undefined,
       startingChips: spikeChips,
     })
     go('spike')
@@ -147,32 +149,32 @@ export function FreePlayScreen() {
                 : tx`Die Karten sollen zusammen null ergeben. Mit Setzrunden, zwei Töpfen und den Spike-Würfeln.`}
             </p>
           </section>
-          {variant === 'kessel' && (
-            <section className={s.field}>
-              <h2 className={s.fieldLabel}>{tx`Spieler an diesem Gerät`}</h2>
-              <Segments<number> value={people} onChange={setPeople} options={[1, 2, 3, 4].map((n) => ({ id: n, name: String(n) }))} />
-              {together && (
-                <>
-                  <div className={s.nameGrid}>
-                    {Array.from({ length: people }, (_, i) => (
-                      <input
-                        key={i}
-                        className={s.nameInput}
-                        value={names[i]}
-                        maxLength={14}
-                        placeholder={tx`Spieler ${i + 1}`}
-                        aria-label={tx`Name von Spieler ${i + 1}`}
-                        onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
-                      />
-                    ))}
-                  </div>
-                  <p className={s.fieldNote}>
-                    {tx`Ihr gebt das Gerät nach jedem Zug weiter; dazwischen bleibt der Tisch verdeckt. Jeder bekommt drei zufällige Shift-Tokens, Spähen gibt es hier nicht, und die Karriere bleibt unberührt.`}
-                  </p>
-                </>
-              )}
-            </section>
-          )}
+          <section className={s.field}>
+            <h2 className={s.fieldLabel}>{tx`Spieler an diesem Gerät`}</h2>
+            <Segments<number> value={people} onChange={setPeople} options={[1, 2, 3, 4].map((n) => ({ id: n, name: String(n) }))} />
+            {together && (
+              <>
+                <div className={s.nameGrid}>
+                  {Array.from({ length: people }, (_, i) => (
+                    <input
+                      key={i}
+                      className={s.nameInput}
+                      value={names[i]}
+                      maxLength={14}
+                      placeholder={tx`Spieler ${i + 1}`}
+                      aria-label={tx`Name von Spieler ${i + 1}`}
+                      onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
+                    />
+                  ))}
+                </div>
+                <p className={s.fieldNote}>
+                  {variant === 'kessel'
+                    ? tx`Ihr gebt das Gerät nach jedem Zug weiter; dazwischen bleibt der Tisch verdeckt. Jeder bekommt drei zufällige Shift-Tokens, Spähen gibt es hier nicht, und die Karriere bleibt unberührt.`
+                    : tx`Ihr gebt das Gerät nach jedem Zug weiter; dazwischen bleibt der Tisch verdeckt. Spähen gibt es hier nicht, und die Karriere bleibt unberührt.`}
+                </p>
+              </>
+            )}
+          </section>
           <section className={s.field}>
             <h2 className={s.fieldLabel}>{together ? tx`Gegner der KI` : tx`Gegner`}</h2>
             <Segments<number>
