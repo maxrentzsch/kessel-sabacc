@@ -11,6 +11,7 @@ import { TABLES } from '../career/tables'
 import { TUTORIAL_OPPONENT, TUTORIAL_STEPS, tutorialGame, tutorialScript } from '../career/tutorial'
 import { applyAction, createGame, randomSeed, Rng, STANDARD_RULES, SUITS } from '../engine'
 import type { Action, GameConfig, GameEvent, GameRecord, GameState, Player, Rules, TokenId } from '../engine'
+import type { ShiftPlayer, ShiftRules } from '../shift'
 import type { SpikePlayer, SpikeRules } from '../spike'
 import { useCareer } from './career'
 import { useToasts } from './toasts'
@@ -22,7 +23,7 @@ export const HUMAN = 0
 
 export interface Session {
   /** which Sabacc is played; Kessel Sabacc when left out */
-  variant?: 'kessel' | 'spike'
+  variant?: 'kessel' | 'spike' | 'shift'
   mode: 'career' | 'free'
   /** a duel is one-on-one against the table's rival; tour and daily hand are made-up tables; the stake game wins a ship */
   kind?: 'table' | 'duel' | 'tour' | 'daily' | 'stake' | 'job'
@@ -48,6 +49,8 @@ export interface Session {
   venue?: string
   /** Corellian Spike: what the table changes about the rules, e.g. at the learning tables */
   spikeRules?: Partial<SpikeRules>
+  /** Coruscant Shift: what the table changes about the rules */
+  shiftRules?: Partial<ShiftRules>
   /** one entry per seat: a character for the AI, `null` for a person at this device */
   seats: (Character | null)[]
   /**
@@ -69,7 +72,7 @@ export function isYou(game: { players: { isHuman: boolean }[] }, id: number): bo
 }
 
 /** Everybody but the viewer, clockwise from the viewer's left: the order they sit along the far rim. */
-export function seatsAround<P extends Player | SpikePlayer>(game: { players: P[] }, viewer: number): P[] {
+export function seatsAround<P extends Player | SpikePlayer | ShiftPlayer>(game: { players: P[] }, viewer: number): P[] {
   const n = game.players.length
   return Array.from({ length: n - 1 }, (_, i) => game.players[(viewer + 1 + i) % n])
 }

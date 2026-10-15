@@ -155,6 +155,14 @@ const LINES: Record<string, Record<Exclude<Occasion, 'cheat'>, string[]>> = {
     lose: [tx`Respektabel.`, tx`Ein kleiner Preis.`],
     out: [tx`Man sieht sich, Pilot.`],
   },
+  orrin: {
+    start: [tx`Die Würfel zuerst. Immer die Würfel zuerst.`, tx`Vierzig Jahre am Tisch. Setzen Sie sich.`],
+    token: [tx`Ein alter Kniff.`, tx`Sehen Sie genau hin.`],
+    hit: [tx`Hm. Lehrreich.`, tx`Das hatte ich verdient.`],
+    win: [tx`Das Ziel, nicht die Null.`, tx`Getroffen.`],
+    lose: [tx`Gut gerechnet, Pilot.`, tx`Sie lernen schnell.`],
+    out: [tx`Ich räume die Würfel weg.`],
+  },
   corvin: {
     start: [tx`Alles hat einen Preis. Auch dieser Abend.`, tx`Ein Bankett braucht Unterhaltung.`],
     token: [tx`Ein Geschäft.`, tx`Angebot und Nachfrage.`],
@@ -187,6 +195,7 @@ const CAUGHT: Record<string, string> = {
   sable: tx`Auch das kommt in die Akte.`,
   veyra: tx`Das Siegel vergisst nichts.`,
   corvin: tx`Betrug ist schlecht fürs Geschäft.`,
+  orrin: tx`Nicht an meinem Tisch, Pilot.`,
 }
 
 const lastSaid = new Map<string, string>()

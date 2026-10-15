@@ -1,12 +1,14 @@
 # Kessel Sabacc
 
 Sabacc as an installable web app (PWA) for desktop and phone, against one to three AI opponents,
-in English and German. Two games:
+in English and German. Three games:
 
 - **Kessel Sabacc** with the rules from *Star Wars Outlaws*: two cards, three rounds, all 16 shift
   tokens.
 - **Corellian Spike**, the game from *Solo*: make your cards add up to zero, with betting rounds,
   two pots and the spike dice.
+- **Coruscant Shift**, the game of the Galactic Starcruiser: two dice set a target number and a
+  suit, and from five cards you choose the ones that hit it.
 
 **Play it: <https://maxrentzsch.github.io/kessel-sabacc/>**
 

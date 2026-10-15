@@ -8,6 +8,7 @@ import type { TokenId } from '../../engine'
 import { unlockAudio } from '../../audio/sfx'
 import { useGame } from '../../store/game'
 import { useNav } from '../../store/nav'
+import { useShift } from '../../store/shift'
 import { useSpike } from '../../store/spike'
 import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
@@ -49,7 +50,7 @@ function dealTokens(): TokenId[] {
 /** At most four at the table, and never fewer than two. */
 const MAX_SEATS = 4
 
-type Variant = 'kessel' | 'spike'
+type Variant = 'kessel' | 'spike' | 'shift'
 
 /** What the strengths mean in a game without shift tokens. */
 const SPIKE_DIFFICULTY: Record<Difficulty, string> = {
@@ -67,6 +68,8 @@ export function FreePlayScreen() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [chips, setChips] = useState(6)
   const [spikeChips, setSpikeChips] = useState(20)
+  const [shiftChips, setShiftChips] = useState(10)
+  const startShift = useShift((g) => g.start)
   const [people, setPeople] = useState(1)
   const [names, setNames] = useState<string[]>(['', '', '', ''])
   const startGame = useGame((g) => g.start)
@@ -76,20 +79,23 @@ export function FreePlayScreen() {
   const opponents = Math.min(most, Math.max(fewest, count))
   const nameOf = (i: number) => names[i].trim() || tx`Spieler ${i + 1}`
 
-  const playSpike = () => {
+  // Corellian Spike and Coruscant Shift start straight away: there are no tokens to choose.
+  const playChips = () => {
     unlockAudio()
     const seated = together ? people : 1
-    startSpike({
-      variant: 'spike',
-      mode: 'free',
+    const session = {
+      variant,
+      mode: 'free' as const,
       table: null,
-      title: together ? tx`Runde am Gerät` : 'Corellian Spike',
+      title: together ? tx`Runde am Gerät` : variant === 'spike' ? 'Corellian Spike' : 'Coruscant Shift',
       venue: randomVenueId(),
       seats: [...Array.from({ length: seated }, () => null), ...pickOpponents(opponents, difficulty)],
       people: together ? Array.from({ length: people }, (_, seat) => ({ seat, name: nameOf(seat), tokens: [] })) : undefined,
-      startingChips: spikeChips,
-    })
-    go('spike')
+      startingChips: variant === 'spike' ? spikeChips : shiftChips,
+    }
+    if (variant === 'spike') startSpike(session)
+    else startShift(session)
+    go(variant === 'spike' ? 'spike' : 'shift')
   }
 
   // Several people at one device: everybody gets three tokens at random, and off it goes.
@@ -139,14 +145,17 @@ export function FreePlayScreen() {
               value={variant}
               onChange={setVariant}
               options={[
-                { id: 'kessel', name: 'Kessel Sabacc' },
-                { id: 'spike', name: 'Corellian Spike' },
+                { id: 'kessel', name: 'Kessel' },
+                { id: 'spike', name: 'Spike' },
+                { id: 'shift', name: 'Shift' },
               ]}
             />
             <p className={s.fieldNote}>
               {variant === 'kessel'
-                ? tx`Zwei Karten, drei Runden, Shift-Tokens. Das Spiel der Karriere.`
-                : tx`Die Karten sollen zusammen null ergeben. Mit Setzrunden, zwei Töpfen und den Spike-Würfeln.`}
+                ? tx`Kessel Sabacc: zwei Karten, drei Runden, Shift-Tokens. Das Spiel der Karriere.`
+                : variant === 'spike'
+                  ? tx`Corellian Spike: Die Karten sollen zusammen null ergeben. Mit Setzrunden, zwei Töpfen und den Spike-Würfeln.`
+                  : tx`Coruscant Shift: Die Würfel geben Zielzahl und Farbe vor. Aus fünf Karten wählst du die, die das Ziel treffen.`}
             </p>
           </section>
           <section className={s.field}>
@@ -203,10 +212,14 @@ export function FreePlayScreen() {
             <>
               <section className={s.field}>
                 <h2 className={s.fieldLabel}>{tx`Chips pro Spieler`}</h2>
-                <Segments<number> value={spikeChips} onChange={setSpikeChips} options={[10, 20, 30].map((n) => ({ id: n, name: String(n) }))} />
+                {variant === 'spike' ? (
+                  <Segments<number> value={spikeChips} onChange={setSpikeChips} options={[10, 20, 30].map((n) => ({ id: n, name: String(n) }))} />
+                ) : (
+                  <Segments<number> value={shiftChips} onChange={setShiftChips} options={[8, 10, 15].map((n) => ({ id: n, name: String(n) }))} />
+                )}
                 <p className={s.fieldNote}>{tx`Der Grundeinsatz steigt alle vier Hände, damit eine Partie ein Ende findet.`}</p>
               </section>
-              <button className={cx(common.btn, common.btnPrimary, common.btnBlock)} onClick={playSpike}>
+              <button className={cx(common.btn, common.btnPrimary, common.btnBlock)} onClick={playChips}>
                 {tx`Spiel starten`}
               </button>
             </>

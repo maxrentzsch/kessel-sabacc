@@ -5,8 +5,9 @@ Where Kessel Sabacc could go after 1.2. Smaller ideas that do not belong to a ph
 
 ## Where we stand
 
-- Two variants with pure, seeded rules engines and AI: Kessel Sabacc (`src/engine`) and Corellian
-  Spike (`src/spike`), both in the career since 2.0.
+- Three variants with pure, seeded rules engines and AI: Kessel Sabacc (`src/engine`), Corellian
+  Spike (`src/spike`), both in the career since 2.0, and Coruscant Shift (`src/shift`), in free
+  play since 2.1.
 - A career over three charts: Tarsk, the Kessel sector (act 1) and the trade route (act 2), with
   duels, legend mode, stakes, jobs, syndicates, the tour, the daily hand, the Sandrunner with five
   modules, a collection, achievements and story scenes. Acts 3 and 4 are still to come.
@@ -248,7 +249,16 @@ and every new line exists in both languages.
 
 - **Coruscant Shift**: engine, AI, art, rules page and its own learning path with an old croupier
   as teacher. Its rules are checked against sources before anything is built, as Corellian
-  Spike's were.
+  Spike's were. *As built in 2.1, in free play:* the deck of Corellian Spike (sylops count for
+  every suit); a gold die for the target number (0, 0, +5, −5, +10, −10) and a silver one for
+  the target suit; five cards, a selection set aside, a betting round, the shift that refills the
+  hand to five, an improvement from the new cards only, a second betting round, and the reveal:
+  nearest to the target wins, then most cards of the target suit, then the pot is split. Sources:
+  the rules published with the Galactic Starcruiser deck as Hyperspace Props and Games of the
+  Galaxy give them. What they leave open is settled here: at least one card in a selection, bets
+  of 1 and 2 chips with two raises at most, an ante that rises every four hands. Orrin Vale, the
+  old croupier, gives a practice hand from the rules page; passing the device works as in the
+  other two games. Cheating and the career tables come with act 3.
 - **Act 3 places** (all new): a gambling hall a thousand levels below the sky (learning tables),
   a penthouse round of senate advisers, a gala on an orbital yacht, a customs hangar of the
   garrison with Zula opening the door, the gamblers' arena, and as the finale a game for the last
@@ -357,7 +367,8 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.8 | 7a: one device, several players (Kessel Sabacc) |
 | 1.9 | Phase 4, groundwork: the Spike table ready for the career |
 | 2.0 | Phase 4: act 2 with Corellian Spike, its learning path and the keys |
-| 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
+| 2.1 | Phase 5, first step: Coruscant Shift in free play |
+| 2.x | Phase 5: acts 3 and 4, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |
 
 ## Review: gaps found, and how the plan closes them

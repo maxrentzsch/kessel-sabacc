@@ -19,6 +19,7 @@ import { ProfileScreen } from './ui/screens/Profile'
 import { ResultScreen } from './ui/screens/Result'
 import { RulesScreen } from './ui/screens/Rules'
 import { DailyScreen, TourScreen } from './ui/screens/Tour'
+import { ShiftTableScreen } from './ui/shift/ShiftTable'
 import { SpikeTableScreen } from './ui/spike/SpikeTable'
 import { TableScreen } from './ui/table/Table'
 
@@ -29,6 +30,7 @@ const SCREENS: Record<Screen, () => ReactNode> = {
   loadout: LoadoutScreen,
   table: TableScreen,
   spike: SpikeTableScreen,
+  shift: ShiftTableScreen,
   result: ResultScreen,
   rules: RulesScreen,
   profile: ProfileScreen,
@@ -57,7 +59,7 @@ export function App() {
   }, [chips])
 
   // The cantina is loudest at the table and a murmur behind the menus.
-  useEffect(() => setAmbience(screen === 'table' || screen === 'spike' ? 0.4 : 0.15), [screen])
+  useEffect(() => setAmbience(screen === 'table' || screen === 'spike' || screen === 'shift' ? 0.4 : 0.15), [screen])
 
   return (
     <MotionConfig reducedMotion="user">

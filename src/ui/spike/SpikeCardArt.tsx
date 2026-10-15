@@ -29,6 +29,15 @@ function Pip({ suit, x, y, r }: { suit: SpikeSuit; x: number; y: number; r: numb
   return <path d={`M${x} ${y - r * 1.1}L${x + r * 1.1} ${y + r * 0.85}H${x - r * 1.1}Z`} />
 }
 
+/** A suit on its own, as the silver die shows it. */
+export function SuitMark({ suit, size = 16 }: { suit: SpikeSuit; size?: number }) {
+  return (
+    <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden fill="currentColor">
+      <Pip suit={suit} x={10} y={10} r={7} />
+    </svg>
+  )
+}
+
 /** The corner band runs along the upper left edge; ten places for the dots that count the value. */
 const BAND = 'M26 2H45.5L23.5 62H2Z'
 const DOTS: [number, number][] = Array.from({ length: 10 }, (_, i) => [35.4 - i * 2.13, 9.2 + i * 5.2])

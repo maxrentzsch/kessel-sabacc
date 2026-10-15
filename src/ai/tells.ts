@@ -39,6 +39,7 @@ export const TELLS: Record<string, Tell> = {
   sable: { gesture: tx`blättert in einem leeren Notizbuch`, meaning: 'weak' },
   veyra: { gesture: tx`lächelt nur mit einem Mundwinkel`, meaning: 'strong' },
   corvin: { gesture: tx`schwenkt sein Glas`, meaning: 'weak' },
+  orrin: { gesture: tx`dreht einen Würfel zwischen den Fingern`, meaning: 'strong' },
 }
 
 /**

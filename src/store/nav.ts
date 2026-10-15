@@ -9,6 +9,7 @@ export type Screen =
   | 'loadout'
   | 'table'
   | 'spike'
+  | 'shift'
   | 'result'
   | 'rules'
   | 'profile'

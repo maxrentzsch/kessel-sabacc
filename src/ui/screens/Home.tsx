@@ -99,7 +99,7 @@ export function HomeScreen() {
           </button>
           <button className={cx(common.plate, s.menuTile)} onClick={() => go('free')}>
             <span>{tx`Freies Spiel`}</span>
-            <small>{tx`Kessel oder Corellian Spike`}</small>
+            <small>{tx`Drei Spielarten`}</small>
           </button>
           <button className={cx(common.plate, s.menuTile)} onClick={practise}>
             <span>{tx`Übung`}</span>

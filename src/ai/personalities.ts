@@ -239,6 +239,16 @@ export const CHARACTERS: Record<string, Character> = {
     profile: profile('hard', 0.3, 0.7),
     tokens: ['freeDraw', 'refund', 'generalTariff'],
   },
+  // ── Act 3: the core, where Coruscant Shift is played ──
+  orrin: {
+    id: 'orrin',
+    name: tx`Orrin Vale`,
+    title: tx`Alter Croupier von Coruscant`,
+    hue: 215,
+    sigil: 'hood',
+    profile: profile('medium', -0.2, 0.4),
+    tokens: ['freeDraw', 'refund', 'generalTariff'],
+  },
   corvin: {
     id: 'corvin',
     name: tx`Corvin Ashe`,

@@ -61,7 +61,7 @@ interface CardProps {
 }
 
 /** A card that keeps its identity while it travels between deck, hands and discard pile. */
-function Card({ card, hand, faceUp, lean = 0, className, onClick, label }: CardProps) {
+export function Card({ card, hand, faceUp, lean = 0, className, onClick, label }: CardProps) {
   const speed = tempo()
   return (
     <motion.div

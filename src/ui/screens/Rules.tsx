@@ -5,12 +5,14 @@ import { TOKEN_IDS } from '../../engine'
 import type { Card, CardKind, Suit } from '../../engine'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useNav } from '../../store/nav'
+import { useShift } from '../../store/shift'
 import { useSpike } from '../../store/spike'
 import { CardFace } from '../art/CardArt'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
 import common from '../common/common.module.css'
 import { cx } from '../cx'
+import { ShiftRules } from '../shift/ShiftRules'
 import { SpikeRules } from '../spike/SpikeRules'
 import s from './Screens.module.css'
 import { tx } from '../../i18n'
@@ -46,8 +48,9 @@ export function Section({ no, title, children }: { no: number; title: string; ch
 
 export function RulesScreen() {
   const go = useNav((n) => n.go)
-  const [variant, setVariant] = useState<'kessel' | 'spike'>('kessel')
+  const [variant, setVariant] = useState<'kessel' | 'spike' | 'shift'>('kessel')
   const startSpikeTutorial = useSpike((g) => g.startTutorial)
+  const startShiftTutorial = useShift((g) => g.startTutorial)
   return (
     <div className={common.screen}>
       <header className={common.screenHead}>
@@ -60,13 +63,29 @@ export function RulesScreen() {
         <div className={cx(common.column, s.rules)}>
           <div className={s.segments} role="radiogroup" aria-label={tx`Spielart`}>
             <button role="radio" aria-checked={variant === 'kessel'} className={cx(s.segment, variant === 'kessel' && s.segmentOn)} onClick={() => setVariant('kessel')}>
-              Kessel Sabacc
+              Kessel
             </button>
             <button role="radio" aria-checked={variant === 'spike'} className={cx(s.segment, variant === 'spike' && s.segmentOn)} onClick={() => setVariant('spike')}>
-              Corellian Spike
+              Spike
+            </button>
+            <button role="radio" aria-checked={variant === 'shift'} className={cx(s.segment, variant === 'shift' && s.segmentOn)} onClick={() => setVariant('shift')}>
+              Shift
             </button>
           </div>
-          {variant === 'spike' ? <SpikeRules /> : <KesselRules />}
+          <h2 className={s.rulesVariant}>{variant === 'kessel' ? 'Kessel Sabacc' : variant === 'spike' ? 'Corellian Spike' : 'Coruscant Shift'}</h2>
+          {variant === 'spike' ? <SpikeRules /> : variant === 'shift' ? <ShiftRules /> : <KesselRules />}
+          {variant === 'shift' && (
+            <button
+              className={cx(common.btn, common.btnPrimary, common.btnBlock)}
+              onClick={() => {
+                unlockAudio()
+                startShiftTutorial()
+                go('shift')
+              }}
+            >
+              {tx`Übungshand mit Orrin`}
+            </button>
+          )}
           {variant === 'spike' && (
             <button
               className={cx(common.btn, common.btnPrimary, common.btnBlock)}

@@ -1,0 +1,87 @@
+/* What the Coruscant Shift table adds to the styles it shares with the Spike table. */
+
+/* the two dice of the hand, in the middle of the table */
+.dice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: calc(var(--t) * 3.4);
+}
+
+.dice > span:last-child {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+}
+
+.die {
+  display: grid;
+  place-items: center;
+  width: clamp(30px, calc(var(--t) * 7.5), 44px);
+  height: clamp(30px, calc(var(--t) * 7.5), 44px);
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: clamp(12px, calc(var(--t) * 3), 17px);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+.gold {
+  color: #3a2606;
+  background: linear-gradient(160deg, #ffe08a, #d9a332 60%, #a8741a);
+}
+
+.silver {
+  color: #22303a;
+  background: linear-gradient(160deg, #f4f7fa, #b9c4cc 60%, #8a98a2);
+}
+
+/* what is set aside: a smaller row above the hand, face up for its owner */
+.selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.selectionLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.selectionCards {
+  display: flex;
+  gap: 4px;
+}
+
+.selectionCard {
+  width: calc(var(--card-w) * 0.52);
+  perspective: calc(var(--card-w) * 3);
+}
+
+/* a card tapped to go into the selection rises out of the hand */
+.chosen {
+  translate: 0 -14px;
+}
+
+.dim {
+  opacity: 0.45;
+}
+
+/* an opponent's selection, face down, set a little apart */
+.setAside {
+  translate: 0 -6px;
+}
+
+.suited {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}

@@ -2347,3 +2347,12 @@
 .keyHeld svg {
   color: var(--good);
 }
+
+/* the full name of the variant whose rules are shown */
+.rulesVariant {
+  margin: 4px 0 -4px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
