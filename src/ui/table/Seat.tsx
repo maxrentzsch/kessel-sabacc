@@ -144,7 +144,7 @@ export function Seat({ player, character, slot, opponents }: Props) {
           {life.bubble && (
             <motion.span
               key={life.bubble.id}
-              className={cx(s.bubble, life.bubble.speech && s.bubbleSpeech)}
+              className={cx(s.bubble, life.bubble.speech && s.bubbleSpeech, life.bubble.gesture && s.bubbleGesture)}
               initial={{ opacity: 0, scale: 0.6, y: 6 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.85 }}

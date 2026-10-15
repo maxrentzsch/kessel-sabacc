@@ -8,7 +8,9 @@ import { chooseAction } from '../../ai/policy'
 import { canPlayToken, Rng, SUITS } from '../../engine'
 import type { Card, GameState, Player } from '../../engine'
 import { scoreLabel, SOURCE_NAME, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
+import { useCareer } from '../../store/career'
 import { HUMAN, useGame } from '../../store/game'
+import { Critter } from '../art/Critter'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
 import { cx } from '../cx'
@@ -93,6 +95,8 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
   const [wave, setWave] = useState<'near' | 'far' | null>(null)
   const session = useGame((g) => g.session)!
   const tipsLeft = useGame((g) => g.tipsLeft)
+  // Once it has come along, Bix gives the tips; the practice hand keeps the lamp.
+  const bix = useCareer((c) => (c.hasShip ? c.bix : null))
   const takeTip = useGame((g) => g.takeTip)
   /** advice holds for the situation it was given in */
   const [tip, setTip] = useState<{ game: GameState; text: string } | null>(null)
@@ -180,7 +184,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
           {me.embargoed && <span className={cx(s.status, s.statusBad)}>{tx`Embargo`}</span>}
           {!session.tutorial && (
             <button className={s.tipBtn} disabled={!canAct || tipsLeft <= 0 || advice !== null} onClick={askTip} aria-label={tx`Tipp – noch ${Number.isFinite(tipsLeft) ? tipsLeft : tx`beliebig viele`}`}>
-              <Icon name="bulb" size={15} />
+              {bix ? <Critter animal={bix} size={22} perch={false} /> : <Icon name="bulb" size={15} />}
               {Number.isFinite(tipsLeft) && <b className="num">{tipsLeft}</b>}
             </button>
           )}

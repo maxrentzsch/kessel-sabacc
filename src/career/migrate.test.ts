@@ -34,12 +34,12 @@ describe('saved careers', () => {
   })
 
   it('pass through unchanged when they are already current', () => {
-    const current = { ...SAVE_1_2, backupAt: 12, hasShip: false, bix: 'convor', debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor' }
+    const current = { ...SAVE_1_2, backupAt: 12, hasShip: false, bix: 'convor', debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor', dossiers: {} }
     expect(migrateCareer(current, CAREER_VERSION)).toEqual(current)
   })
 
   it('survive storage that holds nothing usable', () => {
-    const empty = { backupAt: 0, hasShip: false, bix: null, storySeen: [], debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor' }
+    const empty = { backupAt: 0, hasShip: false, bix: null, storySeen: [], debt: { paid: 0, extra: 0 }, standing: {}, jobsDone: [], location: 'anchor', dossiers: {} }
     expect(migrateCareer(null, 1)).toEqual(empty)
     expect(migrateCareer([1, 2], 1)).toEqual(empty)
   })

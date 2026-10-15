@@ -13,7 +13,9 @@ import type { SpikeCard, SpikeEvent, SpikePlayer, SpikeState } from '../../spike
 import { chooseSpikeAction, spikeWinChance } from '../../spike/ai'
 import { useNav } from '../../store/nav'
 import { tempo, useSettings } from '../../store/settings'
+import { useCareer } from '../../store/career'
 import { SPIKE_HUMAN, useSpike } from '../../store/spike'
+import { Critter } from '../art/Critter'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
 import type { Mood } from '../art/Portrait'
@@ -88,7 +90,7 @@ function Card({ card, hand, faceUp, lean = 0, className, onClick, label }: CardP
 
 /** What an opponent says and shows: a note for every move, a line now and then. */
 function useSeatLife(player: SpikePlayer, character: Character) {
-  const [bubble, setBubble] = useState<{ id: number; text: string; speech: boolean } | null>(null)
+  const [bubble, setBubble] = useState<{ id: number; text: string; speech: boolean; gesture?: boolean } | null>(null)
   const [mood, setMood] = useState<Mood | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
@@ -103,6 +105,17 @@ function useSeatLife(player: SpikePlayer, character: Character) {
     sfx.voice(character.hue, 2 + Math.ceil(text.length / 9), character.sigil === 'droid')
     later(1500 + text.length * 55, () => setBubble((b) => (b?.id === id ? null : b)))
   }
+
+  // A gesture before the move: shown as an action, never explained.
+  const gesture = useSpike((g) => (g.gesture?.playerId === player.id ? g.gesture : null))
+  const seenGesture = useRef(gesture?.id ?? 0)
+  useEffect(() => {
+    if (!gesture || gesture.id === seenGesture.current) return
+    seenGesture.current = gesture.id
+    const id = -1000 - gesture.id
+    setBubble((b) => (b?.speech ? b : { id, text: gesture.text, speech: false, gesture: true }))
+    later(2600, () => setBubble((b) => (b?.id === id ? null : b)))
+  }, [gesture])
 
   useSpikeFeed((event, id) => {
     const note = seatNote(event, player.id)
@@ -150,7 +163,7 @@ function Seat({ player, character, slot, opponents }: { player: SpikePlayer; cha
           {life.bubble && (
             <motion.span
               key={life.bubble.id}
-              className={cx(t.bubble, life.bubble.speech && t.bubbleSpeech)}
+              className={cx(t.bubble, life.bubble.speech && t.bubbleSpeech, life.bubble.gesture && t.bubbleGesture)}
               initial={{ opacity: 0, scale: 0.6, y: 6 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.85 }}
@@ -349,6 +362,7 @@ export function SpikeTableScreen() {
             ? tx`Nach jeder Setzrunde rollen die Spike-Würfel. Bei einem Pasch bekommen alle neue Karten.`
             : null
   const advice = tip && tip.game === game ? tip.text : null
+  const bix = useCareer((c) => (c.hasShip ? c.bix : null))
   const hintText = advice ?? (hints ? coaching : null)
   const hint: ReactNode = hintText ? (
     <p className={cx(t.hint, advice !== null && t.tip)}>
@@ -472,7 +486,7 @@ export function SpikeTableScreen() {
                 onClick={() => setTip({ game, text: advise(game) })}
                 aria-label={tx`Tipp`}
               >
-                <Icon name="bulb" size={15} />
+                {bix ? <Critter animal={bix} size={22} perch={false} /> : <Icon name="bulb" size={15} />}
               </button>
             </p>
           )}

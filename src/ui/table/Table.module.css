@@ -848,6 +848,12 @@
   pointer-events: none;
 }
 
+.bubbleGesture {
+  font-style: italic;
+  color: var(--cream);
+  border-style: dashed;
+}
+
 .bubbleSpeech {
   bottom: 90%;
   max-width: min(48cqw, 240px);

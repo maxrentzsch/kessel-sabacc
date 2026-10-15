@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { Character } from '../ai/personalities'
+import { winChance } from '../ai/evaluate'
 import { chooseAction } from '../ai/policy'
+import { showsTell, strengthOf, TELLS, tellHeld } from '../ai/tells'
 import { sfx } from '../audio/sfx'
 import type { TableDef } from '../career/tables'
 import { REP } from '../career/reputation'
@@ -10,6 +12,7 @@ import { TUTORIAL_OPPONENT, TUTORIAL_STEPS, tutorialGame, tutorialScript } from 
 import { applyAction, createGame, randomSeed, Rng, STANDARD_RULES, SUITS } from '../engine'
 import type { Action, GameConfig, GameEvent, GameRecord, GameState, Rules, TokenId } from '../engine'
 import { useCareer } from './career'
+import { useToasts } from './toasts'
 import type { GameSummary, GameTally } from './career'
 import { tempo } from './settings'
 import { tx } from '../i18n'
@@ -125,6 +128,10 @@ interface GameStore {
   savedRun: string | null
   /** how often the player may still ask for advice in this game */
   tipsLeft: number
+  /** the last gesture an opponent made, see ai/tells */
+  gesture: { playerId: number; text: string; id: number } | null
+  /** Bix can cover for the player once a game when a peek goes wrong; how often it still can */
+  bixCover: number
 
   /** Spend one piece of advice; false if there is none left. */
   takeTip(): boolean
@@ -133,7 +140,7 @@ interface GameStore {
    * Sneak a look at one of an opponent's cards. Raises suspicion; at 100 the
    * player is caught instead, pays a fine and sees nothing.
    */
-  peek(target: number): 'seen' | 'caught' | null
+  peek(target: number): 'seen' | 'caught' | 'covered' | null
   /** Pick an interrupted game up where it stopped. */
   resume(): boolean
   start(session: Session, humanTokens: TokenId[]): void
@@ -149,6 +156,13 @@ interface GameStore {
 /** Advice is free where nothing is at stake; a game for credits allows a few looks at it. */
 export const TIPS_PER_GAME = 3
 const tipsFor = (session: Session) => (session.mode === 'free' ? Infinity : TIPS_PER_GAME)
+
+/** Bix covers for a peek gone wrong once a game; the vulptex, a born thief, twice. Not before it has come along. */
+function bixCoverFor(session: Session): number {
+  const { hasShip, bix } = useCareer.getState()
+  if (!hasShip || !bix || session.tutorial) return 0
+  return bix === 'vulptex' ? 2 : 1
+}
 
 /** Seats in the order they show their hands: clockwise from the opening player. */
 export function revealOrder(game: GameState): number[] {
@@ -170,6 +184,9 @@ let aiRng = new Rng(1)
 let peekRng = new Rng(1)
 /** the current game, move by move; null for the practice hand and for games resumed from before recording */
 let record: GameRecord | null = null
+/** seats that made their gesture in the current hand; checked against their cards at the reveal */
+let handTells = new Set<number>()
+let gestureId = 0
 
 /** The game being played as a record that replays to the same result (see engine/replay). */
 export function currentRecord(): GameRecord | null {
@@ -306,7 +323,24 @@ export const useGame = create<GameStore>((set, get) => {
     const game = get().game!
     tally.minChips = Math.min(tally.minChips, game.players[HUMAN].chips + game.players[HUMAN].invested)
     for (const e of events) {
-      if (e.type === 'handStart') drewThisHand = false
+      if (e.type === 'handStart') {
+        drewThisHand = false
+        handTells = new Set()
+      }
+      if (e.type === 'tokenPlayed' && e.playerId !== HUMAN) {
+        const seat = get().session?.seats[e.playerId]
+        if (seat) career.noteOpponentToken(seat.id, e.token)
+      }
+      if (e.type === 'settled') {
+        // Gestures made this hand are held against the cards now on the table.
+        for (const playerId of handTells) {
+          const seat = get().session?.seats[playerId]
+          const result = e.result.ranking.find((r) => r.playerId === playerId)
+          const tell = seat && TELLS[seat.id]
+          if (tell && result && tellHeld(tell, { winner: result.winner, sabacc: result.score.category !== 'none' })) career.confirmTell(seat.id)
+        }
+        handTells = new Set()
+      }
       if (e.type === 'drew' && e.playerId === HUMAN) drewThisHand = true
       if (e.type === 'tokenPlayed' && e.playerId === HUMAN) {
         career.noteToken(e.token)
@@ -346,6 +380,23 @@ export const useGame = create<GameStore>((set, get) => {
     set({ outcome: won ? 'won' : 'lost', summary: useCareer.getState().finishGame(session, won, tally) })
   }
 
+  /**
+   * Before an opponent moves they may give their hand away with a gesture.
+   * Only once a hand each; the convor that came along as Bix spots them more often.
+   */
+  function gesture(game: GameState, playerId: number, session: Session): void {
+    const seat = session.seats[playerId]
+    const tell = seat && TELLS[seat.id]
+    const hand = game.players[playerId].hand
+    if (!seat || !tell || !hand || session.tutorial || game.phase !== 'turn' || handTells.has(playerId)) return
+    const opponents = game.players.filter((p) => !p.eliminated && p.id !== playerId).length
+    const strength = strengthOf(winChance(hand, game.modifiers, opponents))
+    const often = useCareer.getState().bix === 'convor' ? 1.4 : 1
+    if (!showsTell(tell, strength, seat.profile.difficulty, Math.random, often)) return
+    handTells.add(playerId)
+    set({ gesture: { playerId, text: tell.gesture, id: ++gestureId } })
+  }
+
   /** Let the AI seats and the scripted phases run until the human is needed. */
   async function pump(gen: number): Promise<void> {
     for (;;) {
@@ -379,6 +430,7 @@ export const useGame = create<GameStore>((set, get) => {
       if (actor.isHuman) break
 
       set({ thinking: actor.id })
+      gesture(game, actor.id, session)
       await wait(game.phase === 'turn' ? 750 + Math.random() * 500 : game.phase === 'discard' ? 550 : 1500)
       if (gen !== generation) return
       const profile = session.seats[actor.id]!.profile
@@ -406,6 +458,8 @@ export const useGame = create<GameStore>((set, get) => {
     nudge: 0,
     savedRun: loadRun()?.session.title ?? null,
     tipsLeft: 0,
+    gesture: null,
+    bixCover: 0,
 
     takeTip() {
       const { tipsLeft } = get()
@@ -424,6 +478,13 @@ export const useGame = create<GameStore>((set, get) => {
       const heat = suspicion + (20 + peekRng.next() * 18) * (1 + Math.max(0, rank) * 0.1)
       tally.peeks++
       useCareer.getState().bumpStats({ peeks: 1 })
+      if (heat >= 100 && get().bixCover > 0) {
+        // Bix knocks a glass over: everybody looks, nobody saw a thing – and neither did the player.
+        set({ suspicion: 25, peekUsed: true, bixCover: get().bixCover - 1 })
+        sfx.blocked()
+        useToasts.getState().push({ kind: 'note', title: tx`Bix lenkt ab`, text: tx`Ein Glas kippt um, alle schauen hin. Niemand hat etwas gesehen – du allerdings auch nicht.` })
+        return 'covered'
+      }
       if (heat >= 100) {
         tally.caught++
         // Getting caught at a syndicate's table costs standing with it, once a game.
@@ -454,7 +515,7 @@ export const useGame = create<GameStore>((set, get) => {
       peekRng = new Rng(run.peekState ?? randomSeed())
       // What happened before the interruption is lost, so claim nothing special about this game.
       tally = { handsLost: 1, minChips: 99, peeks: 0, caught: 1 }
-      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false , tipsLeft: tipsFor(run.session) })
+      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(run.session), gesture: null, bixCover: bixCoverFor(run.session) })
       // Give the table a moment to deal the cards back in.
       void wait(pauseAfter([{ type: 'handStart', hand: run.game.handNumber, dealer: run.game.dealer }], run.game.players.length)).then(() => pump(gen))
       return true
@@ -478,7 +539,7 @@ export const useGame = create<GameStore>((set, get) => {
       record = { config, actions: [] }
       peekRng = new Rng(config.seed ^ 0x2545f491)
       const { state, events } = createGame(config)
-      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(session) })
+      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(session), gesture: null, bixCover: bixCoverFor(session) })
       publish(state, events, [])
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))
     },

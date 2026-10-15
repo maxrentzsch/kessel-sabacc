@@ -151,6 +151,10 @@ export function HangarScreen() {
                 {done}/{ACHIEVEMENTS.length}
               </small>
             </button>
+            <button className={common.btn} onClick={() => go('dossiers')}>
+              {tx`Dossiers`}
+              <small className="num">{Object.keys(career.dossiers).length}</small>
+            </button>
           </div>
 
           {career.hasShip && <h2 className={s.fieldLabel}>{tx`Ausbau`}</h2>}

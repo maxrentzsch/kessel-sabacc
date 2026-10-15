@@ -93,6 +93,8 @@ interface CareerState extends Progress {
   jobsDone: string[]
   /** the table the player was last at; trips from there cost fuel */
   location: string
+  /** what the player has learnt about each opponent, by character id */
+  dossiers: Record<string, Dossier>
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -123,6 +125,10 @@ interface CareerState extends Progress {
   travel(tableId: string): boolean
   /** The price of a module's next level, after any discount. */
   modulePrice(moduleId: string): number | undefined
+  /** An opponent played a shift token: it goes into their file. */
+  noteOpponentToken(characterId: string, token: TokenId): void
+  /** An opponent's gesture turned out true at the reveal. */
+  confirmTell(characterId: string): void
   buy(id: string): boolean
   equip(id: string): void
   owns(id: string): boolean
@@ -165,9 +171,26 @@ const initial = () => ({
   standing: {} as Partial<Record<Syndicate, number>>,
   jobsDone: [] as string[],
   location: 'anchor',
+  dossiers: {} as Record<string, Dossier>,
   gameRep: 0,
   recent: [] as string[],
 })
+
+/** What the player knows about an opponent. */
+export interface Dossier {
+  /** games against them */
+  met: number
+  /** games the player won with them at the table */
+  won: number
+  /** games they won */
+  lost: number
+  /** shift tokens they have been seen playing */
+  tokens: TokenId[]
+  /** how often their gesture has proved true at a reveal */
+  tellProof: number
+}
+
+const emptyDossier = (): Dossier => ({ met: 0, won: 0, lost: 0, tokens: [], tellProof: 0 })
 
 /** How many games may pass without a backup code before the player is reminded of one. */
 export const BACKUP_EVERY = 15
@@ -335,6 +358,18 @@ export const useCareer = create<CareerState>()(
             bump('runnerUps')
           }
 
+          // Everybody who sat at the table goes into the files.
+          const dossiers = { ...s.dossiers }
+          for (const seat of session.seats) {
+            if (!seat) continue
+            const d = { ...(dossiers[seat.id] ?? emptyDossier()) }
+            d.met++
+            if (won) d.won++
+            else if (tally?.winner === seat.id) d.lost++
+            dossiers[seat.id] = d
+          }
+          patch.dossiers = dossiers
+
           // A syndicate takes note of whoever wins at its table for the first time.
           if (summary.firstWin && table?.syndicate) {
             patch.standing = { ...s.standing, [table.syndicate]: clampStanding((s.standing[table.syndicate] ?? 0) + 1) }
@@ -434,6 +469,20 @@ export const useCareer = create<CareerState>()(
           if (job.reward.standing) get().shiftStanding(job.reward.standing, 1)
           settle()
           return true
+        },
+
+        noteOpponentToken(characterId, token) {
+          set((s) => {
+            const d = s.dossiers[characterId] ?? emptyDossier()
+            return d.tokens.includes(token) ? s : { dossiers: { ...s.dossiers, [characterId]: { ...d, tokens: [...d.tokens, token] } } }
+          })
+        },
+
+        confirmTell(characterId) {
+          set((s) => {
+            const d = s.dossiers[characterId] ?? emptyDossier()
+            return { dossiers: { ...s.dossiers, [characterId]: { ...d, tellProof: d.tellProof + 1 } } }
+          })
         },
 
         shiftStanding(syndicate, delta) {

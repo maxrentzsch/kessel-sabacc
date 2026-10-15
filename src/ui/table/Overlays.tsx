@@ -6,6 +6,7 @@ import { venueOf } from '../../career/venues'
 import { canPlayToken, tokenTargets, TOKENS } from '../../engine'
 import type { GameState, PendingDice, PlayerResult, TokenId } from '../../engine'
 import { chipsText, scoreLabel, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
+import { useCareer } from '../../store/career'
 import { HUMAN, revealOrder, useGame } from '../../store/game'
 import { tempo } from '../../store/settings'
 import { Icon } from '../art/Icons'
@@ -348,6 +349,9 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
   const session = useGame((g) => g.session)!
   const peek = useGame((g) => g.peek)
   const used = useGame((g) => g.peekUsed)
+  const suspicion = useGame((g) => g.suspicion)
+  const cover = useGame((g) => g.bixCover)
+  const bix = useCareer((c) => c.bix)
   const ready = canAct && game.phase === 'turn' && !used
   const targets = game.players.filter((p) => !p.isHuman && !p.eliminated && p.hand)
 
@@ -361,6 +365,8 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
         <span>{tx`Verdacht`}</span>
         <Suspicion />
       </div>
+      {bix === 'lothcat' && suspicion >= 60 && <p className={s.tokenNote}>{tx`Bix legt die Ohren an. Der Tisch wird misstrauisch.`}</p>}
+      {cover > 0 && <p className={s.tokenNote}>{cover === 1 ? tx`Fliegt ein Blick auf, lenkt Bix ein Mal ab.` : tx`Fliegt ein Blick auf, lenkt Bix noch ${cover} Mal ab.`}</p>}
       {ready ? (
         <div className={s.targets}>
           {targets.map((p) => (

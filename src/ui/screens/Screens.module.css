@@ -1227,7 +1227,7 @@
 
 .hubLinks {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -2230,4 +2230,52 @@
 
 .jobMissed b {
   color: var(--bad);
+}
+
+/* ── Dossiers ────────────────────────────────────────────────────────────── */
+
+.dossier {
+  composes: plate from '../common/common.module.css';
+  --cut: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.dossier header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dossier header > div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.dossier header b {
+  font-size: 15px;
+}
+
+.dossier header em,
+.dossier header span {
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.dossierTell {
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+
+.dossierTell i {
+  color: var(--cream);
+}
+
+.dossierKnown {
+  color: var(--good);
 }

@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { sfx } from '../audio/sfx'
 import { Rng, randomSeed } from '../engine/rng'
-import { chooseSpikeAction } from '../spike/ai'
+import { showsTell, strengthOf, TELLS, tellHeld } from '../ai/tells'
+import { chooseSpikeAction, spikeWinChance } from '../spike/ai'
+import { isSabacc } from '../spike/scoring'
 import { applySpikeAction, createSpikeGame, IllegalSpikeAction } from '../spike'
 import type { SpikeAction, SpikeConfig, SpikeEvent, SpikeRecord, SpikeState } from '../spike'
 import { tx } from '../i18n'
@@ -28,6 +30,8 @@ interface SpikeStore {
   outcome: 'won' | 'lost' | null
   /** the dice are on show: what they rolled, until the table moves on */
   rolling: [number, number] | null
+  /** the last gesture an opponent made, see ai/tells */
+  gesture: { playerId: number; text: string; id: number } | null
   start(session: Session): void
   act(action: SpikeAction): void
   clear(): void
@@ -40,6 +44,9 @@ let aiRng = new Rng(1)
 let tally: GameTally = { handsLost: 0, minChips: 99, peeks: 0, caught: 0 }
 /** the current game, move by move */
 let record: SpikeRecord | null = null
+/** seats that made their gesture in the current hand */
+let handTells = new Set<number>()
+let gestureId = 0
 
 /** The game being played as a record that replays to the same result (see spike/replay). */
 export function currentSpikeRecord(): SpikeRecord | null {
@@ -135,7 +142,16 @@ export const useSpike = create<SpikeStore>((set, get) => {
     const me = state.players[SPIKE_HUMAN]
     tally.minChips = Math.min(tally.minChips, me.chips)
     for (const e of events) {
+      if (e.type === 'handStart') handTells = new Set()
       if (e.type !== 'settled') continue
+      // Gestures made this hand are held against the cards now on the table.
+      for (const playerId of handTells) {
+        const seat = get().session?.seats[playerId]
+        const placed = e.result.placing.find((x) => x.playerId === playerId)
+        const tell = seat && TELLS[seat.id]
+        if (tell && placed && tellHeld(tell, { winner: placed.winner, sabacc: isSabacc(placed.score) })) useCareer.getState().confirmTell(seat.id)
+      }
+      handTells = new Set()
       const won = e.result.winners.includes(SPIKE_HUMAN)
       if (!won) tally.handsLost++
       useCareer.getState().bumpStats({ hands: 1, handsWon: won ? 1 : 0 })
@@ -147,6 +163,19 @@ export const useSpike = create<SpikeStore>((set, get) => {
     record?.actions.push(action)
     publish(state, events)
     return events
+  }
+
+  /** Before an opponent moves they may give their hand away with a gesture, once a hand. */
+  function gesture(game: SpikeState, playerId: number, session: Session): void {
+    const seat = session.seats[playerId]
+    const tell = seat && TELLS[seat.id]
+    if (!seat || !tell || handTells.has(playerId) || (game.phase !== 'card' && game.phase !== 'bet')) return
+    const opponents = game.players.filter((p) => !p.eliminated && !p.folded && p.id !== playerId).length
+    const strength = strengthOf(spikeWinChance(game.players[playerId].hand, opponents))
+    const often = useCareer.getState().bix === 'convor' ? 1.4 : 1
+    if (!showsTell(tell, strength, seat.profile.difficulty, Math.random, often)) return
+    handTells.add(playerId)
+    set({ gesture: { playerId, text: tell.gesture, id: ++gestureId } })
   }
 
   /** Let the opponents and the table's own steps run until the player is needed. */
@@ -184,6 +213,7 @@ export const useSpike = create<SpikeStore>((set, get) => {
       if (actor.isHuman) break
 
       set({ thinking: actor.id })
+      gesture(game, actor.id, session)
       await wait(650 + Math.random() * 500)
       if (gen !== generation) return
       const action = chooseSpikeAction(get().game!, session.seats[actor.id]!.profile, aiRng)
@@ -201,6 +231,7 @@ export const useSpike = create<SpikeStore>((set, get) => {
     feed: [],
     outcome: null,
     rolling: null,
+    gesture: null,
 
     start(session) {
       const gen = ++generation

@@ -15,6 +15,7 @@ export type Screen =
   | 'ship'
   | 'collection'
   | 'achievements'
+  | 'dossiers'
   | 'tour'
   | 'daily'
 

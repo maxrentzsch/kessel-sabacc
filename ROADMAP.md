@@ -323,7 +323,8 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.3 | Phase 0, the new menu design, table polish |
 | 1.4 | Phase 1: the prologue on Tarsk, Bix, the launch |
 | 1.5 | Phase 2: act 1 |
-| 1.6 | Phase 3: tells, dossiers, the sleeve; 7a (one device, several players) |
+| 1.6 | Phase 3, first half: tells, dossiers, Bix at the table (tips, covering a peek gone wrong) |
+| 1.7 | Phase 3, second half: suspicion per opponent, the sleeve; 7a (one device, several players) |
 | 2.0 | Phase 4: act 2 with Corellian Spike |
 | 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |

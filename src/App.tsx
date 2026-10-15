@@ -10,6 +10,7 @@ import { Toasts } from './ui/common/Toasts'
 import { AchievementsScreen } from './ui/screens/Achievements'
 import { CareerScreen } from './ui/screens/Career'
 import { CollectionScreen } from './ui/screens/Collection'
+import { DossiersScreen } from './ui/screens/Dossiers'
 import { FreePlayScreen } from './ui/screens/FreePlay'
 import { HangarScreen } from './ui/screens/Hangar'
 import { HomeScreen } from './ui/screens/Home'
@@ -34,6 +35,7 @@ const SCREENS: Record<Screen, () => ReactNode> = {
   ship: HangarScreen,
   collection: CollectionScreen,
   achievements: AchievementsScreen,
+  dossiers: DossiersScreen,
   tour: TourScreen,
   daily: DailyScreen,
 }

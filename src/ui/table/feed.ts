@@ -47,6 +47,8 @@ export interface Bubble {
   text: string
   /** a spoken line rather than a status like "Steht" */
   speech: boolean
+  /** a gesture that may give the hand away, see ai/tells */
+  gesture?: boolean
 }
 
 export interface SeatLife {
@@ -103,6 +105,17 @@ export function useSeatLife(playerId: number, character: Character): SeatLife {
     feel(-caught, 'angry', 3600)
     say(-caught, 'cheat', 0.6, 300 + Math.random() * 900, true)
   })
+
+  // A gesture before the move: shown as an action, never explained.
+  const gesture = useGame((g) => (g.gesture?.playerId === playerId ? g.gesture : null))
+  const seenGesture = useRef(gesture?.id ?? 0)
+  useEffect(() => {
+    if (!gesture || gesture.id === seenGesture.current) return
+    seenGesture.current = gesture.id
+    const id = -1000 - gesture.id
+    setBubble((b) => (b?.speech ? b : { id, text: gesture.text, speech: false, gesture: true }))
+    later(2600, () => setBubble((b) => (b?.id === id ? null : b)))
+  }, [gesture])
 
   // The opening deal happens before the table is on screen, so greet from here.
   useEffect(() => {
