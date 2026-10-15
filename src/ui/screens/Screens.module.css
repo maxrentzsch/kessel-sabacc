@@ -2279,3 +2279,35 @@
 .dossierKnown {
   color: var(--good);
 }
+
+/* names of the people passing the device round */
+.nameGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nameInput {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--frame-line);
+  border-radius: 3px;
+  /* 16px keeps iOS from zooming in on focus */
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  background: rgb(0 0 0 / 0.35);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.nameInput::placeholder {
+  color: var(--ink-faint);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}

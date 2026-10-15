@@ -5,7 +5,7 @@ import type { Character } from '../../ai/personalities'
 import { sfx } from '../../audio/sfx'
 import type { GameEvent, GameState } from '../../engine'
 import { SOURCE_NAME, TOKEN_TEXT } from '../../i18n/texts'
-import { revealOrder, useGame } from '../../store/game'
+import { isYou, revealOrder, useGame } from '../../store/game'
 import { tempo } from '../../store/settings'
 import type { Mood } from '../art/Portrait'
 import { tx } from '../../i18n'
@@ -61,7 +61,7 @@ export interface SeatLife {
  * Everything that makes an opponent feel present: what they say, how they
  * react to the table and the short status notes about their moves.
  */
-export function useSeatLife(playerId: number, character: Character): SeatLife {
+export function useSeatLife(playerId: number, character: Character | null): SeatLife {
   const [bubble, setBubble] = useState<Bubble | null>(null)
   const [flash, setFlash] = useState<{ id: number; mood: Mood } | null>(null)
   const thinking = useGame((g) => g.thinking === playerId)
@@ -78,7 +78,7 @@ export function useSeatLife(playerId: number, character: Character): SeatLife {
     if (Math.random() > chance) return
     later(delay, () => {
       // One line at a time: nobody talks over themselves.
-      if (!force && Date.now() - spokeAt.current < 3500) return
+      if (!character || (!force && Date.now() - spokeAt.current < 3500)) return
       const text = banter(character.id, occasion)
       if (!text) return
       spokeAt.current = Date.now()
@@ -179,7 +179,7 @@ export function useSeatLife(playerId: number, character: Character): SeatLife {
 /** One line describing an event for the status ticker. */
 export function describe(event: GameEvent, game: GameState): string | null {
   const name = (id: number) => game.players[id].name
-  const you = (id: number) => game.players[id].isHuman
+  const you = (id: number) => isYou(game, id)
   // Whole sentences for every case: the two languages do not build them alike.
   switch (event.type) {
     case 'handStart':

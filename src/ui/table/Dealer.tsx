@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { sfx } from '../../audio/sfx'
 import { STANDARD_RULES } from '../../engine'
 import type { Rules } from '../../engine'
-import { HUMAN, useGame } from '../../store/game'
+import { isYou, seatsAround, useGame } from '../../store/game'
 import { tempo } from '../../store/settings'
 import { cx } from '../cx'
 import { useFeed } from './feed'
@@ -30,6 +30,7 @@ type Gesture = 'deal' | 'shuffle' | 'alarm'
 export function Dealer() {
   const game = useGame((g) => g.game)!
   const session = useGame((g) => g.session)!
+  const viewer = useGame((g) => g.viewer)
   const suspicion = useGame((g) => g.suspicion)
   const caught = useGame((g) => g.caught)
   const [line, setLine] = useState<{ id: number; text: string } | null>(null)
@@ -102,13 +103,13 @@ export function Dealer() {
         say(tx`Karten auf den Tisch.`)
         break
       case 'eliminated':
-        say(event.playerId === HUMAN ? tx`Du bist raus.` : tx`${current.players[event.playerId].name} ist raus.`, 900)
+        say(isYou(current, event.playerId) ? tx`Du bist raus.` : tx`${current.players[event.playerId].name} ist raus.`, 900)
         break
     }
   })
 
   // Look at whoever is to move: opponents sit along the far rim, the player in front of it.
-  const opponents = game.players.filter((p) => !p.isHuman)
+  const opponents = seatsAround(game, viewer)
   const slot = opponents.findIndex((p) => p.id === game.current)
   const idle = REVEAL_PHASES.includes(game.phase)
   const gaze = gesture === 'alarm' || (wary && !idle) ? { x: 2.2, y: 2 } : idle ? { x: 1.2, y: -0.4 } : slot < 0 ? { x: 2.2, y: 2 } : { x: 0.6 + (SLOTS[opponents.length][slot].x + 1) * 1.1, y: -1.8 }

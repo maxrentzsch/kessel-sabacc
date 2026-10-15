@@ -7,7 +7,7 @@ import { canPlayToken, tokenTargets, TOKENS } from '../../engine'
 import type { GameState, PendingDice, PlayerResult, TokenId } from '../../engine'
 import { chipsText, scoreLabel, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
-import { HUMAN, revealOrder, useGame } from '../../store/game'
+import { isHotseat, isYou, revealOrder, useGame } from '../../store/game'
 import { tempo, useSettings } from '../../store/settings'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
@@ -17,13 +17,14 @@ import { Sheet } from '../common/Sheet'
 import { cx } from '../cx'
 import { useFeed } from './feed'
 import { useInspect } from './inspect'
+import { coverCards } from './PlayingCard'
 import s from './Table.module.css'
 import { tx } from '../../i18n'
 
 // ── Shift token sheet ────────────────────────────────────────────────────────
 
-function whyNot(game: GameState, token: TokenId, canAct: boolean): string {
-  const me = game.players[HUMAN]
+function whyNot(game: GameState, viewer: number, token: TokenId, canAct: boolean): string {
+  const me = game.players[viewer]
   if (!canAct || game.phase !== 'turn') return tx`Tokens spielst du in deinem Zug, bevor du ziehst oder stehst.`
   if (game.tokenPlayedThisTurn) return tx`Du hast in diesem Zug schon ein Token gespielt.`
   if (token === 'freeDraw' && me.embargoed) return tx`Embargo: Du darfst in diesem Zug nicht ziehen.`
@@ -47,6 +48,7 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
   const game = useGame((g) => g.game)!
   const session = useGame((g) => g.session)!
   const act = useGame((g) => g.act)
+  const viewer = useGame((g) => g.viewer)
   // Keep the last token around so the sheet can animate out with its content.
   const [shown, setShown] = useState(token)
   useEffect(() => {
@@ -56,8 +58,8 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
   if (!t) return null
 
   const text = TOKEN_TEXT[t]
-  const playable = mine && canAct && canPlayToken(game, HUMAN, t)
-  const targets = playable ? tokenTargets(game, HUMAN, t) : []
+  const playable = mine && canAct && canPlayToken(game, viewer, t)
+  const targets = playable ? tokenTargets(game, viewer, t) : []
   const play = (target?: number) => {
     onClose()
     act({ type: 'playToken', token: t, target })
@@ -95,7 +97,7 @@ export function TokenSheet({ canAct }: { canAct: boolean }) {
         </>
       )}
 
-      {mine && !playable && <p className={s.tokenNote}>{whyNot(game, t, canAct)}</p>}
+      {mine && !playable && <p className={s.tokenNote}>{whyNot(game, viewer, t, canAct)}</p>}
 
       <div className={common.sheetActions}>
         <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
@@ -124,13 +126,13 @@ export function TokenBanner() {
   const [banner, setBanner] = useState<Banner | null>(null)
   useFeed((event, id) => {
     if (event.type !== 'tokenPlayed') return
-    const players = useGame.getState().game!.players
-    const name = (p: number) => (p === HUMAN ? tx`Du` : players[p].name)
+    const game = useGame.getState().game!
+    const players = game.players
     setBanner({
       id,
       token: event.token,
-      who: event.playerId === HUMAN ? tx`Du spielst` : tx`${players[event.playerId].name} spielt`,
-      target: event.target !== undefined ? (event.target === HUMAN ? tx`gegen dich` : tx`gegen ${name(event.target)}`) : null,
+      who: isYou(game, event.playerId) ? tx`Du spielst` : tx`${players[event.playerId].name} spielt`,
+      target: event.target !== undefined ? (isYou(game, event.target) ? tx`gegen dich` : tx`gegen ${players[event.target].name}`) : null,
     })
     setTimeout(() => setBanner((b) => (b?.id === id ? null : b)), 1900 * tempo())
   })
@@ -222,7 +224,8 @@ export function DiceOverlay({ canAct }: { canAct: boolean }) {
     setTimeout(() => setRoll((r) => (r?.chosen != null ? null : r)), 1000 * tempo())
   })
 
-  const mine = roll?.playerId === HUMAN
+  const viewer = useGame((g) => g.viewer)
+  const mine = roll?.playerId === viewer
   const pickable = mine && canAct && roll !== null && !roll.rolling && roll.chosen === null
   const choose = (value: number) =>
     act(roll!.purpose === 'prime' ? { type: 'choosePrime', value } : { type: 'chooseImpostor', value })
@@ -287,7 +290,7 @@ export function RevealCallout() {
   let call: { key: string; kicker?: string; text: string; sabacc?: boolean } | null = null
   if (game.phase === 'showdown' && step !== null && game.result) {
     const order = revealOrder(game)
-    const name = (id: number) => (id === HUMAN ? tx`Du` : game.players[id].name)
+    const name = (id: number) => (isYou(game, id) ? tx`Du` : game.players[id].name)
     if (step < 0) {
       call = { key: 'intro', text: tx`Karten auf den Tisch` }
     } else if (step < order.length) {
@@ -295,7 +298,7 @@ export function RevealCallout() {
       if (r.score.category !== 'none') call = { key: `hand-${step}`, kicker: name(order[step]), text: SABACC_CALL[r.score.category], sabacc: true }
     } else {
       const winners = game.result.ranking.filter((r) => r.winner).map((r) => r.playerId)
-      const mine = winners.includes(HUMAN)
+      const mine = winners.some((id) => isYou(game, id))
       call = {
         key: 'winner',
         kicker: winners.length > 1 ? tx`Unentschieden` : tx`Die Hand geht an`,
@@ -580,7 +583,7 @@ function ResultRow({ r, index }: { r: PlayerResult; index: number }) {
     >
       <Portrait character={session.seats[r.playerId]} size={40} frame />
       <div className={s.resultWho}>
-        <b>{player.isHuman ? tx`Du` : player.name}</b>
+        <b>{isYou(game, player.id) ? tx`Du` : player.name}</b>
         <span className="num">{scoreLabel(r.score)}</span>
       </div>
       <span className={cx(s.resultValues, 'num')}>
@@ -607,15 +610,19 @@ export function ResultSheet({ onLeave }: { onLeave(): void }) {
   const outcome = useGame((g) => g.outcome)
   const busy = useGame((g) => g.busy)
   const act = useGame((g) => g.act)
+  const viewer = useGame((g) => g.viewer)
   const open = !busy && (game.phase === 'handEnd' || game.phase === 'gameOver') && game.result !== null
   const result = game.result
   if (!result) return null
 
   const winners = result.ranking.filter((r) => r.winner)
-  const iWon = winners.some((r) => r.playerId === HUMAN)
+  const iWon = winners.some((r) => r.playerId === viewer)
   const tutorial = session.tutorial
+  const champion = game.winner !== null && game.winner !== undefined ? game.players[game.winner] : null
   const title = tutorial
     ? tx`Übung geschafft`
+    : isHotseat(session) && outcome
+    ? champion ? tx`${champion.name} gewinnt die Partie` : tx`Alle am Gerät sind pleite`
     : outcome === 'won'
     ? tx`Der Tisch gehört dir!`
     : outcome === 'lost'
@@ -645,5 +652,41 @@ export function ResultSheet({ onLeave }: { onLeave(): void }) {
         )}
       </div>
     </Sheet>
+  )
+}
+
+// ── Passing the device ───────────────────────────────────────────────────────
+
+/**
+ * In a game passed round the table is covered between two people's turns:
+ * it shows up at once, so nobody catches the last hand, and only goes once
+ * the next person says they have the device.
+ */
+export function Handoff() {
+  const handoff = useGame((g) => g.handoff)
+  const game = useGame((g) => g.game)!
+  const takeOver = useGame((g) => g.takeOver)
+  return (
+    <AnimatePresence>
+      {handoff !== null && (
+        <motion.div className={s.handoff} initial={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}>
+          <span className={s.handoffKicker}>{tx`Gerät weitergeben an`}</span>
+          <Portrait character={null} size={88} frame />
+          <h2 className={cx(s.handoffName, 'display')}>{game.players[handoff].name}</h2>
+          <p className={s.handoffText}>{tx`Die anderen schauen weg. Deine Karten erscheinen erst, wenn du tippst.`}</p>
+          <button
+            className={cx(common.btn, common.btnPrimary)}
+            onClick={() => {
+              // Whatever the last person held lands face down at their seat, without turning over in view.
+              const others = game.players.filter((p) => p.id !== handoff)
+              coverCards(game.handNumber, others.flatMap((p) => (p.hand ? [p.hand.sand.id, p.hand.blood.id] : [])))
+              takeOver()
+            }}
+          >
+            {tx`Ich bin bereit`}
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

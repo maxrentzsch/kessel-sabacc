@@ -95,7 +95,8 @@ function ChipColumn({ owner, from, count, bet }: { owner: number; from: number; 
 
 interface Props {
   player: Player
-  character: Character
+  /** `null` for another person at this device */
+  character: Character | null
   /** position among the opponents, left to right */
   slot: number
   opponents: number

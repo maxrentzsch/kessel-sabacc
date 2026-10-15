@@ -8,7 +8,7 @@ import { canDraw, canDrawFrom, drawCost } from '../../engine'
 import type { DrawSource, GameState, TokenId } from '../../engine'
 import { TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
-import { HUMAN, useGame } from '../../store/game'
+import { isHotseat, seatsAround, useGame } from '../../store/game'
 import { useNav } from '../../store/nav'
 import { useSettings } from '../../store/settings'
 import { Icon } from '../art/Icons'
@@ -22,7 +22,7 @@ import { TableRipple, TokenBeams } from './Effects'
 import { describe, useFeed } from './feed'
 import { useInspect } from './inspect'
 import { MyArea } from './MyArea'
-import { Announcer, DiceOverlay, PeekSheet, ResultSheet, RevealCallout, Suspicion, TokenBanner, TokenSheet } from './Overlays'
+import { Announcer, DiceOverlay, Handoff, PeekSheet, ResultSheet, RevealCallout, Suspicion, TokenBanner, TokenSheet } from './Overlays'
 import { Piles } from './Piles'
 import { pruneCardMemory } from './PlayingCard'
 import { Seat } from './Seat'
@@ -54,8 +54,8 @@ function Modifiers({ game }: { game: GameState }) {
 }
 
 /** What the player is expected to do right now, plus an optional explanation. */
-function prompt(game: GameState): { line: string; hint: string | null } {
-  const me = game.players[HUMAN]
+function prompt(game: GameState, viewer: number): { line: string; hint: string | null } {
+  const me = game.players[viewer]
   switch (game.phase) {
     case 'turn': {
       // Explain the goal once, then get out of the way.
@@ -100,6 +100,8 @@ export function TableScreen() {
   const tutorialStep = useGame((g) => g.tutorialStep)
   const tutorialNext = useGame((g) => g.tutorialNext)
   const nudge = useGame((g) => g.nudge)
+  const viewer = useGame((g) => g.viewer)
+  const handoff = useGame((g) => g.handoff)
 
   const [quitting, setQuitting] = useState(false)
   const [line, setLine] = useState('')
@@ -117,8 +119,8 @@ export function TableScreen() {
   const handNumber = game?.handNumber ?? 0
   useEffect(() => pruneCardMemory(handNumber), [handNumber])
 
-  const canAct = !!game && !busy && game.current === HUMAN && HUMAN_PHASES.includes(game.phase)
-  const drawing = canAct && game.phase === 'turn' && canDraw(game, game.players[HUMAN])
+  const canAct = !!game && !busy && handoff === null && game.current === viewer && HUMAN_PHASES.includes(game.phase)
+  const drawing = canAct && game.phase === 'turn' && canDraw(game, game.players[viewer])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -139,18 +141,26 @@ export function TableScreen() {
   useEffect(() => setAmbienceMix(venue.sound), [venue])
 
   useEffect(() => {
-    if (!game || !session) go('home')
+    // only while this is the screen: on its way out the table has let go of its game already
+    if ((!game || !session) && useNav.getState().screen === 'table') go('home')
   }, [game, session, go])
   if (!game || !session) return null
 
-  const opponents = game.players.filter((p) => !p.isHuman)
+  const opponents = seatsAround(game, viewer)
+  const hotseat = isHotseat(session)
   const showdown = game.phase === 'showdown'
   // In the practice hand the coach does the talking.
-  const mine = canAct && !session.tutorial ? prompt(game) : null
+  const mine = canAct && !session.tutorial ? prompt(game, viewer) : null
   const waiting = thinking !== null ? tx`${game.players[thinking].name} überlegt …` : line
 
+  // A game among friends has no payout to show: back to setting up the next one.
+  const finish = () => {
+    if (!hotseat) return go('result')
+    go('free')
+    clear()
+  }
   const leave = () => {
-    if (outcome) go('result')
+    if (outcome) finish()
     else setQuitting(true)
   }
   const endTutorial = () => {
@@ -212,7 +222,7 @@ export function TableScreen() {
             <Seat
               key={p.id}
               player={p}
-              character={session.seats[p.id]!}
+              character={session.seats[p.id]}
               slot={i}
               opponents={opponents.length}
             />
@@ -228,16 +238,17 @@ export function TableScreen() {
           </div>
         </div>
 
-        <MyArea canAct={canAct} hint={hint} hintSlot={hintSlot} canPeek={!session.tutorial} />
+        <MyArea canAct={canAct} hint={hint} hintSlot={hintSlot} canPeek={!session.tutorial && !hotseat} />
 
         <TokenBeams />
         <Announcer />
         <RevealCallout />
         <TokenBanner />
         <DiceOverlay canAct={canAct} />
-        <ResultSheet onLeave={session.tutorial ? endTutorial : () => go('result')} />
+        <ResultSheet onLeave={session.tutorial ? endTutorial : finish} />
         <TokenSheet canAct={canAct} />
         <PeekSheet canAct={canAct} />
+        {hotseat && <Handoff />}
 
         <Sheet open={quitting} onClose={() => setQuitting(false)} dialog>
           <h2 className={common.sheetTitle}>{tx`Tisch verlassen?`}</h2>

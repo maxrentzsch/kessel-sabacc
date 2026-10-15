@@ -26,6 +26,14 @@ export function pruneCardMemory(hand: number): void {
   }
 }
 
+/**
+ * Cards that are to show up face down from now on, without turning over
+ * first: the last person's hand when the device has been passed on.
+ */
+export function coverCards(hand: number, ids: string[]): void {
+  for (const id of ids) faceMemory.set(`${hand}:${id}`, false)
+}
+
 /** How far a card has to be flicked to be thrown away, in pixels. */
 const FLING = 42
 

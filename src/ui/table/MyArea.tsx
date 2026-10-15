@@ -9,7 +9,7 @@ import { canPlayToken, Rng, SUITS } from '../../engine'
 import type { Card, GameState, Player } from '../../engine'
 import { scoreLabel, SOURCE_NAME, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
-import { HUMAN, useGame } from '../../store/game'
+import { useGame } from '../../store/game'
 import { Critter } from '../art/Critter'
 import { Icon } from '../art/Icons'
 import { TokenIcon } from '../art/TokenIcon'
@@ -33,8 +33,8 @@ function handLabel(game: GameState, me: Player): { text: string; sabacc: boolean
  * What a strong player would do in the player's place, and how the hand stands.
  * The same question gets the same answer however often it is asked.
  */
-function advise(game: GameState): string {
-  const me = game.players[HUMAN]
+function advise(game: GameState, viewer: number): string {
+  const me = game.players[viewer]
   const rng = new Rng(game.handNumber * 131 + game.round * 17 + me.chips * 7 + me.invested)
   const action = chooseAction(game, DEFAULT_PROFILES.hard, rng)
   const name = (id: number) => game.players[id].name
@@ -51,7 +51,7 @@ function advise(game: GameState): string {
               ? tx`Nimm die ${action.value}.`
               : ''
   if (game.phase !== 'turn' || !me.hand) return move
-  const rivals = game.players.filter((p) => !p.isHuman && !p.eliminated).length
+  const rivals = game.players.filter((p) => p.id !== viewer && !p.eliminated).length
   const chance = Math.round(winChance(me.hand, game.modifiers, rivals, me.impostor) * 100)
   return tx`${move} Mit diesem Blatt gewinnst du etwa ${chance} von 100 Händen.`
 }
@@ -103,14 +103,15 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
   const peekUsed = useGame((g) => g.peekUsed)
   const game = useGame((g) => g.game)!
   const act = useGame((g) => g.act)
-  const me = game.players[HUMAN]
-  const myTurn = game.current === HUMAN && !REVEAL_PHASES.includes(game.phase)
-  const reveal = useReveal(HUMAN)
-  const pending = game.pendingDraw && game.current === HUMAN ? game.pendingDraw : null
+  const viewer = useGame((g) => g.viewer)
+  const me = game.players[viewer]
+  const myTurn = game.current === viewer && !REVEAL_PHASES.includes(game.phase)
+  const reveal = useReveal(viewer)
+  const pending = game.pendingDraw && game.current === viewer ? game.pendingDraw : null
   const choosing = canAct && game.phase === 'discard' && pending
   const standing = canAct && game.phase === 'turn'
   const n = game.players.length
-  const dealOrder = (HUMAN - game.dealer + n) % n
+  const dealOrder = (viewer - game.dealer + n) % n
 
   const cards: { card: Card; isNew: boolean }[] = []
   if (me.hand) {
@@ -130,7 +131,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
     hint
   )
   const askTip = () => {
-    if (canAct && takeTip()) setTip({ game, text: advise(game) })
+    if (canAct && takeTip()) setTip({ game, text: advise(game, viewer) })
   }
 
   return (
@@ -140,7 +141,7 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
       {hintSlot && createPortal(coaching, hintSlot)}
       <motion.div
         className={s.myHand}
-        data-seat={HUMAN}
+        data-seat={viewer}
         drag={standing ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.45}
@@ -204,13 +205,13 @@ export function MyArea({ canAct, hint, hintSlot, canPeek }: Props) {
           </span>
           <ChipPile from={me.chips} count={me.invested} invested />
         </div>
-        <ChipFloaters playerId={HUMAN} />
+        <ChipFloaters playerId={viewer} />
       </div>
 
       <div className={s.myBar}>
         <div className={s.myTokens}>
           {me.tokens.map((token, i) => {
-            const playable = canAct && canPlayToken(game, HUMAN, token)
+            const playable = canAct && canPlayToken(game, viewer, token)
             return (
               <button
                 key={`${token}-${i}`}

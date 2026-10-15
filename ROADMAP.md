@@ -210,6 +210,7 @@ and every new line exists in both languages.
   forewoman, as its teacher (new).
 - **Cheating at the Spike table**: peeking with suspicion per opponent and the sleeve, as in
   Kessel Sabacc since 1.7, so that tells, dossier and sleeve finally work in both variants.
+- **Passing the device at the Spike table**, as in Kessel Sabacc since 1.8.
 - **Places** (all new): the Hallis shipyard canteen (learning tables), a convoy freighter whose
   table travels with it, the bar above a swoop track, a casino barge in a gas giant, the
   Glassfingers' archive, the Red Seal's grand casino, and the merchants' banquet as the finale.
@@ -301,7 +302,10 @@ the landing field, so they are offered the same ride once when they open the new
 ## Phase 7 – Playing together (medium, then large)
 
 - **7a. One device, several players** (no server): two to four people pass the phone, each hand
-  stays hidden between turns, empty seats go to the AI. Cheating only works against AI seats.
+  stays hidden between turns, empty seats go to the AI. *As built in 1.8:* Kessel Sabacc in free
+  play; a curtain covers the table until the next person taps, everybody gets three random shift
+  tokens, there is no peeking (the others would see it anyway), and the career is left alone.
+  Corellian Spike follows with phase 4, when its table is reworked for the career.
 - **7b. A leaderboard for the daily hand** (small server): the app sends the action log of the
   day's game, the server replays it with the day's seed and only then accepts the score. That
   stops invented scores but not foreknowledge: today the day's seed follows from the date, so
@@ -330,7 +334,7 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.5 | Phase 2: act 1 |
 | 1.6 | Phase 3, first half: tells, dossiers, Bix at the table (tips, covering a peek gone wrong) |
 | 1.7 | Phase 3, second half: suspicion per opponent, the sleeve with its steadiness test |
-| 1.8 | 7a: one device, several players |
+| 1.8 | 7a: one device, several players (Kessel Sabacc) |
 | 2.0 | Phase 4: act 2 with Corellian Spike |
 | 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |

@@ -10,7 +10,7 @@ import { suspicionCooldown } from '../career/ship'
 import { TABLES } from '../career/tables'
 import { TUTORIAL_OPPONENT, TUTORIAL_STEPS, tutorialGame, tutorialScript } from '../career/tutorial'
 import { applyAction, createGame, randomSeed, Rng, STANDARD_RULES, SUITS } from '../engine'
-import type { Action, GameConfig, GameEvent, GameRecord, GameState, Rules, TokenId } from '../engine'
+import type { Action, GameConfig, GameEvent, GameRecord, GameState, Player, Rules, TokenId } from '../engine'
 import { useCareer } from './career'
 import { useToasts } from './toasts'
 import type { GameSummary, GameTally } from './career'
@@ -45,9 +45,30 @@ export interface Session {
   title: string
   /** which room the table stands in, see career/venues */
   venue?: string
-  /** one entry per seat; seat 0 is the human */
+  /** one entry per seat: a character for the AI, `null` for a person at this device */
   seats: (Character | null)[]
+  /**
+   * Several people passing one device round: who sits at which empty seat,
+   * with the shift tokens dealt to them. Left out when one person plays.
+   */
+  people?: { seat: number; name: string; tokens: TokenId[] }[]
   startingChips: number
+}
+
+/** Several people share the device and pass it on between their turns. */
+export function isHotseat(session: Session | null | undefined): boolean {
+  return (session?.people?.length ?? 0) > 1
+}
+
+/** Seat `id` is the one person at the table, so the texts address them as "you". */
+export function isYou(game: GameState, id: number): boolean {
+  return game.players[id].isHuman && game.players.filter((p) => p.isHuman).length === 1
+}
+
+/** Everybody but the viewer, clockwise from the viewer's left: the order they sit along the far rim. */
+export function seatsAround(game: GameState, viewer: number): Player[] {
+  const n = game.players.length
+  return Array.from({ length: n - 1 }, (_, i) => game.players[(viewer + 1 + i) % n])
 }
 
 export interface FeedItem {
@@ -132,6 +153,10 @@ interface GameStore {
   savedRun: string | null
   /** how often the player may still ask for advice in this game */
   tipsLeft: number
+  /** whose hand the table shows at the bottom: the player, or whoever holds the device in a game passed round */
+  viewer: number
+  /** a game passed round: the seat that is to take the device next; the table stays covered until they do */
+  handoff: number | null
   /** the last gesture an opponent made, see ai/tells */
   gesture: { playerId: number; text: string; id: number } | null
   /** Bix can cover for the player once a game when a peek goes wrong; how often it still can */
@@ -139,6 +164,8 @@ interface GameStore {
 
   /** Spend one piece of advice; false if there is none left. */
   takeTip(): boolean
+  /** The next person has the device: uncover the table for them. */
+  takeOver(): void
 
   /**
    * Sneak a look at one of an opponent's cards. Raises suspicion; at 100 the
@@ -166,6 +193,15 @@ interface GameStore {
 /** Advice is free where nothing is at stake; a game for credits allows a few looks at it. */
 export const TIPS_PER_GAME = 3
 const tipsFor = (session: Session) => (session.mode === 'free' ? Infinity : TIPS_PER_GAME)
+
+/**
+ * Who sees the table first: the player, or in a game passed round the person
+ * whose move it is (else the first of them), once they have the device.
+ */
+function firstView(session: Session, game?: GameState): Pick<GameStore, 'viewer' | 'handoff'> {
+  const first = game?.players[game.current]?.isHuman ? game.current : (session.people?.[0]?.seat ?? HUMAN)
+  return { viewer: first, handoff: isHotseat(session) ? first : null }
+}
 
 /** Each seat's watchfulness, and the table's as the most watchful of them. */
 function watching(watch: number[], rest: Partial<GameStore> = {}): Partial<GameStore> {
@@ -248,12 +284,12 @@ function pauseAfter(events: GameEvent[], playerCount: number): number {
   return ms
 }
 
-function playSounds(events: GameEvent[], game: GameState): void {
+function playSounds(events: GameEvent[], game: GameState, viewer: number): void {
   const dealing = events.some((e) => e.type === 'handStart')
   for (const e of events) {
     switch (e.type) {
       case 'turnStart':
-        if (e.playerId === HUMAN && !dealing) sfx.turn()
+        if (game.players[e.playerId].isHuman && !dealing) sfx.turn()
         break
       case 'eliminated':
         sfx.eliminated()
@@ -290,7 +326,7 @@ function playSounds(events: GameEvent[], game: GameState): void {
         sfx.reveal()
         break
       case 'settled': {
-        const me = e.result.ranking.find((r) => r.playerId === HUMAN)
+        const me = e.result.ranking.find((r) => r.playerId === viewer)
         if (!me) break
         if (me.winner) {
           if (me.score.category === 'none') sfx.win()
@@ -319,7 +355,7 @@ export const useGame = create<GameStore>((set, get) => {
   function publish(state: GameState, events: GameEvent[], feed: FeedItem[]): void {
     const items = events.map((event) => ({ id: ++feedId, event }))
     set({ game: state, feed: [...feed, ...items].slice(-60) })
-    playSounds(events, state)
+    playSounds(events, state, get().viewer)
     trackStats(events)
     checkOutcome(state)
     // A new hand: fresh cards, and the table relaxes a little.
@@ -339,7 +375,8 @@ export const useGame = create<GameStore>((set, get) => {
   }
 
   function trackStats(events: GameEvent[]): void {
-    if (get().session?.tutorial) return
+    // A game among friends leaves the career alone.
+    if (get().session?.tutorial || isHotseat(get().session)) return
     const career = useCareer.getState()
     const game = get().game!
     tally.minChips = Math.min(tally.minChips, game.players[HUMAN].chips + game.players[HUMAN].invested)
@@ -392,6 +429,13 @@ export const useGame = create<GameStore>((set, get) => {
   function checkOutcome(state: GameState): void {
     const { outcome, session } = get()
     if (outcome || !session) return
+    if (isHotseat(session)) {
+      // Played on until one is left, or until nobody at the device is still in.
+      if (state.phase !== 'gameOver' && state.players.some((p) => p.isHuman && !p.eliminated)) return
+      const won = state.winner !== null && state.winner !== undefined && state.players[state.winner].isHuman
+      set({ outcome: won ? 'won' : 'lost', summary: null })
+      return
+    }
     const human = state.players[HUMAN]
     const won = state.phase === 'gameOver' && state.winner === HUMAN
     if (!won && !human.eliminated) return
@@ -448,7 +492,10 @@ export const useGame = create<GameStore>((set, get) => {
       }
 
       const actor = game.players[game.current]
-      if (actor.isHuman) break
+      if (actor.isHuman) {
+        if (isHotseat(session) && actor.id !== get().viewer) set({ handoff: actor.id })
+        break
+      }
 
       set({ thinking: actor.id })
       gesture(game, actor.id, session)
@@ -481,6 +528,8 @@ export const useGame = create<GameStore>((set, get) => {
     nudge: 0,
     savedRun: loadRun()?.session.title ?? null,
     tipsLeft: 0,
+    viewer: HUMAN,
+    handoff: null,
     gesture: null,
     bixCover: 0,
 
@@ -489,6 +538,11 @@ export const useGame = create<GameStore>((set, get) => {
       if (tipsLeft <= 0) return false
       set({ tipsLeft: tipsLeft - 1 })
       return true
+    },
+
+    takeOver() {
+      const { handoff } = get()
+      if (handoff !== null) set({ viewer: handoff, handoff: null })
     },
 
     peek(target) {
@@ -578,7 +632,7 @@ export const useGame = create<GameStore>((set, get) => {
       peekRng = new Rng(run.peekState ?? randomSeed())
       // What happened before the interruption is lost, so claim nothing special about this game.
       tally = { handsLost: 1, minChips: 99, peeks: 0, caught: 1 }
-      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, watch: run.session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(run.session), gesture: null, bixCover: bixCoverFor(run.session) })
+      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, watch: run.session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(run.session), gesture: null, bixCover: bixCoverFor(run.session), ...firstView(run.session, run.game) })
       // Give the table a moment to deal the cards back in.
       void wait(pauseAfter([{ type: 'handStart', hand: run.game.handNumber, dealer: run.game.dealer }], run.game.players.length)).then(() => pump(gen))
       return true
@@ -588,21 +642,21 @@ export const useGame = create<GameStore>((set, get) => {
       const gen = ++generation
       aiRng = new Rng(session.seed !== undefined ? session.seed ^ 0x5bd1e995 : randomSeed())
       tally = { handsLost: 0, minChips: session.playerChips ?? session.startingChips, peeks: 0, caught: 0, startChips: session.playerChips ?? session.startingChips }
-      useCareer.getState().beginGame(session)
+      if (!isHotseat(session)) useCareer.getState().beginGame(session)
       const config: GameConfig = {
         seed: session.seed ?? randomSeed(),
         startingChips: session.startingChips,
         rules: session.rules,
-        players: session.seats.map((c) =>
-          c
-            ? { name: c.name, isHuman: false, tokens: c.tokens }
-            : { name: tx`Du`, isHuman: true, tokens: humanTokens, chips: session.playerChips },
-        ),
+        players: session.seats.map((c, seat) => {
+          if (c) return { name: c.name, isHuman: false, tokens: c.tokens }
+          const person = session.people?.find((p) => p.seat === seat)
+          return person ? { name: person.name, isHuman: true, tokens: person.tokens } : { name: tx`Du`, isHuman: true, tokens: humanTokens, chips: session.playerChips }
+        }),
       }
       record = { config, actions: [] }
       peekRng = new Rng(config.seed ^ 0x2545f491)
       const { state, events } = createGame(config)
-      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(session), gesture: null, bixCover: bixCoverFor(session) })
+      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(session), gesture: null, bixCover: bixCoverFor(session), ...firstView(session) })
       publish(state, events, [])
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))
     },
@@ -617,7 +671,7 @@ export const useGame = create<GameStore>((set, get) => {
         { type: 'roundStart', round: 1 },
         { type: 'turnStart', playerId: HUMAN },
       ]
-      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tutorialStep: 0 })
+      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tutorialStep: 0, ...firstView(session) })
       publish(tutorialGame(), events, [])
       void wait(pauseAfter(events, 2)).then(() => pump(gen))
     },
@@ -653,7 +707,7 @@ export const useGame = create<GameStore>((set, get) => {
     forfeit() {
       const { session, outcome } = get()
       generation++
-      if (session && !outcome) {
+      if (session && !outcome && !isHotseat(session)) {
         useCareer.getState().finishGame(session, false, tally)
       }
       dropRun()

@@ -2502,3 +2502,41 @@
   background: var(--ink);
   box-shadow: 0 0 10px var(--ink);
 }
+
+/* ── Passing the device: covers the whole table between two people's turns ── */
+
+.handoff {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: calc(24px + var(--safe-top)) 24px calc(24px + var(--safe-bottom));
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 38%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+    #06090b;
+}
+
+.handoffKicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.handoffName {
+  margin: 0;
+  font-size: clamp(28px, 8vw, 44px);
+  color: var(--ink);
+}
+
+.handoffText {
+  max-width: 30ch;
+  margin: 0 0 10px;
+  color: var(--ink-dim);
+}
