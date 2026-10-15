@@ -149,6 +149,11 @@ export type Action =
   | { type: 'nextHand' }
   /** the acting player was caught cheating and pays a fine out of their stock */
   | { type: 'caught'; fine: number }
+  /**
+   * the acting player swaps their card of one suit for a 1 of that suit from their sleeve;
+   * the card they had goes into their pocket, so the count of cards in play stays the same
+   */
+  | { type: 'sleeve'; suit: Suit }
 
 export type ChipReason =
   | 'draw'
@@ -175,6 +180,7 @@ export type GameEvent =
   | { type: 'diceChosen'; playerId: number; purpose: 'impostor' | 'prime'; value: number; suit?: Suit }
   | { type: 'handsSwapped'; a: number; b: number }
   | { type: 'handRedrawn'; playerId: number }
+  | { type: 'sleeved'; playerId: number; suit: Suit }
   | { type: 'reshuffled'; suit: Suit }
   | { type: 'showdown'; result: HandResult }
   | { type: 'settled'; result: HandResult }

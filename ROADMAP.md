@@ -191,20 +191,25 @@ in tells.
   one card bought before the game can be swapped in once, with a short steadiness test. A setting
   replaces the test with a plain button and a fixed risk instead. The sleeve card is an extra
   card, so the engines must accept a card from outside the deck (their card-count tests change
-  with it), and if its twin turns up at the reveal everybody at the table grows suspicious.
-  Getting caught costs chips and standing.
+  with it). Getting caught costs chips and standing. *As built in 1.7:* the sleeve card is always
+  a 1 and swaps the player's card of one suit; the steadiness test is a marker swinging over a
+  bar, a clean tap halves the suspicion, a miss raises it by half. There is no "twin at the
+  reveal": a Kessel deck holds every value several times over, so a twin proves nothing.
+  Peeking and the sleeve in Corellian Spike come with act 2, when Spike joins the career.
 - **Bix's specialities** that build on this switch on: the kitten's warning, the convor's tells.
 - **Balance.** A bot that reads every tell perfectly may win at most a set share more than one
   that ignores them; cheating pays a little on average but ruins a game when it goes wrong. Both
   are checked by simulation.
 
-**Done when:** tells, dossier and sleeve work in both variants, the simulations hold their limits,
+**Done when:** tells and dossier work in both variants, the sleeve in Kessel Sabacc (Spike follows in phase 4), the simulations hold their limits,
 and every new line exists in both languages.
 
 ## Phase 4 – Act 2: The Trade Route (large)
 
 - **Corellian Spike in the campaign**, with the learning path below and Dessa, a shipyard
   forewoman, as its teacher (new).
+- **Cheating at the Spike table**: peeking with suspicion per opponent and the sleeve, as in
+  Kessel Sabacc since 1.7, so that tells, dossier and sleeve finally work in both variants.
 - **Places** (all new): the Hallis shipyard canteen (learning tables), a convoy freighter whose
   table travels with it, the bar above a swoop track, a casino barge in a gas giant, the
   Glassfingers' archive, the Red Seal's grand casino, and the merchants' banquet as the finale.
@@ -324,7 +329,8 @@ the landing field, so they are offered the same ride once when they open the new
 | 1.4 | Phase 1: the prologue on Tarsk, Bix, the launch |
 | 1.5 | Phase 2: act 1 |
 | 1.6 | Phase 3, first half: tells, dossiers, Bix at the table (tips, covering a peek gone wrong) |
-| 1.7 | Phase 3, second half: suspicion per opponent, the sleeve; 7a (one device, several players) |
+| 1.7 | Phase 3, second half: suspicion per opponent, the sleeve with its steadiness test |
+| 1.8 | 7a: one device, several players |
 | 2.0 | Phase 4: act 2 with Corellian Spike |
 | 2.x | Phase 5: acts 3 and 4, Coruscant Shift, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |

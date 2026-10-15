@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import { ACHIEVEMENTS } from '../../career/achievements'
 import { COSMETICS } from '../../career/cosmetics'
 import { SHIP_MODULES } from '../../career/ship'
-import { useCareer } from '../../store/career'
+import { SLEEVE_PRICE, SLEEVE_STOCK, useCareer } from '../../store/career'
 import { useNav } from '../../store/nav'
 import { Icon } from '../art/Icons'
 import common from '../common/common.module.css'
@@ -156,6 +156,21 @@ export function HangarScreen() {
               <small className="num">{Object.keys(career.dossiers).length}</small>
             </button>
           </div>
+
+          {career.hasShip && (career.tableWins.lodge ?? 0) > 0 && (
+            <>
+              <h2 className={s.fieldLabel}>{tx`Ausrüstung`}</h2>
+              <div className={s.module}>
+                <div className={s.moduleInfo}>
+                  <b>{tx`Karte für den Ärmel`}</b>
+                  <em>{tx`Von den Glasfingern: eine 1, die du einmal pro Partie gegen eine deiner Karten tauschen kannst. Im Ärmel: ${career.sleeves} von ${SLEEVE_STOCK}.`}</em>
+                </div>
+                <button className={cx(common.btn, career.credits >= SLEEVE_PRICE && career.sleeves < SLEEVE_STOCK && common.btnPrimary)} disabled={career.credits < SLEEVE_PRICE || career.sleeves >= SLEEVE_STOCK} onClick={() => career.buySleeve()}>
+                  <span className="num">{SLEEVE_PRICE}</span>
+                </button>
+              </div>
+            </>
+          )}
 
           {career.hasShip && <h2 className={s.fieldLabel}>{tx`Ausbau`}</h2>}
           <div className={s.modules} hidden={!career.hasShip}>

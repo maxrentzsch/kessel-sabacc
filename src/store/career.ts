@@ -95,6 +95,8 @@ interface CareerState extends Progress {
   location: string
   /** what the player has learnt about each opponent, by character id */
   dossiers: Record<string, Dossier>
+  /** cards for the sleeve, bought from the Glassfingers */
+  sleeves: number
 
   /** not saved: what the current game has earned so far */
   gameRep: number
@@ -129,6 +131,8 @@ interface CareerState extends Progress {
   noteOpponentToken(characterId: string, token: TokenId): void
   /** An opponent's gesture turned out true at the reveal. */
   confirmTell(characterId: string): void
+  buySleeve(): boolean
+  spendSleeve(): void
   buy(id: string): boolean
   equip(id: string): void
   owns(id: string): boolean
@@ -172,9 +176,14 @@ const initial = () => ({
   jobsDone: [] as string[],
   location: 'anchor',
   dossiers: {} as Record<string, Dossier>,
+  sleeves: 0,
   gameRep: 0,
   recent: [] as string[],
 })
+
+/** A card for the sleeve, from the Glassfingers; no more than a few at a time. */
+export const SLEEVE_PRICE = 250
+export const SLEEVE_STOCK = 3
 
 /** What the player knows about an opponent. */
 export interface Dossier {
@@ -476,6 +485,17 @@ export const useCareer = create<CareerState>()(
             const d = s.dossiers[characterId] ?? emptyDossier()
             return d.tokens.includes(token) ? s : { dossiers: { ...s.dossiers, [characterId]: { ...d, tokens: [...d.tokens, token] } } }
           })
+        },
+
+        buySleeve() {
+          const s = get()
+          if (s.credits < SLEEVE_PRICE || s.sleeves >= SLEEVE_STOCK) return false
+          set({ credits: s.credits - SLEEVE_PRICE, sleeves: s.sleeves + 1 })
+          return true
+        },
+
+        spendSleeve() {
+          set((s) => ({ sleeves: Math.max(0, s.sleeves - 1) }))
         },
 
         confirmTell(characterId) {

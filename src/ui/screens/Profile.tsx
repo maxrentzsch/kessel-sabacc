@@ -150,6 +150,12 @@ export function ProfileScreen() {
               value={settings.cardNumbers}
               onChange={(cardNumbers) => settings.set({ cardNumbers })}
             />
+            <Toggle
+              label={tx`Ruhige Hand beim Ärmel`}
+              note={tx`Ein kurzer Geschicklichkeitstest beim Kartentausch. Aus: ein einfacher Knopf mit festem Risiko`}
+              value={settings.steadyHand}
+              onChange={(steadyHand) => settings.set({ steadyHand })}
+            />
           </div>
 
           <h2 className={s.fieldLabel}>{tx`Spielstand`}</h2>

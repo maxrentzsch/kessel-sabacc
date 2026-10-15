@@ -112,8 +112,12 @@ interface GameStore {
    * is open, `null` outside the showdown.
    */
   revealStep: number | null
-  /** how closely the table is watching the player's hands, 0–100 */
+  /** how closely the table is watching the player's hands, 0–100: the most watchful opponent */
   suspicion: number
+  /** how closely each seat is watching, by seat; the player's own seat stays 0 */
+  watch: number[]
+  /** the card from the sleeve has been swapped in this game */
+  sleeveUsed: boolean
   /** ids of opponents' cards the player has sneaked a look at this hand */
   peeked: string[]
   /** one look per hand */
@@ -141,6 +145,12 @@ interface GameStore {
    * player is caught instead, pays a fine and sees nothing.
    */
   peek(target: number): 'seen' | 'caught' | 'covered' | null
+  /**
+   * Swap the player's card of a suit for a 1 from the sleeve. Everybody at
+   * the table grows suspicious; whoever reaches 100 sees it. `steadiness`
+   * scales that: below 1 for a steady hand, above 1 for a shaky one.
+   */
+  sleeve(suit: 'sand' | 'blood', steadiness?: number): 'swapped' | 'caught' | 'covered' | null
   /** Pick an interrupted game up where it stopped. */
   resume(): boolean
   start(session: Session, humanTokens: TokenId[]): void
@@ -156,6 +166,17 @@ interface GameStore {
 /** Advice is free where nothing is at stake; a game for credits allows a few looks at it. */
 export const TIPS_PER_GAME = 3
 const tipsFor = (session: Session) => (session.mode === 'free' ? Infinity : TIPS_PER_GAME)
+
+/** Each seat's watchfulness, and the table's as the most watchful of them. */
+function watching(watch: number[], rest: Partial<GameStore> = {}): Partial<GameStore> {
+  return { ...rest, watch, suspicion: Math.max(0, ...watch) }
+}
+
+/** Better tables keep a closer eye on their guests. */
+function wariness(session: Session): number {
+  const rank = session.table ? TABLES.indexOf(session.table) : 2
+  return 1 + Math.max(0, rank) * 0.1
+}
 
 /** Bix covers for a peek gone wrong once a game; the vulptex, a born thief, twice. Not before it has come along. */
 function bixCoverFor(session: Session): number {
@@ -303,7 +324,7 @@ export const useGame = create<GameStore>((set, get) => {
     checkOutcome(state)
     // A new hand: fresh cards, and the table relaxes a little.
     if (events.some((e) => e.type === 'handStart')) {
-      set((st) => ({ peeked: [], peekUsed: false, suspicion: Math.max(0, st.suspicion - suspicionCooldown(useCareer.getState().ship)) }))
+      set((st) => watching(st.watch.map((w) => Math.max(0, w - suspicionCooldown(useCareer.getState().ship))), { peeked: [], peekUsed: false }))
     }
 
     const { session, outcome } = get()
@@ -451,6 +472,8 @@ export const useGame = create<GameStore>((set, get) => {
     summary: null,
     revealStep: null,
     suspicion: 0,
+    watch: [],
+    sleeveUsed: false,
     peeked: [],
     peekUsed: false,
     caught: 0,
@@ -469,18 +492,20 @@ export const useGame = create<GameStore>((set, get) => {
     },
 
     peek(target) {
-      const { game, busy, peekUsed, peeked, suspicion, session, caught } = get()
+      const { game, busy, peekUsed, peeked, session, caught, watch } = get()
       const victim = game?.players[target]
       if (!game || !session || session.tutorial || busy || peekUsed || game.phase !== 'turn' || game.current !== HUMAN || !victim?.hand) return null
 
-      // Better tables keep a closer eye on their guests.
-      const rank = session.table ? TABLES.indexOf(session.table) : 2
-      const heat = suspicion + (20 + peekRng.next() * 18) * (1 + Math.max(0, rank) * 0.1)
+      // The one looked at notices most; the others catch a glimpse of it too.
+      const added = (20 + peekRng.next() * 18) * wariness(session)
+      const next = watch.map((w, seat) => (seat === HUMAN ? 0 : seat === target ? w + added : w + added * 0.35))
+      const heat = next[target]
       tally.peeks++
       useCareer.getState().bumpStats({ peeks: 1 })
       if (heat >= 100 && get().bixCover > 0) {
         // Bix knocks a glass over: everybody looks, nobody saw a thing – and neither did the player.
-        set({ suspicion: 25, peekUsed: true, bixCover: get().bixCover - 1 })
+        next[target] = 25
+        set(watching(next, { peekUsed: true, bixCover: get().bixCover - 1 }))
         sfx.blocked()
         useToasts.getState().push({ kind: 'note', title: tx`Bix lenkt ab`, text: tx`Ein Glas kippt um, alle schauen hin. Niemand hat etwas gesehen – du allerdings auch nicht.` })
         return 'covered'
@@ -490,7 +515,8 @@ export const useGame = create<GameStore>((set, get) => {
         // Getting caught at a syndicate's table costs standing with it, once a game.
         const syndicate = session.table?.syndicate
         if (syndicate && tally.caught === 1) useCareer.getState().shiftStanding(syndicate, -1)
-        set({ suspicion: 45, peekUsed: true, caught: caught + 1 })
+        next[target] = 45
+        set(watching(next, { peekUsed: true, caught: caught + 1 }))
         useCareer.getState().bumpStats({ caught: 1 })
         sfx.blocked()
         step({ type: 'caught', fine: 2 })
@@ -498,9 +524,46 @@ export const useGame = create<GameStore>((set, get) => {
       }
       const unseen = SUITS.map((suit) => victim.hand![suit].id).filter((id) => !peeked.includes(id))
       const card = unseen[peekRng.int(unseen.length)]
-      set({ suspicion: heat, peekUsed: true, peeked: card ? [...peeked, card] : peeked })
+      set(watching(next, { peekUsed: true, peeked: card ? [...peeked, card] : peeked }))
       sfx.card()
       return 'seen'
+    },
+
+    sleeve(suit, steadiness = 1) {
+      const { game, busy, session, caught, watch, sleeveUsed } = get()
+      const career = useCareer.getState()
+      if (!game || !session || session.mode !== 'career' || session.tutorial || busy || sleeveUsed || career.sleeves <= 0) return null
+      if (game.phase !== 'turn' || game.current !== HUMAN || !game.players[HUMAN].hand) return null
+
+      // A hand under the table is noticed by everybody at once.
+      const added = (32 + peekRng.next() * 22) * wariness(session) * steadiness
+      const next = watch.map((w, seat) => (seat === HUMAN ? 0 : w + added))
+      const spotted = next.findIndex((w) => w >= 100)
+      career.spendSleeve()
+      tally.peeks++
+      set({ sleeveUsed: true })
+      if (spotted >= 0 && get().bixCover > 0) {
+        next[spotted] = 30
+        set(watching(next, { bixCover: get().bixCover - 1 }))
+        sfx.blocked()
+        useToasts.getState().push({ kind: 'note', title: tx`Bix lenkt ab`, text: tx`Ein Glas kippt um, alle schauen hin. Die Karte bleibt im Ärmel – gesehen hat es keiner.` })
+        return 'covered'
+      }
+      if (spotted >= 0) {
+        tally.caught++
+        const syndicate = session.table?.syndicate
+        if (syndicate) career.shiftStanding(syndicate, -1)
+        next[spotted] = 55
+        set(watching(next, { caught: caught + 1 }))
+        career.bumpStats({ caught: 1 })
+        sfx.blocked()
+        step({ type: 'caught', fine: 3 })
+        return 'caught'
+      }
+      set(watching(next))
+      sfx.card()
+      step({ type: 'sleeve', suit })
+      return 'swapped'
     },
 
     resume() {
@@ -515,7 +578,7 @@ export const useGame = create<GameStore>((set, get) => {
       peekRng = new Rng(run.peekState ?? randomSeed())
       // What happened before the interruption is lost, so claim nothing special about this game.
       tally = { handsLost: 1, minChips: 99, peeks: 0, caught: 1 }
-      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(run.session), gesture: null, bixCover: bixCoverFor(run.session) })
+      set({ session: run.session, game: run.game, busy: true, thinking: null, feed: [], outcome: null, summary: null, revealStep: null, suspicion: 0, watch: run.session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(run.session), gesture: null, bixCover: bixCoverFor(run.session) })
       // Give the table a moment to deal the cards back in.
       void wait(pauseAfter([{ type: 'handStart', hand: run.game.handNumber, dealer: run.game.dealer }], run.game.players.length)).then(() => pump(gen))
       return true
@@ -539,7 +602,7 @@ export const useGame = create<GameStore>((set, get) => {
       record = { config, actions: [] }
       peekRng = new Rng(config.seed ^ 0x2545f491)
       const { state, events } = createGame(config)
-      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tipsLeft: tipsFor(session), gesture: null, bixCover: bixCoverFor(session) })
+      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tipsLeft: tipsFor(session), gesture: null, bixCover: bixCoverFor(session) })
       publish(state, events, [])
       void wait(pauseAfter(events, state.players.length)).then(() => pump(gen))
     },
@@ -554,7 +617,7 @@ export const useGame = create<GameStore>((set, get) => {
         { type: 'roundStart', round: 1 },
         { type: 'turnStart', playerId: HUMAN },
       ]
-      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, peeked: [], peekUsed: false, tutorialStep: 0 })
+      set({ session, busy: true, thinking: null, outcome: null, summary: null, revealStep: null, suspicion: 0, watch: session.seats.map(() => 0), sleeveUsed: false, peeked: [], peekUsed: false, tutorialStep: 0 })
       publish(tutorialGame(), events, [])
       void wait(pauseAfter(events, 2)).then(() => pump(gen))
     },

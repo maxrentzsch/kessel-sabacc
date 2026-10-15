@@ -13,6 +13,8 @@ interface SettingsState {
   fast: boolean
   /** Corellian Spike: print the value on the cards as a numeral, beside the symbols to count */
   cardNumbers: boolean
+  /** the sleeve: a short test of a steady hand instead of a plain button with a fixed risk */
+  steadyHand: boolean
   set(patch: Partial<Omit<SettingsState, 'set'>>): void
 }
 
@@ -26,6 +28,7 @@ export const useSettings = create<SettingsState>()(
       hints: true,
       fast: false,
       cardNumbers: true,
+      steadyHand: true,
       set: (patch) => set(patch),
     }),
     { name: 'kessel-sabacc-settings', version: 1 },

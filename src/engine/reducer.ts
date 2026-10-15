@@ -156,6 +156,12 @@ export function applyAction(state: GameState, action: Action): StepResult {
       if (s.phase !== 'handEnd') fail('hand is not over')
       startHand(ctx, nextActiveSeat(s, s.dealer))
       break
+    case 'sleeve': {
+      if (s.phase !== 'turn' || !player.hand) fail('nothing to swap')
+      player.hand = { ...player.hand, [action.suit]: { id: `sleeve-${action.suit}-${s.handNumber}-${player.id}`, suit: action.suit, kind: 'number', value: 1 } }
+      ctx.events.push({ type: 'sleeved', playerId: player.id, suit: action.suit })
+      break
+    }
     case 'caught': {
       if (s.phase !== 'turn') fail('not in a turn')
       // Never the last chip: being thrown out is for the cards to decide.

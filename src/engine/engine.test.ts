@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyAction,
   buildSuit,
+  cardsPerSuit,
   canPlayToken,
   createGame,
   IllegalActionError,
@@ -323,6 +324,20 @@ describe('house rules', () => {
   it('lets a seat start with its own number of chips', () => {
     const s = custom(undefined, 4)
     expect(s.players.map((p) => p.chips)).toEqual([4, 6])
+  })
+
+  it('swaps a card for a 1 from the sleeve without changing the count of cards', () => {
+    const s = createGame({ seed: 3, startingChips: 6, players: [{ name: 'A', isHuman: true, tokens: [] }, { name: 'B', isHuman: false, tokens: [] }] }).state
+    const before = s.players[s.current].hand!.sand
+    const { state, events } = applyAction(s, { type: 'sleeve', suit: 'sand' })
+    const after = state.players[s.current].hand!.sand
+    expect(after.value).toBe(1)
+    expect(after.kind).toBe('number')
+    expect(after.id).not.toBe(before.id)
+    expect(events).toContainEqual({ type: 'sleeved', playerId: s.current, suit: 'sand' })
+    const ids = [...state.decks.sand, ...state.discards.sand, ...state.players.flatMap((p) => (p.hand ? [p.hand.sand] : []))].map((c) => c.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toHaveLength(cardsPerSuit(state.rules))
   })
 
   it('fines a player caught cheating, but never their last chip', () => {

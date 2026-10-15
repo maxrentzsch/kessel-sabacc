@@ -1724,6 +1724,12 @@
   text-align: left;
 }
 
+/* still listed after the look, so the meters stay in view */
+.targetBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .targetBtn span {
   display: flex;
   flex-direction: column;
@@ -1733,6 +1739,12 @@
   font-style: normal;
   font-size: 12px;
   color: var(--ink-dim);
+}
+
+/* how watchful this opponent already is, at the far end of the button */
+.targetBtn .heat {
+  flex-direction: row;
+  margin-left: auto;
 }
 
 /* ── Token banner ────────────────────────────────────────────────────────── */
@@ -2444,4 +2456,49 @@
   .standBtn {
     height: 46px;
   }
+}
+
+/* the card from the sleeve, under the peek sheet */
+.sleeve {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--frame-line);
+}
+
+/* the steadiness test for the sleeve: a marker swinging over a bar with a calm middle */
+.steady {
+  position: relative;
+  height: 56px;
+  margin: 8px 0 4px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.steadyZone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  border-left: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+
+.steadyMarker {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--ink);
+  box-shadow: 0 0 10px var(--ink);
 }

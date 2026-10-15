@@ -8,7 +8,7 @@ import type { GameState, PendingDice, PlayerResult, TokenId } from '../../engine
 import { chipsText, scoreLabel, SUIT_NAME, TOKEN_TEXT } from '../../i18n/texts'
 import { useCareer } from '../../store/career'
 import { HUMAN, revealOrder, useGame } from '../../store/game'
-import { tempo } from '../../store/settings'
+import { tempo, useSettings } from '../../store/settings'
 import { Icon } from '../art/Icons'
 import { Portrait } from '../art/Portrait'
 import { TokenIcon } from '../art/TokenIcon'
@@ -352,14 +352,37 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
   const suspicion = useGame((g) => g.suspicion)
   const cover = useGame((g) => g.bixCover)
   const bix = useCareer((c) => c.bix)
+  const watch = useGame((g) => g.watch)
+  const sleeves = useCareer((c) => c.sleeves)
+  const sleeveUsed = useGame((g) => g.sleeveUsed)
+  const sleeve = useGame((g) => g.sleeve)
+  const steadyHand = useSettings((st) => st.steadyHand)
+  const [steady, setSteady] = useState<'sand' | 'blood' | null>(null)
   const ready = canAct && game.phase === 'turn' && !used
+  const canSleeve = canAct && game.phase === 'turn' && session.mode === 'career' && !session.tutorial && !sleeveUsed && sleeves > 0
   const targets = game.players.filter((p) => !p.isHuman && !p.eliminated && p.hand)
+
+  useEffect(() => {
+    if (!open) setSteady(null)
+  }, [open])
+
+  if (steady)
+    return (
+      <Sheet open={open} onClose={onClose}>
+        <SteadyHand
+          onDone={(steadiness) => {
+            onClose()
+            sleeve(steady, steadiness)
+          }}
+        />
+      </Sheet>
+    )
 
   return (
     <Sheet open={open} onClose={onClose}>
       <h2 className={common.sheetTitle}>{tx`Spähen`}</h2>
       <p className={common.sheetText}>
-        {tx`Wirf einen Blick auf eine Karte eines Gegners – einmal pro Hand, in deinem Zug. Jeder Blick macht den Tisch misstrauischer. Bei vollem Verdacht wirst du erwischt, siehst nichts und zahlst 2 Chips Strafe.`}
+        {tx`Wirf einen Blick auf eine Karte eines Gegners – einmal pro Hand, in deinem Zug. Wer ausgespäht wird, wird misstrauisch, die anderen ein wenig. Ist einer ganz misstrauisch, wirst du erwischt, siehst nichts und zahlst 2 Chips Strafe.`}
       </p>
       <div className={s.heatRow}>
         <span>{tx`Verdacht`}</span>
@@ -367,27 +390,56 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
       </div>
       {bix === 'lothcat' && suspicion >= 60 && <p className={s.tokenNote}>{tx`Bix legt die Ohren an. Der Tisch wird misstrauisch.`}</p>}
       {cover > 0 && <p className={s.tokenNote}>{cover === 1 ? tx`Fliegt ein Blick auf, lenkt Bix ein Mal ab.` : tx`Fliegt ein Blick auf, lenkt Bix noch ${cover} Mal ab.`}</p>}
-      {ready ? (
-        <div className={s.targets}>
-          {targets.map((p) => (
-            <button
-              key={p.id}
-              className={s.targetBtn}
-              onClick={() => {
-                onClose()
-                peek(p.id)
-              }}
+      {!ready && <p className={s.tokenNote}>{used ? tx`In dieser Hand hast du schon gespäht.` : tx`Spähen kannst du nur in deinem Zug, bevor du ziehst oder stehst.`}</p>}
+      <div className={s.targets}>
+        {targets.map((p) => (
+          <button
+            key={p.id}
+            className={s.targetBtn}
+            disabled={!ready}
+            onClick={() => {
+              onClose()
+              peek(p.id)
+            }}
+          >
+            <Portrait character={session.seats[p.id]} size={44} frame />
+            <span>
+              <b>{p.name}</b>
+              <em>{tx`eine Karte ansehen`}</em>
+            </span>
+            <span
+              className={cx(s.heat, (watch[p.id] ?? 0) >= 70 ? s.heatHigh : (watch[p.id] ?? 0) >= 40 ? s.heatMid : undefined)}
+              aria-label={tx`Verdacht ${Math.round(watch[p.id] ?? 0)} %`}
             >
-              <Portrait character={session.seats[p.id]} size={44} frame />
-              <span>
-                <b>{p.name}</b>
-                <em>{tx`eine Karte ansehen`}</em>
-              </span>
-            </button>
-          ))}
+              <i>
+                <b style={{ width: `${Math.min(100, watch[p.id] ?? 0)}%` }} />
+              </i>
+            </span>
+          </button>
+        ))}
+      </div>
+      {canSleeve && (
+        <div className={s.sleeve}>
+          <h3 className={s.fieldLabel}>{tx`Ärmel`}</h3>
+          <p className={s.tokenNote}>
+            {tx`Tausch eine deiner Karten gegen eine 1 aus dem Ärmel – einmal pro Partie. Alle am Tisch werden misstrauisch; bemerkt es einer, kostet es 3 Chips und Ansehen. Im Ärmel: ${sleeves}.`}
+          </p>
+          <div className={common.sheetActions}>
+            {(['sand', 'blood'] as const).map((suit) => (
+              <button
+                key={suit}
+                className={common.btn}
+                onClick={() => {
+                  if (steadyHand) return setSteady(suit)
+                  onClose()
+                  sleeve(suit)
+                }}
+              >
+                {suit === 'sand' ? tx`Sandkarte tauschen` : tx`Blutkarte tauschen`}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <p className={s.tokenNote}>{used ? tx`In dieser Hand hast du schon gespäht.` : tx`Spähen kannst du nur in deinem Zug, bevor du ziehst oder stehst.`}</p>
       )}
       <div className={common.sheetActions}>
         <button className={cx(common.btn, common.btnGhost)} onClick={onClose}>
@@ -395,6 +447,55 @@ export function PeekSheet({ canAct }: { canAct: boolean }) {
         </button>
       </div>
     </Sheet>
+  )
+}
+
+/** How wide the calm middle of the steadiness bar is, as a share of it. */
+const STEADY_ZONE = 0.2
+
+/**
+ * The sleeve under the table: a marker swings to and fro, and the player
+ * lets go while it is in the calm middle. A clean swap draws half the
+ * suspicion, a clumsy one more; waiting too long counts as clumsy.
+ */
+function SteadyHand({ onDone }: { onDone(steadiness: number): void }) {
+  const marker = useRef<HTMLElement>(null)
+  const pos = useRef(0)
+  const done = useRef(false)
+  const finish = (steadiness: number) => {
+    if (done.current) return
+    done.current = true
+    onDone(steadiness)
+  }
+  const release = () => {
+    const off = Math.abs(pos.current - 0.5)
+    finish(off <= STEADY_ZONE / 2 ? 0.5 : off <= STEADY_ZONE ? 1 : 1.5)
+  }
+
+  useEffect(() => {
+    const start = performance.now()
+    let frame = 0
+    const tick = (now: number) => {
+      const t = (now - start) / 1000
+      if (t > 3.2) return finish(1.5)
+      // speeds up a little the longer the hand hangs under the table
+      pos.current = (1 - Math.cos(t * (2.6 + t * 0.9))) / 2
+      if (marker.current) marker.current.style.left = `${pos.current * 100}%`
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return (
+    <>
+      <h2 className={common.sheetTitle}>{tx`Ruhige Hand`}</h2>
+      <p className={common.sheetText}>{tx`Tipp, wenn die Marke in der Mitte ist. Je ruhiger die Hand, desto weniger fällt es auf.`}</p>
+      <button className={s.steady} onClick={release} aria-label={tx`Jetzt tauschen`}>
+        <span className={s.steadyZone} style={{ width: `${STEADY_ZONE * 100}%` }} />
+        <i ref={marker} className={s.steadyMarker} />
+      </button>
+    </>
   )
 }
 
