@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CORE, KESSEL_SECTOR, MAPS as BY_ID, TARSK, TRADE_ROUTE } from './maps'
+import { CORE, KESSEL_SECTOR, MAPS as BY_ID, STATION, TARSK, TRADE_ROUTE } from './maps'
 import { FIELD, TABLES } from './tables'
 
 const MAPS = Object.values(BY_ID)
@@ -45,9 +45,17 @@ describe('maps', () => {
     expect(tables(KESSEL_SECTOR)).toEqual(TABLES.filter((t) => t.chapter === 'kessel').map((t) => t.id).sort())
     expect(tables(TRADE_ROUTE)).toEqual(TABLES.filter((t) => t.chapter === 'trade').map((t) => t.id).sort())
     expect(tables(CORE)).toEqual(TABLES.filter((t) => t.chapter === 'core').map((t) => t.id).sort())
+    expect(tables(STATION)).toEqual(TABLES.filter((t) => t.chapter === 'station').map((t) => t.id).sort())
   })
 
   it('opens only maps that exist', () => {
     for (const map of MAPS) for (const p of map.places) if (p.opens) expect(BY_ID[p.opens], p.id).toBeDefined()
+  })
+})
+
+describe('the charts together', () => {
+  it('never use one id for two places, since every way through space is one network', () => {
+    const ids = Object.values(BY_ID).flatMap((map) => map.places.map((p) => p.id))
+    expect(ids.length).toBe(new Set(ids).size)
   })
 })

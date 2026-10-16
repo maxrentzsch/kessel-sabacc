@@ -47,6 +47,9 @@ export const TELLS: Record<string, Tell> = {
   hask: { gesture: tx`legt die Hand an den Gürtel`, meaning: 'weak' },
   tarn: { gesture: tx`ballt die Faust`, meaning: 'strong' },
   seraphine: { gesture: tx`dreht an ihrem Siegelring`, meaning: 'weak' },
+  curator: { gesture: tx`summt eine alte Casinomelodie`, meaning: 'strong' },
+  kael: { gesture: tx`zieht den Handschuh straff`, meaning: 'weak' },
+  nyra: { gesture: tx`legt den Kopf schief`, meaning: 'strong' },
   orrin: { gesture: tx`dreht einen Würfel zwischen den Fingern`, meaning: 'strong' },
 }
 

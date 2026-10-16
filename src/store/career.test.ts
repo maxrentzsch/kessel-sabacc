@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { CHARACTERS } from '../ai/personalities'
 import { JOBS } from '../career/jobs'
+import { endingOpen, finalSeats } from '../career/route'
 import { FIELD, tableById } from '../career/tables'
 import { useCareer } from './career'
 import type { Session } from './game'
@@ -137,5 +138,29 @@ describe('the core', () => {
     expect(useCareer.getState().storySeen).toContain('ledger-stolen')
     // the first win on her yacht counts for her, the theft twice against
     expect(useCareer.getState().standing.oshi).toBe(1 + 1 - 2)
+  })
+})
+
+describe('the Empty Crown', () => {
+  it('opens once the residence is won', () => {
+    useCareer.getState().reset()
+    useCareer.setState({ hasShip: true, tableWins: { arena: 1 } })
+    expect(useCareer.getState().isUnlocked(tableById('promenade')!)).toBe(false)
+    useCareer.setState({ tableWins: { arena: 1, residence: 1 } })
+    expect(useCareer.getState().isUnlocked(tableById('promenade')!)).toBe(true)
+  })
+
+  it('seats Oshi, Dray unless he was beaten for good, and the champion who likes the player least', () => {
+    const base = { storySeen: [], debt: { paid: 0, extra: 0 }, jobsDone: [] as string[], duelWins: {} as Record<string, number> }
+    expect(finalSeats({ ...base, standing: { seal: 1, glass: -1, scrap: 2 } })).toEqual(['oshi', 'dray', 'sable'])
+    expect(finalSeats({ ...base, standing: { scrap: -2 }, duelWins: { casino: 1 } })).toEqual(['oshi', 'grex', 'ilsa'])
+  })
+
+  it('opens the endings to those who earned them', () => {
+    const base = { jobsDone: [], standing: {} }
+    expect(endingOpen('debt-free', { ...base, storySeen: [], debt: { paid: 40000, extra: 0 } })).toBe(true)
+    expect(endingOpen('debt-free', { ...base, storySeen: ['ledger-stolen'], debt: { paid: 6000, extra: 0 } })).toBe(false)
+    expect(endingOpen('trusted', { ...base, storySeen: ['patron-glass'], debt: { paid: 0, extra: 0 }, standing: { glass: 2 } })).toBe(true)
+    expect(endingOpen('trusted', { ...base, storySeen: ['patron-glass'], debt: { paid: 0, extra: 0 }, standing: { glass: 1 } })).toBe(false)
   })
 })

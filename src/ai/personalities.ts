@@ -201,7 +201,7 @@ export const CHARACTERS: Record<string, Character> = {
     hue: 345,
     sigil: 'crest',
     profile: profile('medium', 0.9, 0.6),
-    tokens: ['freeDraw', 'refund', 'generalTariff'],
+    tokens: ['freeDraw', 'extraRefund', 'exhaustion'],
   },
   harl: {
     id: 'harl',
@@ -228,7 +228,7 @@ export const CHARACTERS: Record<string, Character> = {
     hue: 170,
     sigil: 'hood',
     profile: profile('hard', -0.4, 0.7),
-    tokens: ['freeDraw', 'refund', 'generalTariff'],
+    tokens: ['generalAudit', 'markdown', 'immunity'],
   },
   veyra: {
     id: 'veyra',
@@ -237,7 +237,7 @@ export const CHARACTERS: Record<string, Character> = {
     hue: 355,
     sigil: 'crest',
     profile: profile('hard', 0.3, 0.7),
-    tokens: ['freeDraw', 'refund', 'generalTariff'],
+    tokens: ['primeSabacc', 'embezzlement', 'targetTariff'],
   },
   // ── Act 3: the core, where Coruscant Shift is played ──
   orrin: {
@@ -321,6 +321,34 @@ export const CHARACTERS: Record<string, Character> = {
     profile: profile('hard', 0.1, 0.8),
     tokens: ['freeDraw', 'refund', 'generalTariff'],
   },
+  // ── Act 4: the Empty Crown, and who comes after an outlaw ──
+  curator: {
+    id: 'curator',
+    name: tx`Der Kurator`,
+    title: tx`Droide der Leeren Krone`,
+    hue: 45,
+    sigil: 'droid',
+    profile: profile('hard', 0.0, 0.7),
+    tokens: ['immunity', 'generalAudit', 'primeSabacc'],
+  },
+  kael: {
+    id: 'kael',
+    name: tx`Kael Dravik`,
+    title: tx`Kopfgeldjäger`,
+    hue: 10,
+    sigil: 'visor',
+    profile: profile('hard', 0.6, 0.8),
+    tokens: ['targetTariff', 'embargo', 'directTransaction'],
+  },
+  nyra: {
+    id: 'nyra',
+    name: tx`Nyra Voss`,
+    title: tx`Kopfgeldjägerin`,
+    hue: 160,
+    sigil: 'horns',
+    profile: profile('hard', 0.4, 0.8),
+    tokens: ['targetAudit', 'exhaustion', 'immunity'],
+  },
   corvin: {
     id: 'corvin',
     name: tx`Corvin Ashe`,
@@ -328,7 +356,7 @@ export const CHARACTERS: Record<string, Character> = {
     hue: 45,
     sigil: 'visor',
     profile: profile('hard', 0.0, 0.8),
-    tokens: ['freeDraw', 'refund', 'generalTariff'],
+    tokens: ['directTransaction', 'cookTheBooks', 'immunity'],
   },
 }
 

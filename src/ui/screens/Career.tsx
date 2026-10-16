@@ -7,7 +7,7 @@ import { JOBS } from '../../career/jobs'
 import type { Job } from '../../career/jobs'
 import { MAPS } from '../../career/maps'
 import { CUSTOMS_CHIPS, customsFine, HEAT_CHECK } from '../../career/heat'
-import { banquetMissing, KEY_HOLDERS, keysHeld, patronOf, residenceMissing, secondInstalmentDue, thirdInstalmentDue } from '../../career/route'
+import { banquetMissing, endingOpen, finalSeats, HUNTERS, KEY_HOLDERS, keysHeld, patronOf, residenceMissing, secondInstalmentDue, thirdInstalmentDue } from '../../career/route'
 import { standingEffects, standingName, SYNDICATE, SYNDICATES } from '../../career/syndicates'
 import type { Syndicate } from '../../career/syndicates'
 import { SCENES } from '../../career/story'
@@ -44,9 +44,15 @@ function duelist(rival: Character): Character {
  * Legend mode: everybody plays their best, you start a chip short – for twice the money.
  * A syndicate's standing changes the price, and one that has turned hostile sends an enforcer.
  */
-function tableSession(table: TableDef, legend: boolean, standing: Partial<Record<Syndicate, number>> = {}, flags: string[] = []): Session {
+function tableSession(table: TableDef, legend: boolean, standing: Partial<Record<Syndicate, number>> = {}, flags: string[] = [], career?: ReturnType<typeof useCareer.getState>): Session {
   const effect = standingEffects(table.syndicate ? (standing[table.syndicate] ?? 0) : 0)
-  const seats = table.opponents.map((id) => (legend ? duelist(CHARACTERS[id]) : CHARACTERS[id]))
+  // At the final table the story decides who sits there.
+  const opponents = table.id === 'finaltable' && career ? finalSeats(career) : table.opponents
+  const seats = opponents.map((id) => (legend ? duelist(CHARACTERS[id]) : CHARACTERS[id]))
+  // An outlaw has a price on their head: in legend mode a hunter sits at every table.
+  if (legend && flags.includes('ending-outlaw')) seats[seats.length - 1] = duelist(CHARACTERS[HUNTERS[TABLES.indexOf(table) % HUNTERS.length]])
+  // Oshi's partner finds the doors of the Crown open, and the seats cheaper.
+  const partner = table.chapter === 'station' && flags.includes('oshi-partner') ? 0.8 : 1
   if (effect.enforcer && table.syndicate) seats[0] = duelist(CHARACTERS[SYNDICATE[table.syndicate].enforcer])
   // Once Oshi has sold the debt, the Red Seal's man sits in on the route's open tables.
   if (CREDITOR_TABLES.includes(table.id) && flags.includes('oshi-refused') && !seats.some((c) => c.id === 'dray')) seats[0] = CHARACTERS.dray
@@ -59,7 +65,7 @@ function tableSession(table: TableDef, legend: boolean, standing: Partial<Record
     title: table.name,
     venue: table.id,
     rules: table.rules,
-    buyIn: Math.round(table.buyIn * (legend ? 2 : 1) * effect.buyIn),
+    buyIn: Math.round(table.buyIn * (legend ? 2 : 1) * effect.buyIn * partner),
     payout: Math.round(payoutFor(table) * (legend ? 2 : 1) * effect.payout),
     seats: [null, ...seats],
     startingChips: table.chips,
@@ -128,7 +134,7 @@ function stakeSession(): Session {
 /** The order the story leads through: Tarsk's tables, the stake game, then out into the sector. */
 const ROUTE: TableDef[] = [...TABLES.filter((t) => t.chapter === 'tarsk'), FIELD, ...TABLES.filter((t) => t.chapter !== 'tarsk')]
 
-type View = 'tarsk' | 'kessel' | 'trade' | 'core'
+type View = 'tarsk' | 'kessel' | 'trade' | 'core' | 'station'
 
 /** Which chart a table is on. */
 const viewOf = (table: TableDef): View => table.chapter
@@ -138,6 +144,7 @@ function lockedBecause(table: TableDef, career: ReturnType<typeof useCareer.getS
   if (table.chapter !== 'tarsk' && !career.hasShip) return tx`Erst ein Schiff gewinnen`
   if (table.chapter === 'trade' && !career.tableWins.crown) return tx`Erst die Kessel-Krone gewinnen`
   if (table.chapter === 'core' && !career.tableWins.banquet) return tx`Erst das Bankett gewinnen`
+  if (table.chapter === 'station' && !career.tableWins.residence) return tx`Erst die Residenz gewinnen`
   const before = ROUTE[ROUTE.indexOf(table) - 1]
   if (table.id === 'banquet' && career.tableWins[before.id]) return tx`Es fehlt: ${banquetMissing(career).join(', ')}`
   if (table.id === 'residence' && career.tableWins[before.id]) return tx`Es fehlt: ${residenceMissing(career).join(', ')}`
@@ -272,7 +279,7 @@ function TableCard({ table, onSit, onPay }: { table: TableDef; onSit(session: Se
   // legend mode replays the tables already won
   const unlocked = legend ? !!career.tableWins[table.id] : career.isUnlocked(table)
   const wins = (legend ? career.legendWins : career.tableWins)[table.id] ?? 0
-  const session = tableSession(table, legend, career.standing, career.storySeen)
+  const session = tableSession(table, legend, career.standing, career.storySeen, career)
   const [taken, setTaken] = useState<string | null>(null)
   const fuel = career.tripCost(table.id)
   const due = instalmentDue(career.debt)
@@ -542,10 +549,18 @@ export function CareerScreen() {
   const { legend, storySeen, tableWins, markStory, finishScene, hasShip, bix } = career
   // On Tarsk until there is a ship; then out in the sector, with Tarsk a tap away; after the Crown on the trade route.
   const [view, setView] = useState<View>(
-    !hasShip ? 'tarsk' : tableWins.banquet && storySeen.includes('win-banquet') ? 'core' : tableWins.crown && storySeen.includes('win-crown') ? 'trade' : 'kessel',
+    !hasShip
+      ? 'tarsk'
+      : tableWins.residence && storySeen.includes('win-residence')
+        ? 'station'
+        : tableWins.banquet && storySeen.includes('win-banquet')
+          ? 'core'
+          : tableWins.crown && storySeen.includes('win-crown')
+            ? 'trade'
+            : 'kessel',
   )
   // which charts can be opened: Tarsk always, the sector with the ship, the route once the jump lock is gone, the core after the banquet
-  const canOpen = (id: string) => id === 'tarsk' || (id === 'kessel' && hasShip) || (id === 'trade' && !!tableWins.crown) || (id === 'core' && !!tableWins.banquet)
+  const canOpen = (id: string) => id === 'tarsk' || (id === 'kessel' && hasShip) || (id === 'trade' && !!tableWins.crown) || (id === 'core' && !!tableWins.banquet) || (id === 'station' && !!tableWins.residence)
   const map = MAPS[view]
   const onMap = map.places.filter((p) => !p.opens).map((p) => tableById(p.id) ?? FIELD)
 
@@ -581,6 +596,8 @@ export function CareerScreen() {
     if (view === 'trade' && !storySeen.includes('mira-confession')) return setTelling({ scene: SCENES[storySeen.includes('oshi-courier') ? 'trade-arrival-courier' : 'trade-arrival-sold'] })
     // Coruscant, the first time: the garrison, Orrin, and a word about the ledger.
     if (view === 'core' && !storySeen.includes('core-arrival')) return setTelling({ scene: SCENES['core-arrival'] })
+    // The Crown, the first time: the station wakes, and the tournament is agreed.
+    if (view === 'station' && !storySeen.includes('station-arrival')) return setTelling({ scene: SCENES['station-arrival'] })
     // The crystal Bix brought back from the gala.
     if (storySeen.includes('ledger-stolen') && !storySeen.includes('ledger-scene')) {
       markStory('ledger-scene')
@@ -702,6 +719,11 @@ export function CareerScreen() {
                     {tx`Kern`}
                   </button>
                 )}
+                {!!tableWins.residence && (
+                  <button role="radio" aria-checked={view === 'station'} className={cx(s.segment, view === 'station' && s.segmentOn)} onClick={() => openMap('station')}>
+                    {tx`Krone`}
+                  </button>
+                )}
               </div>
             )}
             <div className={cx(common.plate, s.starFrame, view === 'tarsk' && s.planetFrame)}>
@@ -731,6 +753,7 @@ export function CareerScreen() {
             key={telling.scene.id}
             scene={telling.scene}
             bix={bix}
+            allows={(choice) => !choice.requires || endingOpen(choice.requires, career)}
             onDone={(choice?: Choice) => {
               finishScene(telling.scene, choice)
               // A sequence may follow the scene; then an answer may lead on to the next scene; otherwise whatever waited for this one goes ahead.

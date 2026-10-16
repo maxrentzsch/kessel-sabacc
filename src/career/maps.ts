@@ -126,6 +126,7 @@ export const CORE: MapDef = {
     { id: 'customs', name: tx`Zollhangar`, x: 214, y: 158, r: 13, kind: 'planet', label: 'below' },
     { id: 'arena', name: tx`Arena`, x: 290, y: 226, r: 15, kind: 'planet', label: 'below' },
     { id: 'residence', name: tx`Residenz`, x: 306, y: 86, r: 16, kind: 'crown', label: 'below' },
+    { id: 'stationgate', opens: 'station', name: tx`Die Krone`, x: 326, y: 254, r: 13, kind: 'ringed', label: 'below' },
   ],
   routes: [
     { from: 'tradegate', to: 'level1' },
@@ -136,10 +137,32 @@ export const CORE: MapDef = {
     { from: 'yacht', to: 'customs' },
     { from: 'customs', to: 'arena' },
     { from: 'arena', to: 'residence' },
+    { from: 'residence', to: 'stationgate' },
   ],
 }
 
-export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR, trade: TRADE_ROUTE, core: CORE }
+/** Act 4: the Empty Crown, a casino station at the edge of the galaxy, and its tournament. */
+export const STATION: MapDef = {
+  id: 'station',
+  scale: 'sector',
+  places: [
+    { id: 'corelink', opens: 'core', name: tx`Kern`, x: 34, y: 240, r: 13, kind: 'ringed', label: 'below' },
+    { id: 'promenade', name: tx`Promenade`, x: 96, y: 170, r: 13, kind: 'station', label: 'below' },
+    { id: 'round1', name: tx`Runde 1`, x: 150, y: 96, r: 12, kind: 'station', label: 'above' },
+    { id: 'round2', name: tx`Runde 2`, x: 222, y: 150, r: 12, kind: 'station', label: 'below' },
+    { id: 'round3', name: tx`Runde 3`, x: 270, y: 70, r: 12, kind: 'station', label: 'below' },
+    { id: 'finaltable', name: tx`Finaltisch`, x: 300, y: 210, r: 18, kind: 'crown', label: 'below' },
+  ],
+  routes: [
+    { from: 'corelink', to: 'promenade' },
+    { from: 'promenade', to: 'round1' },
+    { from: 'round1', to: 'round2' },
+    { from: 'round2', to: 'round3' },
+    { from: 'round3', to: 'finaltable' },
+  ],
+}
+
+export const MAPS: Record<string, MapDef> = { tarsk: TARSK, kessel: KESSEL_SECTOR, trade: TRADE_ROUTE, core: CORE, station: STATION }
 
 export function placeOf(map: MapDef, id: string): Place {
   const place = map.places.find((p) => p.id === id)

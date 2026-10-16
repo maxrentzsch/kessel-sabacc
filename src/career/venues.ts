@@ -473,12 +473,69 @@ export const VENUES: Record<string, Venue> = {
       rim: ['#eef2f4', '#d2dadf'],
     }),
   },
+  // ── Act 4: the Empty Crown ──
+  // an old casino station waking up: dust, gold and flickering lamps
+  promenade: {
+    place: tx`Die Leere Krone, Promenadendeck`,
+    sound: { crowd: 1.2, hum: 1.3 },
+    colors: paint({
+      wall: ['#0e0c0a', '#2e2618', '#4e4026'],
+      niche: ['#1c1810', '#7a6438'],
+      trim: '#090806',
+      pane: ['#fff4d8', '#e8b860', '#946a24'],
+      door: ['#f4dcaa', '#c8963e'],
+      lamp: '#fff0cc',
+      floor: ['#221c12', '#070605'],
+      ceiling: '#080706',
+      haze: '230 190 120',
+      felt: ['#3a4a5a', '#2e3c4a', '#232e3a'],
+      rim: ['#e4dcc8', '#c8bea4'],
+    }),
+  },
+  // the tournament hall: black marble and the Crown's own gold
+  tourney: {
+    place: tx`Die Leere Krone, Spielsaal`,
+    sound: { crowd: 1.6, hum: 0.8 },
+    colors: paint({
+      wall: ['#08080a', '#1c1a22', '#34303e'],
+      niche: ['#121018', '#5a4e6e'],
+      trim: '#050506',
+      pane: ['#fffbe8', '#ffd76a', '#b8861a'],
+      door: ['#fff0b8', '#e0b23a'],
+      lamp: '#fff6d4',
+      floor: ['#16141a', '#040405'],
+      ceiling: '#050506',
+      haze: '255 215 120',
+      felt: ['#6a1e2a', '#561822', '#42121a'],
+      rim: ['#f0e2b8', '#d8c48a'],
+    }),
+  },
+  // before the vault door: one lamp, cold steel, the hum of the old reactor
+  finaltable: {
+    place: tx`Die Leere Krone, Tresorsaal`,
+    sound: { crowd: 0.3, hum: 2 },
+    colors: paint({
+      wall: ['#06080a', '#141c22', '#26323c'],
+      niche: ['#0c1216', '#3e5462'],
+      trim: '#030405',
+      pane: ['#f0fbff', '#9ad8ee', '#3a8aa8'],
+      door: ['#d8f2fc', '#62b2d0'],
+      lamp: '#eafaff',
+      floor: ['#10161a', '#030405'],
+      ceiling: '#030405',
+      haze: '160 220 240',
+      felt: ['#2a2a2e', '#222226', '#1a1a1e'],
+      rim: ['#f2e6c2', '#dac896'],
+    }),
+  },
 }
 
 // the three learning tables share the canteen
 VENUES.hallis1 = VENUES.hallis2 = VENUES.hallis3 = VENUES.hallis
 // and the three of the core the gambling hall
 VENUES.level1 = VENUES.level2 = VENUES.level3 = VENUES.level
+// the three rounds of the tournament its hall
+VENUES.round1 = VENUES.round2 = VENUES.round3 = VENUES.tourney
 
 export function venueOf(id: string | undefined): Venue {
   return (id && VENUES[id]) || VENUES.anchor

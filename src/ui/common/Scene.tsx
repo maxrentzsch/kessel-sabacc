@@ -17,6 +17,8 @@ interface Props {
   bix?: Animal | null
   /** the scene is over; `choice` is the answer the player gave, if it asked for one */
   onDone(choice?: Choice): void
+  /** whether an answer that asks for something is open to this player; all are when left out */
+  allows?(choice: Choice): boolean
 }
 
 /** How fast the words appear, in letters per tick. */
@@ -27,8 +29,10 @@ const TICK = 22
  * A tap finishes the line, the next tap moves on. A scene that asks
  * something waits on its last line for one of the answers.
  */
-export function Scene({ scene, bix, onDone }: Props) {
-  const { lines, venue, title, choices } = scene
+export function Scene({ scene, bix, onDone, allows = () => true }: Props) {
+  const { lines, venue, title } = scene
+  // answers the player has not earned are left out
+  const choices = scene.choices?.filter((c) => !c.requires || allows(c))
   const [index, setIndex] = useState(0)
   const [shown, setShown] = useState(0)
   const line = lines[index]

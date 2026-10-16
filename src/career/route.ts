@@ -1,4 +1,4 @@
-import { COURIER_RELIEF, instalmentDue } from './debt'
+import { COURIER_RELIEF, debtLeft, instalmentDue } from './debt'
 import type { DebtState } from './debt'
 import type { Syndicate } from './syndicates'
 import { tx } from '../i18n'
@@ -60,3 +60,33 @@ export function banquetMissing(s: RouteState): string[] {
   if (courier(s.storySeen) && !s.jobsDone.includes('oshi-run')) missing.push(tx`Oshis Fracht`)
   return missing
 }
+
+// ── Act 4 ──
+
+export interface EndingState extends RouteState {
+  standing: Partial<Record<Syndicate, number>>
+}
+
+/** Who has earned which ending: debt-free asks for every credit paid, a new Crown for a patron who trusts the player. */
+export function endingOpen(requires: 'debt-free' | 'trusted', s: EndingState): boolean {
+  if (requires === 'debt-free') return !s.storySeen.includes('ledger-stolen') && debtLeft(s.debt) === 0
+  const patron = patronOf(s.storySeen)
+  return !!patron && (s.standing[patron] ?? 0) >= 2
+}
+
+/** Each syndicate of the route sends its champion to the Crown. */
+export const CHAMPION: Record<Syndicate, string> = { seal: 'veyra', glass: 'sable', scrap: 'ilsa', oshi: 'oshi' }
+
+/**
+ * Who sits at the final table: Madame Oshi; Dray Venn, unless he was beaten
+ * for good in a duel, else Grex; and the champion of the syndicate that
+ * likes the player least.
+ */
+export function finalSeats(s: EndingState & { duelWins: Record<string, number> }): string[] {
+  const drayBeaten = (s.duelWins.casino ?? 0) > 0 || s.jobsDone.includes('steal-key-seal')
+  const coldest = KEY_HOLDERS.reduce((a, b) => ((s.standing[b] ?? 0) < (s.standing[a] ?? 0) ? b : a))
+  return ['oshi', drayBeaten ? 'grex' : 'dray', CHAMPION[coldest]]
+}
+
+/** After the outlaw ending a bounty hunter sits at every table of legend mode. */
+export const HUNTERS = ['kael', 'nyra']

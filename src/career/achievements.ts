@@ -18,6 +18,8 @@ export interface Progress {
   dailyBest: number
   ship: Record<string, number>
   stats: Record<string, number>
+  /** story beats and facts, such as the ending chosen */
+  storySeen?: string[]
 }
 
 export interface Achievement {
@@ -59,10 +61,13 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'riskyTop', name: tx`Nerven aus Durastahl`, text: tx`Gewinne „Riskant“ im Syndikatssalon oder an der Kessel-Krone.`, credits: 1500, rep: 150, progress: stat('riskyTopWins', 1) },
 
   { id: 'tables3', name: tx`Halbzeit`, text: tx`Gewinne an drei verschiedenen Tischen.`, credits: 200, rep: 40, progress: (p) => [count(p.tableWins), 3] },
-  { id: 'crown', name: tx`Die Sandläufer fliegt wieder`, text: tx`Gewinne die Kessel-Krone.`, credits: 1000, rep: 200, progress: (p) => [p.tableWins.crown ? 1 : 0, 1] },
+  { id: 'crown', name: tx`Die Siegel fallen`, text: tx`Gewinne die Kessel-Krone.`, credits: 1000, rep: 200, progress: (p) => [p.tableWins.crown ? 1 : 0, 1] },
   { id: 'duel', name: tx`Revanche`, text: tx`Gewinne ein Duell gegen einen Rivalen.`, credits: 100, rep: 25, progress: (p) => [Math.min(1, count(p.duelWins)), 1] },
   { id: 'duelAll', name: tx`Keine Rivalen mehr`, text: tx`Gewinne jedes Duell gegen die Rivalen der Karriere.`, credits: 1500, rep: 200, progress: (p) => [count(p.duelWins), TABLES.length] },
   { id: 'legend', name: tx`Legende`, text: tx`Gewinne die Kessel-Krone im Legendenmodus.`, credits: 3000, rep: 400, progress: (p) => [p.legendWins.crown ? 1 : 0, 1] },
+  { id: 'endFree', name: tx`Schuldenfrei`, text: tx`Gib die Leere Krone frei – ohne einen Credit Schulden.`, credits: 5000, rep: 500, progress: (p) => [p.storySeen?.includes('ending-free') ? 1 : 0, 1] },
+  { id: 'endCrown', name: tx`Eine neue Krone`, text: tx`Übernimm die Leere Krone mit deinem Schutzherrn.`, credits: 5000, rep: 500, progress: (p) => [p.storySeen?.includes('ending-crown') ? 1 : 0, 1] },
+  { id: 'endOutlaw', name: tx`Outlaw`, text: tx`Nimm den Tresor der Krone und spring.`, credits: 2000, rep: 500, progress: (p) => [p.storySeen?.includes('ending-outlaw') ? 1 : 0, 1] },
 
   { id: 'tour3', name: tx`Auf Tour`, text: tx`Gewinne drei Tische am Stück auf Tour.`, credits: 300, rep: 60, progress: (p) => [p.tourBest, 3] },
   { id: 'tour5', name: tx`Unaufhaltsam`, text: tx`Gewinne fünf Tische am Stück auf Tour.`, credits: 2000, rep: 250, progress: (p) => [p.tourBest, 5] },

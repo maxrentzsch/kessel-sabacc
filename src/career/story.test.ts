@@ -58,6 +58,10 @@ describe('the story', () => {
     for (const start of ['ride']) expect(SCENES[start].lines.map((l) => l.who).filter((who) => (ANIMALS as readonly (string | null)[]).includes(who)).sort(), start).toEqual([...ANIMALS].sort())
   })
 
+  it('always leaves an answer open at the end, whatever the player has earned', () => {
+    for (const scene of scenes) if (scene.choices) expect(scene.choices.some((c) => !c.requires), scene.id).toBe(true)
+  })
+
   it('offers a real choice wherever it asks for one', () => {
     for (const scene of scenes) {
       if (!scene.choices) continue

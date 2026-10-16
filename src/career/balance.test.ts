@@ -71,7 +71,8 @@ export function shiftWinRate(table: TableDef, player: AiProfile, games: number):
 describe('career difficulty', () => {
   it('gets harder table by table for a competent player', () => {
     // A stand-in for a good player who still only owns the starting tokens.
-    const rates = TABLES.filter((t) => !t.variant).map((table) => winRate(table, DEFAULT_PROFILES.hard, STARTING_TOKENS, 250))
+    // the climb of act 1; the Crown's tournament starts again from a warm-up table, see below
+    const rates = TABLES.filter((t) => t.chapter === 'tarsk' || t.chapter === 'kessel').map((table) => winRate(table, DEFAULT_PROFILES.hard, STARTING_TOKENS, 250))
     expect(rates[0]).toBeGreaterThan(0.65)
     expect(rates.at(-1)).toBeLessThan(0.25)
     // allow for the noise of 250 games
@@ -94,4 +95,11 @@ describe('career difficulty', () => {
     expect(rates.at(-1)).toBeLessThan(0.4)
     for (let i = 1; i < rates.length; i++) expect(rates[i], tables[i].id).toBeLessThan(rates[i - 1] + 0.15)
   }, 400_000)
+
+  it('ends the tournament of the Crown at its hardest table', () => {
+    const rate = (id: string) => winRate(TABLES.find((t) => t.id === id)!, DEFAULT_PROFILES.hard, STARTING_TOKENS, 200)
+    const final = rate('finaltable')
+    expect(final).toBeLessThan(0.2)
+    expect(final).toBeLessThan(rate('promenade'))
+  }, 240_000)
 })

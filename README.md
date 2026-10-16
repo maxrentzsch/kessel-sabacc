@@ -16,7 +16,9 @@ in English and German. Three games:
 
 - **Career** that starts on the desert world Tarsk, where a stake game wins you a ship and the
   debt that comes with it, then goes out into the Kessel sector; in act 2 along the trade route,
-  where Corellian Spike is played, and in act 3 to Coruscant, where it is Coruscant Shift: a story
+  where Corellian Spike is played; in act 3 to Coruscant, where it is Coruscant Shift; and in act
+  4 to the Empty Crown, a lost casino station whose tournament is played in all three games, with
+  three endings: a story
   with three animals to choose from without being asked, Oshi's instalments to pay (or her ledger
   to steal), four syndicates whose standing changes prices and seats, a patron to choose, three
   keys to the ship's nav data, the garrison's checks at the jump points, jobs on every table's

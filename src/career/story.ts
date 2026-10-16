@@ -29,6 +29,8 @@ export type Effect = { flag: string } | { credits: number } | { bix: Animal } | 
 /** An answer the player can give at the end of a scene. */
 export interface Choice {
   text: string
+  /** an answer only open to a player who has earned it: the debt paid in full, or a patron who trusts them */
+  requires?: 'debt-free' | 'trusted'
   effects?: Effect[]
   /** the scene that follows this answer */
   next?: string
@@ -157,6 +159,26 @@ const ARRIVAL: Record<string, { place: string; reply: Line }> = {
     place: tx`Der Kristallturm des Hauses Aurel. Ganz oben, wo die Luft dünn und das Geld alt ist.`,
     reply: { who: 'oshi', mood: 'smug', text: tx`Sieh an. Wir wollen beide dasselbe. Wie unangenehm.` },
   },
+  promenade: {
+    place: tx`Die Promenade der Leeren Krone. Staub auf den Teppichen, Gold an den Wänden, und an jedem Tisch ein anderes Syndikat.`,
+    reply: { who: 'sesk', mood: 'smug', text: tx`Na, wer hätte das gedacht. Wir alle, an einem Ort. Das endet nie gut.` },
+  },
+  round1: {
+    place: tx`Der Spielsaal der Krone. Drei Champions, drei Syndikate, ein Tisch.`,
+    reply: { who: 'ilsa', text: tx`Für die Schrottkrone. Nimm's nicht persönlich.` },
+  },
+  round2: {
+    place: tx`Die zweite Runde. Die alten Spike-Würfel der Krone liegen auf dem Filz.`,
+    reply: { who: 'vesh', text: tx`Wie in den Wolken von Yavvis. Nur höher.` },
+  },
+  round3: {
+    place: tx`Die dritte Runde. Zwei Würfel, fünf Karten, ein Ziel.`,
+    reply: { who: 'seraphine', text: tx`Der Code meiner Familie hat Sie hergebracht. Jetzt sehen wir, ob er es wert war.` },
+  },
+  finaltable: {
+    place: tx`Der Tresorsaal. Eine einzelne Lampe über dem Tisch, und dahinter eine Tür, so hoch wie ein Frachter.`,
+    reply: { who: 'oshi', mood: 'smug', text: tx`Neun Jahre ungeschlagen, und dann kamst du. Bringen wir es zu Ende.` },
+  },
 }
 
 /**
@@ -191,6 +213,28 @@ export function arrivalScene(table: TableDef): Line[] {
 }
 
 const VICTORY: Record<string, Line[]> = {
+  promenade: [
+    { who: 'curator', text: tx`Zugelassen. Das Turnier hat drei Runden in drei Spielarten. Wer sie übersteht, spielt am Finaltisch um den Tresor.` },
+    { who: 'lio', text: tx`Drei Spielarten. Du kannst sie alle. Das ist unheimlich.` },
+  ],
+  round1: [
+    { who: 'veyra', text: tx`Das Siegel zieht sich zurück. Für heute.` },
+    { who: 'curator', text: tx`Die zweite Runde: Corellian Spike.` },
+  ],
+  round2: [
+    { who: 'corvin', text: tx`Ein Verlustgeschäft. Aber ein lehrreiches.` },
+    { who: 'curator', text: tx`Die dritte Runde: Coruscant Shift.` },
+  ],
+  round3: [
+    { who: 'seraphine', mood: 'thinking', text: tx`Er war es wert.` },
+    { who: 'curator', text: tx`Der Finaltisch ist gedeckt. Madame Oshi wartet. Und nicht allein.` },
+  ],
+  finaltable: [
+    { who: null, text: tx`Die letzte Karte fällt. Madame Oshi legt ihre Hand ab, ganz langsam.` },
+    { who: 'oshi', mood: 'worried', text: tx`… Gut gespielt. Wirklich.` },
+    { who: null, text: tx`Hinter dem Tisch gleitet die Tür des Tresors auf. Kisten voller Chips aus dreißig Jahren, und der Kontrollkern der Station.` },
+    { who: 'curator', text: tx`Die Krone gehört dem Sieger des Turniers. Was soll aus ihr werden?` },
+  ],
   level1: [
     { who: 'orrin', text: tx`Sie treffen die Zahl. Gut. Wissen Sie, warum ich Ihnen das beibringe?` },
     { who: 'orrin', mood: 'thinking', text: tx`Ich war Croupier auf der Leeren Krone. Vor dreißig Jahren. Ich habe gesehen, wie sie verschwand.` },
@@ -524,6 +568,56 @@ const PARTNER: Choice[] = [
   { text: tx`Nein. Die Krone hole ich mir allein.`, effects: [{ flag: 'oshi-rival' }, { standing: 'oshi', delta: -1 }] },
 ]
 
+// ── Act 4: the Empty Crown ──────────────────────────────────────────────────
+
+const STATION_ARRIVAL: Line[] = [
+  { who: null, text: tx`Am Rand der Galaxis, wo die Sterne dünn werden, treibt sie: die Leere Krone. Ein Ring aus Gold und Stahl, dunkel seit dreißig Jahren.` },
+  { who: null, text: tx`Als die Sandläufer andockt, gehen die Lichter an. Eins nach dem anderen.` },
+  { who: 'curator', text: tx`Willkommen an Bord. Die Syndikate sind bereits eingetroffen. Sie haben sich auf das Einzige geeinigt, dem hier alle trauen: ein Turnier.` },
+  { who: 'curator', text: tx`Drei Runden in drei Spielarten. Wer sie übersteht, spielt am Finaltisch um den Tresor – und um die Krone.` },
+  { who: 'bix', text: tx`…!` },
+]
+const ENDINGS: Choice[] = [
+  {
+    text: tx`Schuldenfrei: Die Krone wird neutraler Boden, für alle Syndikate.`,
+    requires: 'debt-free',
+    effects: [{ flag: 'ending-free' }],
+    next: 'ending-free',
+  },
+  {
+    text: tx`Eine neue Krone: Ich führe die Station, mit meinem Schutzherrn.`,
+    requires: 'trusted',
+    effects: [{ flag: 'ending-crown' }],
+    next: 'ending-crown',
+  },
+  { text: tx`Outlaw: Ich nehme den Tresor und springe.`, effects: [{ flag: 'ending-outlaw' }, { credits: 25000 }], next: 'ending-outlaw' },
+]
+const ENDING_FREE: Line[] = [
+  { who: null, text: tx`Du gibst den Kontrollkern dem Kurator zurück. Die Krone gehört niemandem – und damit allen.` },
+  { who: 'oshi', mood: 'thinking', text: tx`Neutraler Boden. Ohne Schulden, ohne Herrin. Wie unerhört.` },
+  { who: 'oshi', mood: 'smug', text: tx`Komm wieder, Pilot. Als Gast. An meinem Tisch ist immer ein Platz frei.` },
+  { who: null, text: tx`Die Sandläufer legt ab. Zum ersten Mal schuldet sie niemandem etwas. Ende.` },
+]
+const ENDING_CROWN: Line[] = [
+  { who: null, text: tx`Du setzt dich auf den Stuhl des alten Hauses Aurel, mitten im Tresorsaal. Dein Schutzherr stellt sich neben dich.` },
+  { who: 'curator', text: tx`Die Krone hat einen neuen Herrn. Die Tische öffnen um Mitternacht.` },
+  { who: 'oshi', mood: 'angry', text: tx`Genieß es. Kronen fallen. Ich weiß, wovon ich rede.` },
+  { who: null, text: tx`Die Leere Krone ist nicht mehr leer. Und sie gehört dir. Ende.` },
+]
+const ENDING_OUTLAW: Line[] = [
+  { who: null, text: tx`Bix ist als Erster im Tresor. Du schaffst so viel in den Frachtraum, wie die Sandläufer tragen kann.` },
+  { who: 'oshi', mood: 'angry', text: tx`Du Dieb! Jedes Syndikat wird ein Kopfgeld auf dich aussetzen!` },
+  { who: YOU, text: tx`Sollen sie. Ich spiele gern um viel.` },
+  { who: null, text: tx`Die Sandläufer springt, bevor die Türen schließen. Von jetzt an sitzt an jedem Tisch ein Kopfgeldjäger. Ende – und ein Anfang.` },
+]
+
+const STATION_SCENES: Scene[] = [
+  { id: 'station-arrival', title: tx`Die Leere Krone`, venue: 'promenade', lines: STATION_ARRIVAL },
+  { id: 'ending-free', title: tx`Schuldenfrei`, venue: 'finaltable', lines: ENDING_FREE },
+  { id: 'ending-crown', title: tx`Eine neue Krone`, venue: 'finaltable', lines: ENDING_CROWN },
+  { id: 'ending-outlaw', title: tx`Outlaw`, venue: 'finaltable', lines: ENDING_OUTLAW },
+]
+
 const CORE_SCENES: Scene[] = [
   { id: 'core-arrival', title: tx`Coruscant`, venue: 'level', lines: CORE_ARRIVAL },
   { id: 'shift-known', title: tx`Ebene 1313`, venue: 'level', lines: SHIFT_KNOWN },
@@ -545,6 +639,7 @@ export const SCENES: Record<string, Scene> = Object.fromEntries(
     ...TARSK_SCENES,
     ...TRADE_SCENES,
     ...CORE_SCENES,
+    ...STATION_SCENES,
     ...TABLES.flatMap((table): Scene[] => [
       {
         id: `intro-${table.id}`,
@@ -558,7 +653,7 @@ export const SCENES: Record<string, Scene> = Object.fromEntries(
         title: table.name,
         venue: table.id,
         lines: victoryScene(table),
-        ...(table.id === 'crown' ? { choices: OSHI_OFFER } : table.id === 'convoy' ? { choices: PATRON } : table.id === 'residence' ? { choices: PARTNER } : {}),
+        ...(table.id === 'crown' ? { choices: OSHI_OFFER } : table.id === 'convoy' ? { choices: PATRON } : table.id === 'residence' ? { choices: PARTNER } : table.id === 'finaltable' ? { choices: ENDINGS } : {}),
       },
     ]),
   ].map((scene) => [scene.id, scene]),
@@ -575,6 +670,7 @@ export const TRIGGERS: string[] = [
   'trade-arrival-sold',
   'core-arrival',
   'ledger-stolen',
+  'station-arrival',
   ...ANIMALS.map((animal) => `win-${FIELD.id}-${animal}`),
   ...TABLES.flatMap((table) => [`intro-${table.id}`, `win-${table.id}`]),
 ]

@@ -1,4 +1,4 @@
-import { CORE, KESSEL_SECTOR, TRADE_ROUTE } from './maps'
+import { CORE, KESSEL_SECTOR, STATION, TRADE_ROUTE } from './maps'
 import { tableById } from './tables'
 
 /**
@@ -49,9 +49,11 @@ export function sectorPlace(tableId: string): string {
 
 /** Every way through space, the long jump between the two sectors included. */
 const LANES: { from: string; to: string; length: number }[] = [
-  ...[...KESSEL_SECTOR.routes, ...TRADE_ROUTE.routes, ...CORE.routes].map((r) => ({ ...r, length: 1 })),
+  ...[...KESSEL_SECTOR.routes, ...TRADE_ROUTE.routes, ...CORE.routes, ...STATION.routes].map((r) => ({ ...r, length: 1 })),
   { from: 'route', to: 'kesselgate', length: SECTOR_JUMP },
   { from: 'coregate', to: 'tradegate', length: SECTOR_JUMP },
+  // the Crown lies at the edge of the galaxy: the longest jump of all
+  { from: 'stationgate', to: 'corelink', length: SECTOR_JUMP * 2 },
 ]
 
 /** How many jumps lie between two places, on one chart or across both. */

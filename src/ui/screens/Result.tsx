@@ -90,11 +90,13 @@ export function ResultScreen() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.15 }}
         >
-          {champion ? (table?.id === 'residence' ? tx`Der Code der Krone!` : table?.id === 'banquet' ? tx`Das Bankett!` : tx`Kessel-Krone!`) : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
+          {champion ? (table?.id === 'finaltable' ? tx`Der Tresor der Krone!` : table?.id === 'residence' ? tx`Der Code der Krone!` : table?.id === 'banquet' ? tx`Das Bankett!` : tx`Kessel-Krone!`) : won ? (duel ? tx`Duell gewonnen` : tour ? tx`Weiter geht’s` : tx`Sieg`) : tour ? tx`Tour vorbei` : summary.refund > 0 ? tx`Zweiter Platz` : tx`Pleite`}
         </motion.h1>
         <motion.p className={s.resultText} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           {champion
-            ? table?.id === 'residence'
+            ? table?.id === 'finaltable'
+              ? tx`Madame Oshi legt ihre Karten ab. Hinter dem Tisch öffnet sich der Tresor der Leeren Krone – und die Entscheidung, was aus ihr wird, liegt bei dir.`
+              : table?.id === 'residence'
               ? tx`Seraphine Aurel legt den Kristall auf den Tisch. Weit draußen antwortet der Peilsender der Leeren Krone – und jedes Syndikat hört mit.`
               : table?.id === 'banquet'
               ? tx`Corvin Ashe applaudiert, langsam. Die drei Schlüssel klicken in den Navcomputer, und die Spur der Leeren Krone führt in den Kern.`

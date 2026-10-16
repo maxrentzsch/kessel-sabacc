@@ -8,10 +8,10 @@ Where Kessel Sabacc could go after 1.2. Smaller ideas that do not belong to a ph
 - Three variants with pure, seeded rules engines and AI: Kessel Sabacc (`src/engine`), Corellian
   Spike (`src/spike`), both in the career since 2.0, and Coruscant Shift (`src/shift`), in free
   play since 2.1 and in the career since 2.2.
-- A career over four charts: Tarsk, the Kessel sector (act 1), the trade route (act 2) and
-  Coruscant (act 3), with duels, legend mode, stakes, jobs, syndicates, the garrison, the tour, the
-  daily hand, the Sandrunner with five modules, a collection, achievements and story scenes. Act 4
-  is still to come.
+- A career over five charts: Tarsk, the Kessel sector (act 1), the trade route (act 2), Coruscant
+  (act 3) and the Empty Crown (act 4, with three endings), with duels, legend mode, stakes, jobs,
+  syndicates, the garrison, the tour, the daily hand, the Sandrunner with five modules, a
+  collection, achievements and story scenes. The crew and the galaxy map are still to come.
 - Peeking with suspicion per opponent and the sleeve in all three games; one device for several
   players in all three.
 - German and English, enforced by a catalogue test.
@@ -292,6 +292,18 @@ and every new line exists in both languages.
   ground. *A new Crown*: trusted by a syndicate, the tournament won; you take over the station
   with your patron. *Outlaw*: you take the vault and jump; afterwards legend mode is played with
   bounty hunters at every table.
+- *As built in 2.3:* a fifth chart, the Empty Crown at the edge of the galaxy, behind the longest
+  jump. A warm-up at the promenade (Kessel Sabacc), three rounds of the tournament – Kessel Sabacc
+  against the champions of the Scrap Crown, the Glassfingers and the Red Seal, Corellian Spike
+  against the players of the trade route, Coruscant Shift against those of the core – and the
+  final table before the vault, Kessel Sabacc again. The Curator, the station's droid, runs it. At
+  the final table sit Madame Oshi, Dray Venn unless he was beaten in a duel or for his key (then
+  Grex), and the champion of the syndicate that likes the player least. Oshi's partner pays a fifth
+  less for the tournament's seats. The win opens the vault and the endings: debt-free for a debt
+  paid to the last credit (not stolen), a new Crown for a patron at "valued" or better, outlaw
+  always – the vault's 25,000 credits, and from then on a bounty hunter (Kael Dravik or Nyra
+  Voss) at every table of legend mode. Each ending has an achievement. The crew, the galaxy map,
+  the new module effects and the seasons come next.
 - **The galaxy map** above the sector maps, and modules that open the way. New effects come on top
   of what modules already do, so nothing bought loses its worth: the engine (no effect so far)
   opens far routes, sensors also show one tell of each opponent in advance, the lounge also holds
@@ -383,6 +395,8 @@ the landing field, so they are offered the same ride once when they open the new
 | 2.0 | Phase 4: act 2 with Corellian Spike, its learning path and the keys |
 | 2.1 | Phase 5, first step: Coruscant Shift in free play |
 | 2.2 | Phase 5: act 3, the core, with heat and the ledger |
+| 2.3 | Phase 5: act 4, the Empty Crown, its tournament and the three endings |
+| 2.4 | Phase 5: crew, galaxy map, new module effects |
 | 2.x | Phase 5: acts 3 and 4, crew, galaxy map; phase 6 throughout |
 | 3.0 | 7b and 7c: leaderboard and online tables |
 
@@ -435,6 +449,7 @@ the landing field, so they are offered the same ride once when they open the new
 
 1. Heat and the garrison: only in act 3, or from act 1 on? *Built for act 3 only in 2.2, as
    recommended; it can still be carried back if wanted.*
-2. The *Outlaw* ending with bounty hunters in legend mode afterwards?
+2. The *Outlaw* ending with bounty hunters in legend mode afterwards? *Built in 2.3, as
+   recommended.*
 3. A server for phase 7: a free account in your name when the time comes?
 4. Music: generated in the browser (free, more synthetic) or recorded (needs licences)?
